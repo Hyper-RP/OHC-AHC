@@ -1,0 +1,547 @@
+{% extends "frontend/base.html" %}
+
+{% block content %}
+<section class="form-layout">
+    <div class="panel-card">
+        <div class="section-head">
+            <h4>Complete OHC Intake & Diagnosis</h4>
+            <span class="section-badge">Clinical Workflow</span>
+        </div>
+        
+        <form class="portal-form" id="ohcCompleteForm" data-api-endpoint="/api/ohc/complete-intake/">
+            <!-- SECTION 1: PATIENT INFORMATION -->
+            <div class="form-section">
+                <div class="section-divider">
+                    <span class="step-badge">1</span>
+                    <h5 class="section-title">Patient Information</h5>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Employee Profile ID *</label>
+                        <input class="form-control" name="employee" placeholder="e.g., EMP-001" required>
+                        <small class="form-text text-muted">Find this in employee records</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Clinical Staff *</label>
+                        <input class="form-control" name="consulted_doctor" placeholder="Auto-filled for logged-in staff" readonly>
+                        <small class="form-text text-muted">Automatically assigned from your profile</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: VISIT DETAILS -->
+            <div class="form-section">
+                <div class="section-divider">
+                    <span class="step-badge">2</span>
+                    <h5 class="section-title">Visit Details</h5>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Visit Type *</label>
+                        <select class="form-select" name="visit_type" required>
+                            <option value="">Select type</option>
+                            <option value="WALK_IN">Walk-in Visit</option>
+                            <option value="PERIODIC">Periodic Checkup</option>
+                            <option value="PRE_EMPLOYMENT">Pre-employment</option>
+                            <option value="FOLLOW_UP">Follow-up</option>
+                            <option value="EMERGENCY">Emergency</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Urgency Level *</label>
+                        <select class="form-select" name="triage_level" required>
+                            <option value="">Select urgency</option>
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="CRITICAL">Critical</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Visit Date & Time *</label>
+                        <input type="datetime-local" class="form-control" name="visit_date" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: CHIEF COMPLAINT & SYMPTOMS -->
+            <div class="form-section">
+                <div class="section-divider">
+                    <span class="step-badge">3</span>
+                    <h5 class="section-title">Chief Complaint & Symptoms</h5>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Chief Complaint *</label>
+                        <input class="form-control" name="chief_complaint" placeholder="What's the main reason for the visit?" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Detailed Symptoms *</label>
+                        <textarea class="form-control" rows="4" name="symptoms" placeholder="Describe symptoms in detail: fever, pain, breathing issues, etc." required></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 4: VITALS -->
+            <div class="form-section">
+                <div class="section-divider">
+                    <span class="step-badge">4</span>
+                    <h5 class="section-title">Vital Signs</h5>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Temperature (°F)</label>
+                        <input class="form-control vitals-input" data-vital-key="temperature" placeholder="98.6">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Blood Pressure (mmHg)</label>
+                        <input class="form-control vitals-input" data-vital-key="blood_pressure" placeholder="120/80">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Pulse (bpm)</label>
+                        <input class="form-control vitals-input" data-vital-key="pulse" placeholder="76">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">SpO2 (%)</label>
+                        <input class="form-control vitals-input" data-vital-key="spo2" placeholder="98">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Weight (kg)</label>
+                        <input class="form-control vitals-input" data-vital-key="weight" placeholder="68">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Height (cm)</label>
+                        <input class="form-control vitals-input" data-vital-key="height" placeholder="172">
+                    </div>
+                    <div class="col-12">
+                        <input type="hidden" name="vitals" class="vitals-json-field">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 5: PRELIMINARY OBSERVATIONS -->
+            <div class="form-section">
+                <div class="section-divider">
+                    <span class="step-badge">5</span>
+                    <h5 class="section-title">Preliminary Observations</h5>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Preliminary Notes</label>
+                        <textarea class="form-control" rows="4" name="preliminary_notes" placeholder="Initial observations, physical exam findings, and context"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DIVIDER -->
+            <div class="form-divider">
+                <h6>Diagnosis & Treatment Plan</h6>
+                <small class="text-muted">Complete clinical assessment and prescriptions</small>
+            </div>
+
+            <!-- SECTION 6: DIAGNOSIS DETAILS -->
+            <div class="form-section">
+                <div class="section-divider">
+                    <span class="step-badge">6</span>
+                    <h5 class="section-title">Diagnosis Details</h5>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label">Diagnosis Name *</label>
+                        <input class="form-control" name="diagnosis_name" placeholder="e.g., Acute respiratory infection, fracture, dermatitis" required>
+                        <small class="form-text text-muted">Medical diagnosis or condition</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Diagnosis Code</label>
+                        <input class="form-control" name="diagnosis_code" placeholder="e.g., ICD-10 code">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Severity *</label>
+                        <select class="form-select" name="diagnosis_severity" required>
+                            <option value="">Select severity</option>
+                            <option value="MILD">Mild</option>
+                            <option value="MODERATE">Moderate</option>
+                            <option value="SERIOUS">Serious</option>
+                            <option value="CRITICAL">Critical</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Condition Status *</label>
+                        <select class="form-select" name="diagnosis_condition_status" required>
+                            <option value="">Select status</option>
+                            <option value="ACTIVE">Active</option>
+                            <option value="STABLE">Stable</option>
+                            <option value="RESOLVED">Resolved</option>
+                            <option value="CHRONIC">Chronic</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Diagnosis Notes *</label>
+                        <textarea class="form-control" rows="4" name="diagnosis_notes" placeholder="Detailed clinical findings, observations, and assessment" required></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 7: FITNESS ASSESSMENT -->
+            <div class="form-section">
+                <div class="section-divider">
+                    <span class="step-badge">7</span>
+                    <h5 class="section-title">Fitness Assessment</h5>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Fitness Decision *</label>
+                        <select class="form-select" name="fitness_decision" id="fitnessDecision" required>
+                            <option value="">Select decision</option>
+                            <option value="FIT">Fit for Work</option>
+                            <option value="FIT_WITH_RESTRICTION">Fit with Restrictions</option>
+                            <option value="TEMPORARY_UNFIT">Temporarily Unfit</option>
+                            <option value="UNFIT">Unfit for Work</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Follow-up Date</label>
+                        <input type="date" class="form-control" name="follow_up_date">
+                        <small class="form-text text-muted">When to review this case</small>
+                    </div>
+                    <div class="col-md-6" id="restDaysContainer">
+                        <label class="form-label">Advised Rest Days</label>
+                        <input type="number" class="form-control" name="advised_rest_days" value="0" min="0">
+                        <small class="form-text text-muted">Number of days off work (for TEMPORARY_UNFIT)</small>
+                    </div>
+                    <div class="col-md-6" id="restrictionsContainer">
+                        <label class="form-label">Work Restrictions</label>
+                        <textarea class="form-control" rows="3" name="work_restrictions" placeholder="Specify any work limitations or accommodations needed"></textarea>
+                    </div>
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <strong>Referral Alert:</strong> If severity is SERIOUS/CRITICAL or marked as requiring referral, patient will be automatically referred to AHC.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 8: PRESCRIPTIONS -->
+            <div class="form-section">
+                <div class="section-divider">
+                    <span class="step-badge">8</span>
+                    <h5 class="section-title">Prescriptions</h5>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="prescription-guide">
+                            <p><strong>Instructions:</strong> Add medicines prescribed for this diagnosis. Each prescription should include medicine name, dosage, frequency, duration, and start date.</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="prescriptionBlocks">
+                    <!-- Prescription blocks will be added here dynamically -->
+                </div>
+                <div class="row g-3 mt-3">
+                    <div class="col-12">
+                        <button type="button" class="btn btn-outline-brand" id="addPrescriptionBtn">+ Add Prescription</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FORM ACTIONS -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-brand btn-lg">
+                    <i class="icon-check"></i> Submit Complete Intake
+                </button>
+                <button type="reset" class="btn btn-outline-light">Reset Form</button>
+                <button type="button" class="btn btn-outline-secondary" onclick="history.back()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- PRESCRIPTION TEMPLATE (Hidden) -->
+<template id="prescriptionTemplate">
+    <div class="prescription-block card mb-3">
+        <div class="card-body">
+            <div class="prescription-header d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">Prescription</h6>
+                <button type="button" class="btn btn-sm btn-outline-danger removePrescriptionBtn">Remove</button>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Medicine Name *</label>
+                    <input type="text" class="form-control" name="prescriptions[].medicine_name" placeholder="e.g., Paracetamol" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Dosage *</label>
+                    <input type="text" class="form-control" name="prescriptions[].dosage" placeholder="e.g., 650 mg" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Frequency *</label>
+                    <input type="text" class="form-control" name="prescriptions[].frequency" placeholder="e.g., Twice daily" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Duration (Days) *</label>
+                    <input type="number" class="form-control" name="prescriptions[].duration_days" placeholder="e.g., 5" min="1" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Route</label>
+                    <input type="text" class="form-control" name="prescriptions[].route" placeholder="e.g., Oral, Injection, Topical">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Start Date *</label>
+                    <input type="date" class="form-control" name="prescriptions[].start_date" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Instructions</label>
+                    <textarea class="form-control" rows="2" name="prescriptions[].instructions" placeholder="Special instructions: take with food, avoid dairy, etc."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<style>
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-color, #e0e0e0);
+    }
+
+    .form-section:last-of-type {
+        border-bottom: none;
+    }
+
+    .section-divider {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .step-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--primary-color, #007bff);
+        color: white;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
+    .section-title {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .form-divider {
+        margin: 2rem 0;
+        padding: 1.5rem;
+        background: var(--light-bg, #f8f9fa);
+        border-radius: 8px;
+        border-left: 4px solid var(--primary-color, #007bff);
+    }
+
+    .form-divider h6 {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .prescription-block {
+        border: 1px solid var(--border-color, #dee2e6);
+        background: var(--light-bg, #f8f9fa);
+    }
+
+    .prescription-header {
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border-color, #dee2e6);
+    }
+
+    .prescription-guide {
+        background: var(--info-bg, #d1ecf1);
+        border: 1px solid var(--info-border, #bee5eb);
+        padding: 1rem;
+        border-radius: 4px;
+        color: var(--info-text, #0c5460);
+    }
+
+    .vitals-input {
+        background: var(--light-bg, #f8f9fa);
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid var(--border-color, #e0e0e0);
+    }
+
+    .btn-lg {
+        padding: 0.75rem 2rem;
+        font-size: 1.05rem;
+    }
+
+    @media (max-width: 768px) {
+        .form-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .form-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize form
+        const form = document.getElementById('ohcCompleteForm');
+        const prescriptionBlocks = document.getElementById('prescriptionBlocks');
+        const addPrescriptionBtn = document.getElementById('addPrescriptionBtn');
+        const prescriptionTemplate = document.getElementById('prescriptionTemplate');
+        const fitnessDecision = document.getElementById('fitnessDecision');
+
+        // Handle fitness decision visibility
+        fitnessDecision.addEventListener('change', function() {
+            const restDaysContainer = document.getElementById('restDaysContainer');
+            const restrictionsContainer = document.getElementById('restrictionsContainer');
+            
+            if (this.value === 'TEMPORARY_UNFIT') {
+                restDaysContainer.style.display = 'block';
+            } else {
+                restDaysContainer.style.display = this.value ? 'block' : 'none';
+            }
+
+            if (this.value === 'FIT_WITH_RESTRICTION') {
+                restrictionsContainer.style.display = 'block';
+            } else {
+                restrictionsContainer.style.display = 'none';
+            }
+        });
+
+        // Add prescription block
+        addPrescriptionBtn.addEventListener('click', function() {
+            const newPrescription = prescriptionTemplate.content.cloneNode(true);
+            prescriptionBlocks.appendChild(newPrescription);
+            
+            // Add remove event listener to new block
+            prescriptionBlocks.lastElementChild.querySelector('.removePrescriptionBtn')
+                .addEventListener('click', function() {
+                    this.closest('.prescription-block').remove();
+                });
+        });
+
+        // Remove prescription block
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('removePrescriptionBtn')) {
+                e.target.closest('.prescription-block').remove();
+            }
+        });
+
+        // Collect vitals data
+        function collectVitals() {
+            const vitals = {};
+            document.querySelectorAll('.vitals-input').forEach(input => {
+                const key = input.dataset.vitalKey;
+                if (input.value) {
+                    vitals[key] = input.value;
+                }
+            });
+            document.querySelector('.vitals-json-field').value = JSON.stringify(vitals);
+        }
+
+        // Form submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            collectVitals();
+
+            const formData = new FormData(this);
+            const endpoint = this.dataset.apiEndpoint || '/api/ohc/complete-intake/';
+
+            // Collect prescriptions
+            const prescriptions = [];
+            document.querySelectorAll('.prescription-block').forEach(block => {
+                const prescription = {
+                    medicine_name: block.querySelector('[name="prescriptions[].medicine_name"]').value,
+                    dosage: block.querySelector('[name="prescriptions[].dosage"]').value,
+                    frequency: block.querySelector('[name="prescriptions[].frequency"]').value,
+                    duration_days: parseInt(block.querySelector('[name="prescriptions[].duration_days"]').value),
+                    route: block.querySelector('[name="prescriptions[].route"]').value,
+                    start_date: block.querySelector('[name="prescriptions[].start_date"]').value,
+                    instructions: block.querySelector('[name="prescriptions[].instructions"]').value,
+                };
+                prescriptions.push(prescription);
+            });
+
+            // Prepare payload
+            const payload = {
+                // Visit data
+                employee: formData.get('employee'),
+                consulted_doctor: formData.get('consulted_doctor'),
+                visit_type: formData.get('visit_type'),
+                visit_date: formData.get('visit_date'),
+                triage_level: formData.get('triage_level'),
+                chief_complaint: formData.get('chief_complaint'),
+                symptoms: formData.get('symptoms'),
+                vitals: JSON.parse(formData.get('vitals')),
+                preliminary_notes: formData.get('preliminary_notes'),
+
+                // Diagnosis data
+                diagnosis: {
+                    diagnosis_name: formData.get('diagnosis_name'),
+                    diagnosis_code: formData.get('diagnosis_code') || '',
+                    diagnosis_notes: formData.get('diagnosis_notes'),
+                    severity: formData.get('diagnosis_severity'),
+                    condition_status: formData.get('diagnosis_condition_status'),
+                    fitness_decision: formData.get('fitness_decision'),
+                    follow_up_date: formData.get('follow_up_date') || null,
+                    advised_rest_days: parseInt(formData.get('advised_rest_days')) || 0,
+                    work_restrictions: formData.get('work_restrictions') || '',
+                    is_referral_required: false, // Can add checkbox if needed
+                },
+
+                // Prescriptions
+                prescriptions: prescriptions
+            };
+
+            console.log('Submitting payload:', payload);
+
+            // Send to API
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name="csrfmiddlewaretoken"]')?.value || '',
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(JSON.stringify(data));
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('✓ OHC Intake completed successfully!\nVisit ID: ' + data.visit_id);
+                if (data.referral_id) {
+                    alert('⚠ Patient has been referred to AHC.');
+                }
+                // Redirect or reset
+                form.reset();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('✗ Error submitting form:\n' + error.message);
+            });
+        });
+    });
+</script>
+{% endblock %}

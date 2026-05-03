@@ -1,0 +1,74 @@
+{% extends "frontend/base.html" %}
+
+{% block content %}
+<section class="form-layout">
+    <div class="panel-card">
+        <div class="section-head">
+            <h4>Referral Management</h4>
+            <span class="section-badge">AHC</span>
+        </div>
+        <form class="portal-form" data-api-endpoint="/api/ahc/referrals/">
+            <!-- Patient Information -->
+            <div class="form-section">
+                <h5 class="section-title">Patient Information</h5>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Visit ID</label>
+                        <input class="form-control" name="visit" placeholder="Enter visit ID" required>
+                        <small class="form-text text-muted">From the OHC visit record</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Diagnosis ID</label>
+                        <input class="form-control" name="diagnosis" placeholder="Enter diagnosis ID" required>
+                        <small class="form-text text-muted">From the diagnosis record</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Employee Profile ID</label>
+                        <input class="form-control" name="employee" placeholder="Enter employee ID" required>
+                        <small class="form-text text-muted">Employee's profile identifier</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referral Details -->
+            <div class="form-section">
+                <h5 class="section-title">Referral Details</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Specialist Department</label>
+                        <input class="form-control" name="specialist_department" placeholder="e.g., Orthopedic, Cardiology, Neurology" required>
+                        <small class="form-text text-muted">Department for specialist consultation</small>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Priority Level</label>
+                        <select class="form-select" name="priority" required>
+                            <option value="">Select priority</option>
+                            <option value="NORMAL">Normal</option>
+                            <option value="URGENT">Urgent</option>
+                            <option value="EMERGENCY">Emergency</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Referral Status</label>
+                        <select class="form-select" name="referral_status" required>
+                            <option value="">Select status</option>
+                            {% for value, label in referral_statuses %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Referral Reason</label>
+                        <textarea class="form-control" rows="4" name="referral_reason" placeholder="Detailed reason for referral, including symptoms, findings, and why specialist consultation is needed" required></textarea>
+                        <small class="form-text text-muted">Provide comprehensive clinical justification</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-brand">Create or Update Referral</button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

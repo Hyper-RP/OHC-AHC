@@ -1,0 +1,63 @@
+{% extends "frontend/base.html" %}
+
+{% block content %}
+<section class="content-grid">
+    <div class="panel-card">
+        <div class="section-head">
+            <h4>Payment Initiation</h4>
+            <span class="section-badge">Billing</span>
+        </div>
+        <form class="portal-form" data-api-endpoint="/api/payments/transactions/">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Invoice ID</label>
+                    <input class="form-control" name="invoice">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Employee Profile ID</label>
+                    <input class="form-control" name="employee">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Amount</label>
+                    <input class="form-control" name="amount">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Payment Method</label>
+                    <select class="form-select" name="payment_method">
+                        <option>RAZORPAY</option>
+                        <option>UPI</option>
+                        <option>CARD</option>
+                        <option>NETBANKING</option>
+                        <option>CASH</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Reference</label>
+                    <input class="form-control" name="transaction_reference" placeholder="Billing memo or reference id">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-brand">Initiate Payment</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="panel-card soft-panel">
+        <div class="section-head">
+            <h4>Fitness Watchlist</h4>
+            <span class="section-badge">Safety</span>
+        </div>
+        {% for employee in fitness_watchlist %}
+            <div class="report-row">
+                <div>
+                    <strong>{{ employee.employee_code }}</strong>
+                    <p>{{ employee.user.get_full_name|default:employee.user.username }}</p>
+                </div>
+                <span class="tag danger">{{ employee.fitness_status }}</span>
+            </div>
+        {% empty %}
+            <div class="empty-state-inline">No restricted or observation employees right now.</div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

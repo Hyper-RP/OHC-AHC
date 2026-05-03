@@ -1,0 +1,35 @@
+{% extends "frontend/base.html" %}
+
+{% block content %}
+<section class="panel-card">
+    <div class="section-head">
+        <h4>Select Authorized Hospital</h4>
+        <span class="section-badge">Network</span>
+    </div>
+    <div class="hospital-grid">
+        {% for hospital in hospitals %}
+            <article class="hospital-card">
+                <div class="hospital-top">
+                    <h5>{{ hospital.name }}</h5>
+                    <span class="section-badge">{{ hospital.city }}</span>
+                </div>
+                <p>{{ hospital.address_line_1 }}, {{ hospital.state }}</p>
+                <div class="hospital-meta">
+                    <span>{{ hospital.phone_number|default:"Phone pending" }}</span>
+                    <span>{% if hospital.supports_cashless %}Cashless{% else %}Reimbursement{% endif %}</span>
+                </div>
+                <div class="hospital-tags">
+                    {% for specialty in hospital.specialties|slice:":3" %}
+                        <span class="tag">{{ specialty }}</span>
+                    {% empty %}
+                        <span class="tag">General Medicine</span>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn btn-brand w-100 mt-3">Assign Hospital</button>
+            </article>
+        {% empty %}
+            <div class="empty-state-inline">Active hospitals will show here once AHC partners are configured.</div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

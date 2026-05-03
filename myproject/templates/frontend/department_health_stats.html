@@ -1,0 +1,118 @@
+{% extends "frontend/base.html" %}
+
+{% block content %}
+<section class="content-grid">
+    <div class="panel-card">
+        <div class="section-head">
+            <h4>Department-wise Health Statistics</h4>
+            <span class="section-badge">Analytics</span>
+            <div class="header-actions">
+                <a href="{% url 'department-stats-export' %}" class="btn btn-outline-light btn-sm">Export Excel</a>
+                <a href="{% url 'analytics-pdf-export' %}" class="btn btn-brand btn-sm">Export PDF</a>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="form-section">
+            <h5 class="section-title">Filter Options</h5>
+            <form class="portal-form" id="stats-filter">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Time Period</label>
+                        <select class="form-select" name="period">
+                            <option value="30">Last 30 days</option>
+                            <option value="90">Last 3 months</option>
+                            <option value="180">Last 6 months</option>
+                            <option value="365">Last year</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Report Type</label>
+                        <select class="form-select" name="report_type">
+                            <option value="summary">Summary View</option>
+                            <option value="detailed">Detailed View</option>
+                            <option value="trends">Trend Analysis</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-brand w-100">Apply Filters</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Statistics Display -->
+        <div class="form-section">
+            <h5 class="section-title">Department Health Overview</h5>
+            <div class="stats-grid">
+                {% for row in department_stats %}
+                    <article class="department-card">
+                        <div class="department-top">
+                            <h5>{{ row.department }}</h5>
+                            <span class="section-badge">{{ row.total_employees }} employees</span>
+                        </div>
+                        <div class="mini-stat-grid">
+                            <div class="mini-stat">
+                                <span class="stat-label">Total Visits</span>
+                                <strong class="stat-value">{{ row.total_visits }}</strong>
+                            </div>
+                            <div class="mini-stat">
+                                <span class="stat-label">Referred Cases</span>
+                                <strong class="stat-value">{{ row.referred_cases }}</strong>
+                            </div>
+                            <div class="mini-stat">
+                                <span class="stat-label">Unfit Employees</span>
+                                <strong class="stat-value">{{ row.unfit_employees }}</strong>
+                            </div>
+                        </div>
+                        <div class="department-footer">
+                            <small class="text-muted">
+                                Health Index: {% widthratio row.total_visits row.total_employees 100 %}%
+                            </small>
+                        </div>
+                    </article>
+                {% empty %}
+                    <div class="empty-state-inline">
+                        <div class="empty-icon">📊</div>
+                        <h6>No Data Available</h6>
+                        <p>Department statistics will appear here when employee health records are available.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Summary Overview -->
+        {% if department_stats %}
+        <div class="form-section">
+            <h5 class="section-title">Overall Summary</h5>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ department_stats|length }}</div>
+                        <div class="stat-label">Active Departments</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value">{% for row in department_stats %}{% if forloop.first %}{{ row.total_employees }}{% endif %}{% endfor %}</div>
+                        <div class="stat-label">Total Employees</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value">{% for row in department_stats %}{% if forloop.first %}{{ row.total_visits }}{% endif %}{% endfor %}</div>
+                        <div class="stat-label">Total Health Visits</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value">{% widthratio department_stats.0.total_visits department_stats.0.total_employees 100 %}%</div>
+                        <div class="stat-label">Avg Health Rate</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "frontend/base.html" %}
+
+{% block content %}
+<section class="content-grid">
+    <div class="panel-card">
+        <div class="section-head">
+            <h4>Disease Trends & Analytics</h4>
+            <span class="section-badge">Analytics</span>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="form-section">
+            <h5 class="section-title">Filter Options</h5>
+            <form class="portal-form" id="trends-filter">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Time Period</label>
+                        <select class="form-select" name="period">
+                            <option value="30">Last 30 days</option>
+                            <option value="90">Last 3 months</option>
+                            <option value="180">Last 6 months</option>
+                            <option value="365">Last year</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Department</label>
+                        <select class="form-select" name="department">
+                            <option value="">All Departments</option>
+                            <option value="PRODUCTION">Production</option>
+                            <option value="MAINTENANCE">Maintenance</option>
+                            <option value="ADMIN">Administration</option>
+                            <option value="HR">Human Resources</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Severity Level</label>
+                        <select class="form-select" name="severity">
+                            <option value="">All Severities</option>
+                            <option value="MILD">Mild</option>
+                            <option value="MODERATE">Moderate</option>
+                            <option value="SERIOUS">Serious</option>
+                            <option value="CRITICAL">Critical</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-brand w-100">Apply Filters</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Trends Display -->
+        <div class="form-section">
+            <h5 class="section-title">Disease Incidence Trends</h5>
+            <div class="trend-stack">
+                {% for row in disease_trends %}
+                    <div class="trend-row">
+                        <div class="trend-info">
+                            <strong>{{ row.diagnosis_name }}</strong>
+                            <span class="trend-severity">{{ row.severity }}</span>
+                        </div>
+                        <div class="trend-bar-wrap">
+                            <div class="trend-bar" style="width: {% widthratio row.total_cases 1 12 %}%;"></div>
+                        </div>
+                        <div class="trend-count">
+                            <strong>{{ row.total_cases }}</strong>
+                            <small>cases</small>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-state-inline">
+                        <div class="empty-icon">📊</div>
+                        <h6>No Data Available</h6>
+                        <p>Trend charts will appear once diagnoses are recorded in the system.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        {% if disease_trends %}
+        <div class="form-section">
+            <h5 class="section-title">Summary Statistics</h5>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ disease_trends|length }}</div>
+                        <div class="stat-label">Unique Conditions</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ disease_trends.0.total_cases }}</div>
+                        <div class="stat-label">Most Common Cases</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value">{% for row in disease_trends %}{% if forloop.first %}{{ row.diagnosis_name }}{% endif %}{% endfor %}</div>
+                        <div class="stat-label">Top Condition</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value">{% widthratio disease_trends|length 30 1 %}%</div>
+                        <div class="stat-label">Trend Coverage</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
