@@ -1,0 +1,200 @@
+.howItWorks {
+  min-height: 100vh;
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.95), rgba(244, 248, 251, 0.92) 30%, rgba(233, 240, 246, 0.95) 100%);
+  padding: 2rem 1rem;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 4rem;
+  padding: 2rem 0;
+}
+
+.backLink {
+  color: #0a5f78;
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-block;
+  margin-bottom: 2rem;
+  transition: color 0.2s ease;
+}
+
+.backLink:hover {
+  color: #0b4b64;
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #11313d;
+  margin: 0 0 1rem;
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  color: #5f7380;
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.workflowSection {
+  margin-bottom: 6rem;
+}
+
+.workflowGrid {
+  display: grid;
+  gap: 3rem;
+}
+
+.workflowStep {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.stepNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0a5f78 0%, #0b4b64 100%);
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(10, 95, 120, 0.3);
+}
+
+.stepCard {
+  flex: 1;
+}
+
+.stepDescription {
+  font-size: 1rem;
+  color: #5f7380;
+  line-height: 1.6;
+  margin: 0 0 1rem;
+}
+
+.stepDetails {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.stepDetails li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  background: rgba(10, 95, 120, 0.08);
+  color: #0b4b64;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.stepDetails li::before {
+  content: '✓';
+  color: #2c875f;
+  font-weight: 700;
+}
+
+.keyFeatures {
+  margin-bottom: 6rem;
+}
+
+.sectionTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #11313d;
+  text-align: center;
+  margin: 0 0 3rem;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.featureCard h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #11313d;
+  margin: 0 0 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.featureCard p {
+  font-size: 0.95rem;
+  color: #5f7380;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.ctaSection {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: rgba(10, 95, 120, 0.05);
+  border-radius: 1rem;
+}
+
+.ctaSection h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #11313d;
+  margin: 0 0 0.75rem;
+}
+
+.ctaSection p {
+  font-size: 1.1rem;
+  color: #5f7380;
+  margin: 0 0 2rem;
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 2.5rem;
+  }
+
+  .subtitle {
+    font-size: 1.1rem;
+  }
+
+  .workflowStep {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .stepNumber {
+    margin: 0 auto;
+  }
+
+  .stepDetails {
+    justify-content: center;
+  }
+
+  .featuresGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .ctaSection h2 {
+    font-size: 1.75rem;
+  }
+}

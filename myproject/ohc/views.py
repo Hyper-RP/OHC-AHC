@@ -17,6 +17,7 @@ from ohc.serializers import (
 
 class OHCVisitViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'uuid'
 
     def get_permissions(self):
         if self.action in {"create", "update", "partial_update", "destroy"}:
@@ -80,6 +81,7 @@ class MedicalTestViewSet(
 ):
     serializer_class = MedicalTestSerializer
     permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'uuid'
 
     def get_permissions(self):
         if self.action in {"create", "update", "partial_update"}:

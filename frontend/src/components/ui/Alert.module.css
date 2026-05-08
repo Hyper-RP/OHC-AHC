@@ -1,0 +1,72 @@
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 0.9rem;
+  border: 1px solid transparent;
+  margin-bottom: 1rem;
+}
+
+.alert.info {
+  background: rgba(74, 160, 180, 0.1);
+  border-color: rgba(74, 160, 180, 0.18);
+  color: #15566a;
+}
+
+.alert.success {
+  background: rgba(44, 135, 95, 0.1);
+  border-color: rgba(44, 135, 95, 0.18);
+  color: #2c875f;
+}
+
+.alert.warning {
+  background: rgba(230, 167, 0, 0.1);
+  border-color: rgba(230, 167, 0, 0.18);
+  color: #b88600;
+}
+
+.alert.danger {
+  background: rgba(196, 93, 93, 0.1);
+  border-color: rgba(196, 93, 93, 0.16);
+  color: #8e3f3f;
+}
+
+.alertContent {
+  flex: 1;
+}
+
+.alertTitle {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.alertMessage {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.alertDismiss {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+}
+
+.alertDismiss:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.05);
+}

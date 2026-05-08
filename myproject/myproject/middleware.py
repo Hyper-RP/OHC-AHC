@@ -8,16 +8,18 @@ class APIAuditMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        response = self.get_response(request)
-
         if request.path.startswith("/api/") and request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+            # Read body BEFORE processing to avoid RawPostDataException
             payload = {}
-            if request.body:
+            if hasattr(request, 'body') and request.body:
                 try:
                     payload = json.loads(request.body.decode("utf-8"))
                 except (UnicodeDecodeError, json.JSONDecodeError):
                     payload = {"raw_body": "[non-json payload omitted]"}
 
+        response = self.get_response(request)
+
+        if request.path.startswith("/api/") and request.method in {"POST", "PUT", "PATCH", "DELETE"}:
             log_audit_event(
                 actor=getattr(request, "user", None),
                 module="API",

@@ -1,0 +1,115 @@
+.snackbar {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 300px;
+  max-width: 500px;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 12px 32px rgba(46, 76, 100, 0.15);
+  animation: slideIn 0.3s ease;
+  z-index: 10000;
+}
+
+.snackbar.success {
+  background: #2c875f;
+  border-left: 4px solid #1e5f42;
+}
+
+.snackbar.error {
+  background: #c45d5d;
+  border-left: 4px solid #8e3f3f;
+}
+
+.snackbar.warning {
+  background: #e6a700;
+  border-left: 4px solid #b88600;
+}
+
+.snackbar.info {
+  background: #0a5f78;
+  border-left: 4px solid #0b4b64;
+}
+
+.snackbarContent {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.snackbarIcon {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.snackbarMessage {
+  flex: 1;
+  color: #ffffff;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.snackbarClose {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+}
+
+.snackbarClose:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.snackbar.closing {
+  animation: slideOut 0.3s ease forwards;
+}
+
+@media (max-width: 640px) {
+  .snackbar {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+    min-width: auto;
+    max-width: none;
+  }
+}
