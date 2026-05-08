@@ -1,0 +1,135 @@
+.loginShell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem 3rem;
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.95), rgba(244, 248, 251, 0.92) 30%, rgba(233, 240, 246, 0.95) 100%);
+}
+
+.loginStack {
+  width: min(100%, 400px);
+}
+
+.loginCard {
+  background: #ffffff;
+  border: 1px solid #d9dee3;
+  border-radius: 0;
+  box-shadow: 0 8px 24px rgba(46, 76, 100, 0.08);
+}
+
+.loginCardMain {
+  padding: 2.5rem 2.5rem 1.5rem;
+}
+
+.loginCardSecondary {
+  margin-top: 0.75rem;
+  padding: 1.1rem 1.5rem;
+  text-align: center;
+  border-top: 1px solid #f1f3f4;
+  background: #f7fafc;
+}
+
+.loginLogoBlock {
+  text-align: center;
+  margin-bottom: 1.6rem;
+}
+
+.loginWordmark {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 2.2rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #1b2f39;
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+
+.loginCopy {
+  margin: 0.85rem 0 0;
+  color: #6b7280;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.loginForm {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.loginField {
+  display: block;
+}
+
+.loginInput {
+  min-height: 2.75rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.45rem;
+  border: 1px solid #d1d5db;
+  background: #fafafa;
+  color: #111827;
+  font-size: 0.92rem;
+}
+
+.loginInput::placeholder {
+  color: #8a8f98;
+}
+
+.loginInput:focus {
+  background: #ffffff;
+  border-color: #a8b0ba;
+  box-shadow: none;
+}
+
+.loginSubmit {
+  margin-top: 0.55rem;
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: 0.55rem;
+  background: linear-gradient(180deg, #45a7d9 0%, #2f95cb 100%);
+  color: #ffffff;
+  font-weight: 700;
+  width: 100%;
+}
+
+.loginSubmit:hover,
+.loginSubmit:focus {
+  background: linear-gradient(180deg, #379fd5 0%, #2388bc 100%);
+  color: #ffffff;
+}
+
+.loginDivider {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.3rem 0 1rem;
+  color: #6b7280;
+}
+
+.loginDivider span {
+  height: 1px;
+  background: #dbdbdb;
+}
+
+.loginDivider strong {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+.loginMeta,
+.loginHelp {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.loginHelp {
+  margin-top: 0.45rem;
+}
+
+.loginMeta strong {
+  color: #303846;
+}
