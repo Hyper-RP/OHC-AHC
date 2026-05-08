@@ -1,0 +1,137 @@
+.hospitalSelection {
+  min-height: calc(100vh - 72px);
+}
+
+.hospitalMain {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.searchSection {
+  margin-bottom: 2rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #d1d9df;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: rgba(10, 95, 120, 0.42);
+  box-shadow: 0 0 0 4px rgba(74, 160, 180, 0.12);
+}
+
+.hospitalGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.hospitalCard {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hospitalCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(46, 76, 100, 0.12);
+}
+
+.hospitalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(34, 81, 108, 0.12);
+}
+
+.hospitalHeader h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #11313d;
+}
+
+.hospitalStatus {
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.hospitalStatus.active {
+  background: rgba(44, 135, 95, 0.12);
+  color: #2c875f;
+}
+
+.hospitalDetails p {
+  margin: 0.35rem 0;
+  font-size: 0.9rem;
+  color: #5f7380;
+}
+
+.hospitalSpecialties {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(34, 81, 108, 0.08);
+}
+
+.hospitalSpecialties strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #11313d;
+}
+
+.specialtiesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.specialtyTag {
+  padding: 0.3rem 0.6rem;
+  background: rgba(10, 95, 120, 0.08);
+  color: #0b4b64;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.hospitalFeatures {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(34, 81, 108, 0.08);
+  display: flex;
+  gap: 0.5rem;
+}
+
+.feature {
+  padding: 0.3rem 0.6rem;
+  background: rgba(44, 135, 95, 0.08);
+  color: #2c875f;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #5f7380;
+}
+
+@media (max-width: 768px) {
+  .hospitalGrid {
+    grid-template-columns: 1fr;
+  }
+}

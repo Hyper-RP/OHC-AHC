@@ -1,0 +1,111 @@
+.departmentStats {
+  min-height: calc(100vh - 72px);
+}
+
+.statsMain {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.periodSelect {
+  min-width: 150px;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.summaryCard {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.summaryCard h3 {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #5f7380;
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.summaryValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0a5f78;
+  line-height: 1;
+}
+
+.departmentsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.deptCard {
+  padding: 1.5rem;
+}
+
+.deptCard h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #11313d;
+  margin: 0 0 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(34, 81, 108, 0.12);
+}
+
+.deptStats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.deptStat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  color: #5f7380;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statValue {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0a5f78;
+}
+
+.healthIndex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(34, 81, 108, 0.08);
+  font-size: 0.9rem;
+  color: #5f7380;
+}
+
+.healthIndex strong {
+  font-size: 1.5rem;
+  color: #0a5f78;
+}
+
+@media (max-width: 768px) {
+  .summaryGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .departmentsGrid {
+    grid-template-columns: 1fr;
+  }
+}

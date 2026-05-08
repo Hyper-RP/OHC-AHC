@@ -1,0 +1,20 @@
+.completeIntake {
+  min-height: calc(100vh - 72px);
+}
+
+.intakeMain {
+  padding: 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.description {
+  margin-bottom: 2rem;
+  color: #5f7380;
+  line-height: 1.6;
+}
+
+.completeButton {
+  width: 100%;
+  margin-top: 1rem;
+}

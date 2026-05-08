@@ -1,0 +1,220 @@
+.publicHome {
+  min-height: 100vh;
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.95), rgba(244, 248, 251, 0.92) 30%, rgba(233, 240, 246, 0.95) 100%);
+}
+
+.publicNav {
+  padding: 1.5rem 2rem;
+  background: rgba(255, 255, 255, 0.98);
+  border-bottom: 1px solid rgba(34, 81, 108, 0.12);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(18px);
+}
+
+.navContent {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.brandSection {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brandMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2b8caa, #0a5f78);
+  color: #f7fbfd;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  font-size: 1rem;
+}
+
+.brandTitle {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #11313d;
+}
+
+.brandSubtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #5f7380;
+}
+
+.heroSection {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 6rem 2rem;
+  text-align: center;
+}
+
+.heroContent h1 {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #11313d;
+  margin: 0 0 1.5rem;
+  line-height: 1.2;
+}
+
+.heroContent p {
+  font-size: 1.25rem;
+  color: #5f7380;
+  max-width: 700px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.6;
+}
+
+.heroActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.metricsSection {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.featuresSection {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 6rem 2rem;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.sectionContainer {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.sectionTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #11313d;
+  text-align: center;
+  margin: 0 0 1rem;
+}
+
+.sectionSubtitle {
+  font-size: 1.1rem;
+  color: #5f7380;
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto 3rem;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.featureCard {
+  background: #ffffff;
+  border-radius: 1rem;
+  padding: 2rem;
+  border: 1px solid rgba(34, 81, 108, 0.12);
+  box-shadow: 0 8px 24px rgba(46, 76, 100, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-align: center;
+}
+
+.featureCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(46, 76, 100, 0.12);
+}
+
+.featureIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.featureCard h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #11313d;
+  margin: 0 0 0.75rem;
+}
+
+.featureCard p {
+  font-size: 0.95rem;
+  color: #5f7380;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.ctaSection {
+  background: linear-gradient(135deg, #0a5f78 0%, #0b4b64 100%);
+  color: #ffffff;
+  padding: 6rem 2rem;
+  text-align: center;
+}
+
+.ctaContent h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+}
+
+.ctaContent p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  margin: 0 0 2rem;
+}
+
+.footer {
+  padding: 2rem;
+  text-align: center;
+  border-top: 1px solid rgba(34, 81, 108, 0.12);
+}
+
+.footerContent p {
+  margin: 0;
+  color: #5f7380;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .heroContent h1 {
+    font-size: 2.5rem;
+  }
+
+  .heroContent p {
+    font-size: 1.1rem;
+  }
+
+  .sectionTitle {
+    font-size: 2rem;
+  }
+
+  .featuresGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .ctaContent h2 {
+    font-size: 2rem;
+  }
+}

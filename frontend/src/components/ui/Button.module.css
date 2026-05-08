@@ -1,0 +1,140 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 2.75rem;
+  padding: 0.7rem 1rem;
+  border-radius: 0.85rem;
+  border: 1px solid transparent;
+  background: #e8eef2;
+  color: #11313d;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.button:hover:not(.disabled):not(.loading),
+.button:focus:not(.disabled):not(.loading) {
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
+.button:active:not(.disabled):not(.loading) {
+  transform: translateY(0);
+}
+
+/* Sizes */
+.sm {
+  min-height: 2.2rem;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.85rem;
+}
+
+.md {
+  min-height: 2.75rem;
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
+}
+
+.lg {
+  min-height: 3rem;
+  padding: 0.85rem 1.25rem;
+  font-size: 1rem;
+}
+
+/* Variants */
+.brand {
+  background: linear-gradient(135deg, #0a5f78 0%, #0b4b64 100%);
+  border-color: transparent;
+  color: #f7ffff;
+}
+
+.brand:hover:not(.disabled):not(.loading),
+.brand:focus:not(.disabled):not(.loading) {
+  background: linear-gradient(135deg, #0b4b64 0%, #0a3d52 100%);
+}
+
+.outline-brand {
+  border-color: rgba(13, 142, 151, 0.25);
+  color: #0b4b64;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.outline-brand:hover:not(.disabled):not(.loading),
+.outline-brand:focus:not(.disabled):not(.loading) {
+  background: rgba(13, 142, 151, 0.08);
+  border-color: rgba(13, 142, 151, 0.4);
+}
+
+.outline-light {
+  border-color: rgba(17, 49, 61, 0.18);
+  color: #11313d;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.outline-light:hover:not(.disabled):not(.loading),
+.outline-light:focus:not(.disabled):not(.loading) {
+  background: rgba(17, 49, 61, 0.05);
+  border-color: rgba(17, 49, 61, 0.3);
+}
+
+.outline-secondary {
+  border-color: rgba(95, 115, 128, 0.24);
+  color: #5f7380;
+  background: #ffffff;
+}
+
+.outline-secondary:hover:not(.disabled):not(.loading),
+.outline-secondary:focus:not(.disabled):not(.loading) {
+  background: rgba(95, 115, 128, 0.05);
+  border-color: rgba(95, 115, 128, 0.4);
+}
+
+.outline-danger {
+  border-color: rgba(196, 93, 93, 0.3);
+  color: #c45d5d;
+  background: #ffffff;
+}
+
+.outline-danger:hover:not(.disabled):not(.loading),
+.outline-danger:focus:not(.disabled):not(.loading) {
+  background: rgba(196, 93, 93, 0.05);
+  border-color: rgba(196, 93, 93, 0.5);
+}
+
+/* Disabled state */
+.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Loading state */
+.loading {
+  position: relative;
+  color: transparent;
+  cursor: wait;
+}
+
+.spinner {
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.hidden {
+  visibility: hidden;
+}
