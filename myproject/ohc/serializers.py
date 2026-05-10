@@ -1,7 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 
-from accounts.models import DoctorProfile, EmployeeProfile
+from accounts.models import DoctorProfile, EmployeeProfile, User
 from ohc.models import Diagnosis, MedicalTest, OHCVisit, Prescription
 from ohc.services import process_diagnosis_outcome
 
@@ -93,10 +93,50 @@ class DiagnosisWithPrescriptionsSerializer(serializers.Serializer):
 
 
 class OHCVisitCreateSerializer(OHCVisitSerializer):
+    employee = serializers.CharField(max_length=50)
+    employee_name = serializers.CharField(max_length=150, required=False, allow_blank=True, write_only=True)
+    employee_department = serializers.CharField(max_length=120, required=False, allow_blank=True, write_only=True)
+    consulted_doctor = serializers.PrimaryKeyRelatedField(
+        queryset=DoctorProfile.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
     def validate(self, attrs):
         request = self.context["request"]
+        emp_code = attrs.pop("employee", None)
+        emp_name = attrs.pop("employee_name", "")
+        emp_dept = attrs.pop("employee_department", "Unassigned")
+        
+        # If department was left empty, fallback to Unassigned
+        if not emp_dept:
+            emp_dept = "Unassigned"
+
+        if emp_code:
+            try:
+                emp_profile = EmployeeProfile.objects.get(employee_code=emp_code)
+            except EmployeeProfile.DoesNotExist:
+                # Use provided name or default to employee code
+                first_name = emp_name if emp_name else emp_code
+
+                user = User.objects.create(
+                    username=emp_code,
+                    first_name=first_name[:150], # Max length protection
+                    email=f"{emp_code}@temp.local",
+                    role=User.Role.EMPLOYEE,
+                    is_verified=True
+                )
+                emp_profile = EmployeeProfile.objects.create(
+                    user=user,
+                    employee_code=emp_code,
+                    department=emp_dept,
+                    designation="Unassigned"
+                )
+            attrs["employee"] = emp_profile
+
         if request.user.role in {request.user.Role.DOCTOR, request.user.Role.NURSE} and not attrs.get("consulted_doctor"):
             attrs["consulted_doctor"] = DoctorProfile.objects.get(user=request.user)
+            
         return super().validate(attrs)
 
 

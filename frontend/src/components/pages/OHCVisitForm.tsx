@@ -22,7 +22,8 @@ export const OHCVisitForm: React.FC = () => {
 
   const [formData, setFormData] = useState({
     employee: '',
-    consulted_doctor: '',
+    employee_name: '',
+    employee_department: '',
     visit_type: VisitType.WALK_IN,
     triage_level: TriageLevel.LOW,
     visit_date: new Date().toISOString().split('T')[0],
@@ -138,14 +139,22 @@ export const OHCVisitForm: React.FC = () => {
                   helperText="Enter the employee code"
                 />
                 <FormInput
-                  label="Consulting Doctor *"
-                  name="consulted_doctor"
+                  label="Employee Name (If New)"
+                  name="employee_name"
                   type="text"
-                  value={formData.consulted_doctor}
-                  onChange={(value) => handleInputChange('consulted_doctor', value)}
-                  placeholder="Doctor name or ID"
-                  required
-                  helperText="Enter the doctor who is consulting"
+                  value={formData.employee_name}
+                  onChange={(value) => handleInputChange('employee_name', value)}
+                  placeholder="John Doe"
+                  helperText="Only needed if employee code is new"
+                />
+                <FormInput
+                  label="Department (If New)"
+                  name="employee_department"
+                  type="text"
+                  value={formData.employee_department}
+                  onChange={(value) => handleInputChange('employee_department', value)}
+                  placeholder="Manufacturing"
+                  helperText="Only needed if employee code is new"
                 />
                 <FormInput
                   label="Visit Type *"

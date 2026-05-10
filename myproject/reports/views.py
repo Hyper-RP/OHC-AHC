@@ -113,17 +113,66 @@ class EmployeeHealthHistoryAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         employee_code = request.query_params.get("employee_code")
-        employee_queryset = EmployeeProfile.objects.all()
-        if employee_code:
-            employee_queryset = employee_queryset.filter(employee_code=employee_code)
+        if not employee_code:
+            return Response({"error": "employee_code is required"}, status=400)
+
+        try:
+            employee = EmployeeProfile.objects.get(employee_code=employee_code)
+        except EmployeeProfile.DoesNotExist:
+            return Response({"error": "Employee not found"}, status=404)
 
         if getattr(request.user, "role", None) == request.user.Role.EMPLOYEE:
-            employee_profile = getattr(request.user, "employee_profile", None)
-            employee_queryset = employee_queryset.filter(id=getattr(employee_profile, "id", None))
+            if getattr(request.user, "employee_profile", None) != employee:
+                return Response({"error": "Not authorized to view this record"}, status=403)
 
-        data = build_employee_health_history(employee_queryset)
-        serializer = EmployeeHealthHistorySerializer(data, many=True)
-        return Response(serializer.data)
+        visits_qs = OHCVisit.objects.filter(employee=employee).prefetch_related('diagnoses', 'prescriptions').order_by('-visit_date')
+        referrals_qs = Referral.objects.filter(employee=employee).order_by('-created_at')
+
+        structured_data = {
+            "employee": {
+                "employee_code": employee.employee_code,
+                "user": {
+                    "first_name": employee.user.first_name,
+                    "last_name": employee.user.last_name,
+                },
+                "department": employee.department,
+                "designation": employee.designation,
+                "fitness_status": employee.fitness_status,
+            },
+            "visits": [
+                {
+                    "uuid": str(v.uuid),
+                    "visit_date": str(v.visit_date.date()) if hasattr(v.visit_date, 'date') else str(v.visit_date),
+                    "visit_type": v.visit_type,
+                    "chief_complaint": v.chief_complaint,
+                    "diagnoses": [
+                        {
+                            "diagnosis_name": d.diagnosis_name,
+                            "severity": d.severity,
+                            "fitness_decision": d.fitness_decision,
+                            "diagnosed_at": str(d.created_at.date()) if hasattr(d.created_at, 'date') else str(d.created_at),
+                        } for d in v.diagnoses.all()
+                    ],
+                    "prescriptions": [
+                        {
+                            "medicine_name": p.medicine_name,
+                            "dosage": p.dosage,
+                            "start_date": str(p.start_date.date()) if hasattr(p.start_date, 'date') else str(p.start_date),
+                        } for p in v.prescriptions.all()
+                    ]
+                } for v in visits_qs
+            ],
+            "referrals": [
+                {
+                    "uuid": str(r.uuid),
+                    "hospital_name": r.hospital.name if r.hospital else "Unknown",
+                    "referral_status": r.referral_status,
+                    "created_at": str(r.created_at.date()) if hasattr(r.created_at, 'date') else str(r.created_at),
+                } for r in referrals_qs
+            ]
+        }
+        
+        return Response(structured_data)
 
 
 class DiseaseTrendsAPIView(APIView):
