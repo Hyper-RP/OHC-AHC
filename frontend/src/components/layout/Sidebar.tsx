@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getNavItemsForRole } from '../../utils/navigation';
 import styles from './Sidebar.module.css';
+import logo from '../../assets/mediGplus.png';
 
 interface SidebarProps {
   className?: string;
@@ -26,7 +27,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
     <aside className={`${styles.sidebar} ${className}`}>
       <div className={styles.sidebarTop}>
         <div className={styles.brandSection}>
-          <div className={styles.brandMark}>OHC</div>
+          <div className={styles.logoContainer}>
+            <img src={logo} alt="MediGplus Logo" className={styles.logoImage} />
+          </div>
           <h1 className={styles.brandTitle}>Health Portal</h1>
           <p className={styles.brandSubtitle}>Occupational Health Center</p>
         </div>
