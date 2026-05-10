@@ -18,7 +18,7 @@ export const getEmployeeHealthHistory = async (
   dateTo?: string
 ): Promise<EmployeeHealthHistory> => {
   try {
-    const params: Record<string, string> = { employee: employeeId };
+    const params: Record<string, string> = { employee_code: employeeId };
     if (dateFrom) params.date_from = dateFrom;
     if (dateTo) params.date_to = dateTo;
 
@@ -89,7 +89,7 @@ export const exportEmployeeHealthHistory = async (
   dateTo?: string
 ): Promise<Blob> => {
   try {
-    const params: Record<string, string> = { employee: employeeId };
+    const params: Record<string, string> = { employee_code: employeeId };
     if (dateFrom) params.date_from = dateFrom;
     if (dateTo) params.date_to = dateTo;
 

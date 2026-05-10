@@ -21,7 +21,7 @@ urlpatterns = [
     path("api/reports/notifications/", NotificationListAPIView.as_view(), name="notifications-api"),
     path("api/reports/audit-logs/", AuditLogListAPIView.as_view(), name="audit-logs-api"),
     path("api/reports/run-auto-alerts/", RunAutoAlertsAPIView.as_view(), name="run-auto-alerts-api"),
-    path("exports/employee-health-history.csv", EmployeeHealthHistoryExcelExportView.as_view(), name="employee-history-export"),
-    path("exports/department-health-stats.csv", DepartmentHealthStatsExcelExportView.as_view(), name="department-stats-export"),
-    path("exports/analytics-summary.pdf", AnalyticsPDFExportView.as_view(), name="analytics-pdf-export"),
+    path("api/exports/employee-health-history.csv", EmployeeHealthHistoryExcelExportView.as_view(), name="employee-history-export"),
+    path("api/exports/department-health-stats.csv", DepartmentHealthStatsExcelExportView.as_view(), name="department-stats-export"),
+    path("api/exports/analytics-summary.pdf", AnalyticsPDFExportView.as_view(), name="analytics-pdf-export"),
 ]
