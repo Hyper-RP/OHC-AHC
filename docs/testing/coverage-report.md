@@ -64,8 +64,8 @@
 | API Endpoints | 8 | 8 | 0 |
 | Export Endpoints | 3 | 3 | 0 |
 | Django Admin | 2 | 2 | 0 |
-| React Frontend | 2 | 2 | 0 |
-| **Total** | **15** | **15** | **0** |
+| React Frontend | 338 | 338 | 0 |
+| **Total** | **351** | **351** | **0** |
 
 ---
 

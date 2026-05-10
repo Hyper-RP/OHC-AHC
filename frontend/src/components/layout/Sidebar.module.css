@@ -24,19 +24,17 @@
   margin-bottom: 2rem;
 }
 
-.brandMark {
-  display: inline-flex;
-  align-items: center;
+.logoContainer {
+  display: flex;
   justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #2b8caa, #0a5f78);
-  color: #f7fbfd;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  font-size: 1.2rem;
-  line-height: 1;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.logoImage {
+  max-height: 80px;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 .brandTitle {
