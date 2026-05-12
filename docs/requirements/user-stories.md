@@ -1,15 +1,16 @@
-# Phase 2: Requirements — Remove Python Frontend Dependencies
+# Phase 2: Requirements — Graphical Dashboard Redesign
 
-**Project:** OHC-AHC — Remove Django Template Frontend Dependencies
-**Date:** 2026-05-08
+**Project:** OHC-AHC Dashboard Redesign - Attractive Graphical Dashboard
+**Date:** 2026-05-11
 **Status:** In Progress
 
 ---
 
 ## Progress Bar
+
 ```
 [████████████████████████████████████████████████████] Phase 1: Planning (Completed)
-[████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] Phase 2: Requirements (In Progress)
+[████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] Phase 2: Requirements (In Progress)
 [░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] Phase 3: Design
 [░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] Phase 4: Development
 [░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] Phase 5: Testing
@@ -18,370 +19,319 @@
 
 ---
 
-## Overview
+## Requirements Overview
 
-This document breaks down the task of removing Django template-based frontend dependencies into actionable user stories with clear acceptance criteria.
+This document outlines the functional requirements for transforming the OHC-AHC text-based dashboard into an attractive graphical dashboard with interactive visualizations.
 
-**Scope:** Remove all server-side template rendering while preserving API endpoints, export functionality, and Django admin.
-
-**What Stays:**
-- All API endpoints (`/api/*`)
-- Export endpoints (CSV, PDF)
-- Django admin interface
-- JWT authentication
-
-**What Goes:**
-- Django template files (`templates/frontend/`)
-- Template-rendering views (13 views)
-- Template URL patterns (13 routes)
-- Old static files (CSS/JS)
-- Auth redirect settings pointing to Django routes
+**Total User Stories:** 15
+**Must-Have (P1):** 10 stories
+**Nice-to-Have (P2):** 5 stories
 
 ---
 
 ## User Stories
 
-### User Story 1: Remove Django Template Files
+### Dashboard Page
 
-**As a:** Developer
-**I want to:** Remove all Django template files from the project
-**So that:** The codebase is cleaner and there's no confusion between old and new frontends
-
-**Acceptance Criteria:**
-- [ ] Directory `myproject/templates/frontend/` is deleted (15+ HTML files)
-- [ ] File `myproject/templates/registration/login.html` is deleted (if unused by admin)
-- [ ] No references to these templates exist in the codebase
-- [ ] Git confirms only these files are removed
-
-**Files Affected:**
-- `myproject/templates/frontend/base.html`
-- `myproject/templates/frontend/dashboard.html`
-- `myproject/templates/frontend/department_health_stats.html`
-- `myproject/templates/frontend/diagnosis_entry.html`
-- `myproject/templates/frontend/disease_trends.html`
-- `myproject/templates/frontend/employee_health_history.html`
-- `myproject/templates/frontend/hospital_selection.html`
-- `myproject/templates/frontend/how_it_works.html`
-- `myproject/templates/frontend/ohc_complete_intake.html`
-- `myproject/templates/frontend/ohc_visit_form.html`
-- `myproject/templates/frontend/payment_page.html`
-- `myproject/templates/frontend/public_home.html`
-- `myproject/templates/frontend/referral_page.html`
-- `myproject/templates/frontend/reports_page.html`
-- `myproject/templates/frontend/analytics_pdf_fallback.html`
-- `myproject/templates/registration/login.html`
-
-**Priority:** High
-
----
-
-### User Story 2: Remove Old Static Files
-
-**As a:** Developer
-**I want to:** Remove the old Python frontend static files
-**So that:** There's no unused CSS/JS files taking up space
+#### US-001: Visual Visit Trends Chart
+**Priority:** P1 (Must-Have)
+**As a** healthcare administrator
+**I want** to see a line chart showing daily visit trends
+**So that** I can quickly identify patterns and spikes in OHC visits
 
 **Acceptance Criteria:**
-- [ ] Directory `myproject/static/frontend/css/` is deleted (portal.css)
-- [ ] Directory `myproject/static/frontend/js/` is deleted (portal.js)
-- [ ] No references to these files exist in the codebase
-- [ ] Django still serves the React build from `myproject/static/react/`
+- [ ] Line chart displays visit counts for the selected time period (7 days / 30 days)
+- [ ] Chart includes data points for each day with hover tooltips showing exact counts
+- [ ] X-axis shows dates, Y-axis shows visit counts
+- [ ] Chart updates smoothly when period selector changes
+- [ ] Empty state displays "No data available" message
+- [ ] Loading state shows skeleton or spinner
+- [ ] Chart is responsive on mobile, tablet, and desktop
 
-**Files Affected:**
-- `myproject/static/frontend/css/portal.css`
-- `myproject/static/frontend/js/portal.js`
-
-**Priority:** High
-
----
-
-### User Story 3: Remove Template-Rendering Views
-
-**As a:** Developer
-**I want to:** Remove all views that render Django templates
-**So that:** Django serves only API responses, not HTML
+#### US-002: Department Comparison Bar Chart
+**Priority:** P1 (Must-Have)
+**As a** healthcare manager
+**I want** to see a bar chart comparing visits across departments
+**So that** I can identify which departments have the highest health needs
 
 **Acceptance Criteria:**
-- [ ] `PublicLandingView` class removed from `reports/views.py`
-- [ ] `PublicHowItWorksView` class removed from `reports/views.py`
-- [ ] `FrontendBaseView` class removed from `reports/views.py`
-- [ ] `DashboardView` class removed from `reports/views.py`
-- [ ] `OHCVisitFormPageView` class removed from `reports/views.py`
-- [ ] `DiagnosisEntryPageView` class removed from `reports/views.py`
-- [ ] `CompleteOHCIntakePageView` class removed from `reports/views.py`
-- [ ] `ReferralPageView` class removed from `reports/views.py`
-- [ ] `HospitalSelectionPageView` class removed from `reports/views.py`
-- [ ] `ReportsPageView` class removed from `reports/views.py`
-- [ ] `EmployeeHealthHistoryPageView` class removed from `reports/views.py`
-- [ ] `DiseaseTrendsPageView` class removed from `reports/views.py`
-- [ ] `DepartmentHealthStatsPageView` class removed from `reports/views.py`
-- [ ] `PaymentPageView` class removed from `reports/views.py`
-- [ ] Export views (`EmployeeHealthHistoryExcelExportView`, `DepartmentHealthStatsExcelExportView`, `AnalyticsPDFExportView`) are **kept**
-- [ ] API views (all `APIView` subclasses) are **kept**
-- [ ] No import errors after removal
+- [ ] Horizontal bar chart shows visits per department
+- [ ] Each bar is labeled with department name and visit count
+- [ ] Bars are color-coded (e.g., different colors for different departments)
+- [ ] Chart supports hover tooltips with additional details (employees, referrals)
+- [ ] Sorting option: by visit count (ascending/descending)
+- [ ] Responsive design with scrollable bars on mobile if needed
 
-**Priority:** High
-
----
-
-### User Story 4: Remove Template URL Patterns
-
-**As a:** Developer
-**I want to:** Remove URL patterns that serve Django templates
-**So that:** The URL configuration only contains API routes
+#### US-003: Disease Severity Pie Chart
+**Priority:** P1 (Must-Have)
+**As a** healthcare analyst
+**I want** to see a donut/pie chart showing disease severity breakdown
+**So that** I can understand the severity distribution at a glance
 
 **Acceptance Criteria:**
-- [ ] Route `/` removed from `reports/urls.py` (was: `PublicLandingView`)
-- [ ] Route `/how-it-works/` removed from `reports/urls.py` (was: `PublicHowItWorksView`)
-- [ ] Route `/dashboard/` removed from `reports/urls.py` (was: `DashboardView`)
-- [ ] Route `/ohc/visit-form/` removed from `reports/urls.py` (was: `OHCVisitFormPageView`)
-- [ ] Route `/ohc/diagnosis-entry/` removed from `reports/urls.py` (was: `DiagnosisEntryPageView`)
-- [ ] Route `/ohc/complete-intake/` removed from `reports/urls.py` (was: `CompleteOHCIntakePageView`)
-- [ ] Route `/ahc/referrals/` removed from `reports/urls.py` (was: `ReferralPageView`)
-- [ ] Route `/ahc/hospital-selection/` removed from `reports/urls.py` (was: `HospitalSelectionPageView`)
-- [ ] Route `/reports/medical/` removed from `reports/urls.py` (was: `ReportsPageView`)
-- [ ] Route `/reports/employee-history/` removed from `reports/urls.py` (was: `EmployeeHealthHistoryPageView`)
-- [ ] Route `/reports/disease-trends/` removed from `reports/urls.py` (was: `DiseaseTrendsPageView`)
-- [ ] Route `/reports/department-stats/` removed from `reports/urls.py` (was: `DepartmentHealthStatsPageView`)
-- [ ] Route `/payments/` removed from `reports/urls.py` (was: `PaymentPageView`)
-- [ ] All `/api/*` routes are **kept**
-- [ ] All `/exports/*` routes are **kept**
-- [ ] URL patterns referencing removed views are cleaned up
-- [ ] No URL resolution errors after removal
+- [ ] Donut chart shows severity categories (MILD, MODERATE, SEVERE, CRITICAL)
+- [ ] Each segment is color-coded with legend
+- [ ] Center of donut shows total count or percentage
+- [ ] Hover effect highlights segment and shows count + percentage in tooltip
+- [ ] Legend can be toggled to show/hide segments
+- [ ] Empty state shows "No severity data available"
 
-**Priority:** High
-
----
-
-### User Story 5: Update Auth Redirect Settings
-
-**As a:** Developer
-**I want to:** Update Django auth settings to point to React routes
-**So that:** Login/logout flows work correctly with the React frontend
+#### US-004: Common Diagnosis Trend Line
+**Priority:** P1 (Must-Have)
+**As a** healthcare provider
+**I want** to see a trend line for the top 5 most common diagnoses
+**So that** I can track patterns in common health issues
 
 **Acceptance Criteria:**
-- [ ] `LOGIN_URL` changed from `/accounts/login/` to `/login` (React route)
-- [ ] `LOGIN_REDIRECT_URL` changed from `/dashboard/` to `/dashboard` (React route)
-- [ ] `LOGOUT_REDIRECT_URL` changed from `/` to `/` (home - same) or `/login`
-- [ ] Django admin login still works (uses different URL path)
-- [ ] JWT authentication flow works correctly
+- [ ] Multi-line chart shows top 5 diagnoses over time
+- [ ] Each diagnosis has a distinct color with legend
+- [ ] Hover shows diagnosis name, count, and date for that point
+- [ ] Y-axis scales appropriately for the data range
+- [ ] Chart updates when time period changes
+- [ ] Maximum 5 lines displayed to avoid clutter
 
-**Files Affected:**
-- `myproject/myproject/settings.py`
-
-**Priority:** Medium
-
----
-
-### User Story 6: Remove Django Auth URL Include
-
-**As a:** Developer
-**I want to:** Remove or modify the Django auth URL include
-**So that:** The auth URLs don't conflict with React routes
+#### US-005: Daily/Monthly Toggle
+**Priority:** P1 (Must-Have)
+**As a** dashboard user
+**I want** to toggle between daily and monthly view
+**So that** I can see data at different granularities
 
 **Acceptance Criteria:**
-- [ ] Evaluate if `path('accounts/', include('django.contrib.auth.urls'))` is needed for Django admin
-- [ ] If not needed, remove the line from `myproject/urls.py`
-- [ ] If needed, ensure it doesn't conflict with React routes
-- [ ] Django admin login still accessible at `/admin/login/`
+- [ ] Toggle switch with "Daily" and "Monthly" options
+- [ ] Toggle persists selection in session/URL
+- [ ] All charts on the page update smoothly when toggle changes
+- [ ] Default view is "Daily"
+- [ ] Toggle is clearly visible and accessible
+- [ ] ARIA labels for screen readers
 
-**Files Affected:**
-- `myproject/myproject/urls.py`
-
-**Priority:** Low (depends on admin requirements)
-
----
-
-### User Story 7: Keep API Endpoints Functional
-
-**As a:** System
-**I want to:** Ensure all API endpoints still work after cleanup
-**So that:** The React frontend continues to function normally
+#### US-006: Chart Export as Image
+**Priority:** P1 (Must-Have)
+**As a** healthcare administrator
+**I want** to export charts as images (PNG/SVG)
+**So that** I can include them in reports and presentations
 
 **Acceptance Criteria:**
-- [ ] `/api/auth/token/` returns JWT tokens
-- [ ] `/api/auth/token/refresh/` refreshes tokens
-- [ ] `/api/accounts/me/` returns current user
-- [ ] `/api/ohc/*` endpoints return data
-- [ ] `/api/ahc/*` endpoints return data
-- [ ] `/api/payments/*` endpoints return data
-- [ ] `/api/reports/*` endpoints return data
-- [ ] All API endpoints respond with proper status codes
-- [ ] JWT authentication works on all protected endpoints
-
-**Priority:** Critical (Must Verify)
+- [ ] Each chart has an export button (download icon)
+- [ ] Export button shows dropdown with PNG and SVG options
+- [ ] Downloaded image includes chart title, legend, and data
+- [ ] Image quality is suitable for presentations (at least 2x resolution)
+- [ ] Export includes white background (not transparent) for better readability
+- [ ] Filename is descriptive (e.g., "visit-trends-2026-05-11.png")
 
 ---
 
-### User Story 8: Keep Export Endpoints Functional
+### Department Stats Page
 
-**As a:** System
-**I want to:** Ensure CSV and PDF export endpoints still work
-**So that:** Users can still export reports from React
+#### US-007: Department Health Index Gauge
+**Priority:** P1 (Must-Have)
+**As a** HR manager
+**I want** to see a visual gauge/meter showing health index per department
+**So that** I can quickly assess department wellness at a glance
 
 **Acceptance Criteria:**
-- [ ] `/exports/employee-health-history.csv` returns CSV file
-- [ ] `/exports/department-health-stats.csv` returns CSV file
-- [ ] `/exports/analytics-summary.pdf` returns PDF file
-- [ ] All export endpoints are accessible from React
-- [ ] Export functionality works with JWT authentication
+- [ ] Gauge/meter shows health index (0-100%) for each department
+- [ ] Color gradient: Red (<60%), Yellow (60-80%), Green (>80%)
+- [ ] Gauge displays percentage number clearly
+- [ ] Hover shows detailed breakdown (visits, referrals, unfit count)
+- [ ] Gauges are arranged in a responsive grid
+- [ ] Animation on load for visual appeal
 
-**Priority:** High
-
----
-
-### User Story 9: Keep Django Admin Functional
-
-**As a:** Administrator
-**I want to:** Ensure Django admin still works after cleanup
-**So that:** I can manage the system through the admin interface
+#### US-008: Visits vs Referrals Stacked Bar
+**Priority:** P1 (Must-Have)
+**As a** healthcare coordinator
+**I want** to see a stacked bar chart comparing visits vs referrals per department
+**So that** I can understand referral rates across departments
 
 **Acceptance Criteria:**
-- [ ] `/admin/` loads successfully
-- [ ] Admin login works
-- [ ] All admin models are accessible
-- [ ] Admin templates (from Django) are not affected
-- [ ] Admin static files are still served
-
-**Priority:** Medium
+- [ ] Stacked bar chart with departments on X-axis
+- [ ] Each bar has two segments: Visits (bottom), Referrals (top)
+- [ ] Different colors for visits and referrals with legend
+- [ ] Hover tooltip shows department name, visits count, referrals count, and referral rate (%)
+- [ ] Y-axis shows count or percentage (selectable)
+- [ ] Chart is sortable by department name or total count
 
 ---
 
-### User Story 10: Verify React Frontend Works
+### Disease Trends Page
 
-**As a:** User
-**I want to:** Use the React application normally after cleanup
-**So that:** The migration is transparent to end users
+#### US-009: Diagnosis Trends Area Chart
+**Priority:** P1 (Must-Have)
+**As a** healthcare analyst
+**I want** to see an area chart showing diagnosis trends over time
+**So that** I can visualize the volume and distribution of diagnoses
 
 **Acceptance Criteria:**
-- [ ] React app loads at root URL (`/`)
-- [ ] Login page works with correct credentials
-- [ ] Dashboard loads after login
-- [ ] All protected routes work
-- [ ] Navigation between pages works
-- [ ] API calls from React succeed
-- [ ] No 404 or 500 errors in browser console
-- [ ] Forms submit correctly
+- [ ] Area chart shows diagnosis volume over time with filled area under line
+- [ ] Semi-transparent fill for better visibility of overlapping data
+- [ ] Multiple diagnoses can be displayed (up to 5)
+- [ ] Hover shows diagnosis, date, and count
+- [ ] Color-coded with interactive legend
+- [ ] Zoom/pan functionality for longer time periods
 
-**Priority:** Critical (Must Verify)
+#### US-010: Severity Distribution Trends
+**Priority:** P1 (Must-Have)
+**As a** healthcare manager
+**I want** to see a line or area chart showing severity distribution trends
+**So that** I can track how severity levels change over time
 
----
+**Acceptance Criteria:**
+- [ ] Multi-line chart showing each severity level (MILD, MODERATE, SEVERE, CRITICAL)
+- [ ] Each severity level has distinct color with legend
+- [ ] Hover shows severity, date, and count
+- [ ] Y-axis shows count, X-axis shows dates
+- [ ] Chart updates when date range changes
+- [ ] Toggle to show/hide specific severity levels
 
-## Task Dependencies
+#### US-011: Custom Date Range Picker
+**Priority:** P1 (Must-Have)
+**As a** dashboard user
+**I want** to select a custom date range for the charts
+**So that** I can analyze specific time periods
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                       Task Dependency Graph                      │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────┐                                                 │
-│  │  Story 1:   │                                                 │
-│  │  Remove     │──────────────────────────────────────┐        │
-│  │  Templates  │                                      │        │
-│  └─────────────┘                                      │        │
-│                                                       │        │
-│  ┌─────────────┐                                      │        │
-│  │  Story 2:   │                                      │        │
-│  │  Remove     │──────────────────────────────────────┼─┐      │
-│  │  Static     │                                      │ │      │
-│  └─────────────┘                                      │ │      │
-│                                                       │ │      │
-│  ┌─────────────┐    ┌─────────────┐    ┌────────────┐ │ │      │
-│  │  Story 3:   │────│  Story 4:   │────│ Story 5:  │◄┼─┼──┐   │
-│  │  Remove     │    │  Remove     │    │ Update     │ │ │  │   │
-│  │  Views      │    │  URL        │    │ Auth       │ │ │  │   │
-│  └─────────────┘    └─────────────┘    └────────────┘ │ │  │   │
-│       │                  │                   │          │ │  │   │
-│       │                  │                   │          │ │  │   │
-│       └──────────────────┴───────────────────┴──────────┘ │  │   │
-│                                                          │  │   │
-│  ┌──────────────────────────────────────────────────────┘  │   │
-│  │                                                           │   │
-│  │  ┌─────────────┐    ┌─────────────┐    ┌────────────┐    │   │
-│  │  │  Story 7:   │    │  Story 8:   │    │ Story 9:  │    │   │
-│  │  │  Keep API   │    │  Keep       │    │ Keep      │    │   │
-│  │  │  Endpoints  │    │  Exports    │    │ Admin     │    │   │
-│  │  └─────────────┘    └─────────────┘    └────────────┘    │   │
-│  │         │                   │                   │        │   │
-│  │         └───────────────────┴───────────────────┘        │   │
-│  │                              │                           │   │
-│  │  ┌─────────────────────────────────────────────────────┘   │
-│  │  │                                                         │
-│  │  │  ┌─────────────┐                                        │
-│  │  └─│  Story 10:  │                                        │
-│  │     │  Verify     │                                        │
-│  │     │  React      │                                        │
-│  │     └─────────────┘                                        │
-│  │                                                             │
-│  └─────────────────────────────────────────────────────────────┘
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**Dependencies:**
-- Stories 1-6 (Cleanup) must be completed before Stories 7-10 (Verification)
-- Story 10 (Verify React) depends on Stories 7-9 (Keep functionality)
+**Acceptance Criteria:**
+- [ ] Date range picker shows start and end date inputs
+- [ ] Preset options: Last 7 days, Last 30 days, Last 90 days, Last 180 days, Last 365 days
+- [ ] "Apply" button to refresh charts with new range
+- [ ] Date validation: end date cannot be before start date
+- [ ] Date range is reflected in URL for sharing/bookmarking
+- [ ] Shows selected date range in header/subtitle
 
 ---
 
-## Priority Matrix
+### Common/Technical Requirements
 
-| Story | Priority | Estimated Time | Dependencies |
-|-------|----------|----------------|--------------|
-| Story 1: Remove Templates | High | 5 min | None |
-| Story 2: Remove Static Files | High | 5 min | None |
-| Story 3: Remove Views | High | 10 min | 1, 2 |
-| Story 4: Remove URL Patterns | High | 10 min | 3 |
-| Story 5: Update Auth Settings | Medium | 5 min | 4 |
-| Story 6: Remove Auth URLs | Low | 10 min | 5 |
-| Story 7: Verify API Endpoints | Critical | 15 min | 1-6 |
-| Story 8: Verify Export Endpoints | High | 10 min | 1-6 |
-| Story 9: Verify Django Admin | Medium | 10 min | 1-6 |
-| Story 10: Verify React Frontend | Critical | 20 min | 7, 8, 9 |
+#### US-012: Chart Loading States
+**Priority:** P1 (Must-Have)
+**As a** dashboard user
+**I want** to see clear loading indicators while charts load
+**So that** I know the system is working and not broken
 
-**Total Estimated Time:** ~100 minutes (1.5 - 2 hours)
+**Acceptance Criteria:**
+- [ ] Skeleton loader or spinner displays while fetching chart data
+- [ ] Loading state is consistent across all charts
+- [ ] Loading animation is smooth and not distracting
+- [ ] Error state displays user-friendly message with retry button
+- [ ] Empty state displays helpful message when no data is available
+
+#### US-013: Responsive Chart Design
+**Priority:** P1 (Must-Have)
+**As a** mobile user
+**I want** charts to be readable and interactive on my phone
+**So that** I can access dashboard data on the go
+
+**Acceptance Criteria:**
+- [ ] Charts are responsive and adapt to screen width
+- [ ] Text labels are readable on mobile (minimum 14px)
+- [ ] Touch interactions work (tap for tooltips, pinch to zoom if applicable)
+- [ ] Horizontal scrolling for wide charts on mobile
+- [ ] Legend collapses to hamburger menu on mobile
+- [ ] Portrait and landscape orientations are supported
+
+#### US-014: Preserve Existing Functionality
+**Priority:** P1 (Must-Have)
+**As a** current user
+**I want** all existing features (exports, navigation, quick actions) to continue working
+**So that** I don't lose any functionality
+
+**Acceptance Criteria:**
+- [ ] CSV export functionality still works on Department Stats and Disease Trends pages
+- [ ] PDF export functionality still works on Disease Trends page
+- [ ] Quick actions on Dashboard page are unchanged
+- [ ] Recent activity section on Dashboard is preserved
+- [ ] Navigation links work as before
+- [ ] All existing tests continue to pass
+
+#### US-015: Animated Chart Transitions
+**Priority:** P2 (Nice-to-Have)
+**As a** dashboard user
+**I want** smooth animations when charts update
+**So that** the dashboard feels polished and modern
+
+**Acceptance Criteria:**
+- [ ] Charts animate smoothly when data changes (period toggle, date range change)
+- [ ] Animation duration is 300-500ms (not too slow, not too fast)
+- [ ] Animation can be disabled for users who prefer performance
+- [ ] Loading animation is consistent across all charts
+- [ ] Hover effects on chart elements have smooth transitions
 
 ---
 
-## Risk Register
+## Non-Functional Requirements
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| Breaking API endpoints | Low | High | Test all API endpoints after cleanup |
-| Breaking export functionality | Low | Medium | Keep export views unchanged |
-| Breaking Django admin | Low | Medium | Keep admin URLs and templates |
-| React app stops working | Low | Critical | Test React app thoroughly after cleanup |
-| External links broken | High | Low | Add redirects or return 410 Gone |
+### Performance
+- [ ] Initial page load time < 3 seconds
+- [ ] Chart rendering time < 1 second for standard datasets
+- [ ] Bundle size increase < 200KB (gzipped)
+- [ ] No layout shift (CLS) during chart loading
 
----
+### Accessibility
+- [ ] All charts are keyboard accessible
+- [ ] Screen reader announces chart summaries and data points
+- [ ] Color contrast ratio meets WCAG AA standards (4.5:1)
+- [ ] Charts work without mouse (keyboard navigation)
+- [ ] ARIA labels and roles properly defined
 
-## Acceptance Checklist
+### Browser Support
+- [ ] Chrome/Edge (latest 2 versions)
+- [ ] Firefox (latest 2 versions)
+- [ ] Safari (latest 2 versions)
+- [ ] Mobile browsers (iOS Safari, Chrome Mobile)
 
-**Before Cleanup:**
-- [ ] All tests pass
-- [ ] React app is working
-- [ ] Backup of current codebase created
-- [ ] Git branch created for cleanup
-
-**After Cleanup:**
-- [ ] All template files removed
-- [ ] All template views removed
-- [ ] All template URLs removed
-- [ ] Settings updated
-- [ ] API endpoints working
-- [ ] Export endpoints working
-- [ ] Django admin working
-- [ ] React app working
-- [ ] No broken references
-- [ ] Git diff shows only expected changes
+### Security
+- [ ] No sensitive data exposed in client-side code
+- [ ] Chart data is fetched through authenticated API calls
+- [ ] Export functionality respects user permissions
 
 ---
 
-## Next Steps
+## Data Requirements
 
-1. Review and approve these user stories
-2. Proceed to Phase 3: Design to create detailed implementation plan
+### API Endpoints (Existing)
+The following existing API endpoints will be used:
+- `/api/reports/dashboard-home/` - Dashboard stats
+- `/api/reports/disease-trends/` - Disease trends data
+- `/api/reports/department-health-stats/` - Department stats
 
-**✅ Phase 2 done. Continue to Phase 3 — Design? (yes/no)**
+### Data Transformations Needed
+- Chart.js/Recharts compatible data format from API responses
+- Daily/Monthly aggregation based on toggle state
+- Date range filtering for custom periods
 
-Run `/workflow-continue` to proceed.
+---
+
+## Out of Scope
+
+The following features are explicitly out of scope for this phase:
+- Real-time data updates via WebSocket
+- Predictive analytics and forecasting
+- Customizable dashboard widget arrangement
+- Dark mode support for charts
+- Geolocation-based visualizations
+- Heat maps for time-based data
+
+---
+
+## Questions for Stakeholders
+
+1. What is the maximum number of data points a chart should display at once?
+2. Should charts support printing? If yes, what layout is preferred?
+3. Are there any specific color requirements based on brand guidelines?
+4. Should chart data be cached client-side? If yes, for how long?
+5. Are there any specific mobile devices that need testing priority?
+
+---
+
+## Success Metrics
+
+- [ ] All 10 P1 user stories implemented and tested
+- [ ] At least 2 P2 user stories implemented
+- [ ] Page load time < 3 seconds
+- [ ] All existing tests still passing
+- [ ] No regressions in existing functionality
+- [ ] User acceptance testing passed
+
+---
+
+**Phase 2 Output:** `docs/requirements/user-stories.md`
+
+**✅ Phase 2 complete. Shall I continue to Phase 3 — Design? (yes/no)**

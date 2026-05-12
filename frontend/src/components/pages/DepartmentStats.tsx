@@ -3,7 +3,8 @@ import { Header } from '../layout';
 import { Card, FormInput, Loading, Button } from '../ui';
 import { getDepartmentHealthStats, exportDepartmentHealthStats } from '../../services/reports';
 import { REPORT_PERIOD_OPTIONS } from '../../utils/constants';
-import type { DepartmentStats as DepartmentStatsType } from '../../types';
+import { HealthIndexGauge, VisitsReferralsStackedBar } from '../charts';
+import { transformDepartmentStatsData } from '../../utils/charts/transformers';
 import styles from './DepartmentStats.module.css';
 
 /**
@@ -13,16 +14,23 @@ import styles from './DepartmentStats.module.css';
 export const DepartmentStats: React.FC = () => {
   const [period, setPeriod] = useState(90);
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<DepartmentStatsType | null>(null);
+  const [chartData, setChartData] = useState<any>({
+    healthIndex: [],
+    visitsReferrals: [],
+  });
+  const [chartError, setChartError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadStats = async () => {
       setLoading(true);
+      setChartError(null);
       try {
         const result = await getDepartmentHealthStats(period);
-        setData(result);
-      } catch {
-        alert('Failed to load stats');
+        const transformed = transformDepartmentStatsData(result);
+        setChartData(transformed);
+      } catch (error) {
+        console.error('Failed to load stats:', error);
+        setChartError('Failed to load department stats');
       } finally {
         setLoading(false);
       }
@@ -68,56 +76,42 @@ export const DepartmentStats: React.FC = () => {
         }
       />
       <main className={styles.statsMain}>
-        {data && (
-          <>
-            <div className={styles.summaryGrid}>
-              <Card className={styles.summaryCard}>
-                <h3>Total Departments</h3>
-                <div className={styles.summaryValue}>{data.summary.total_departments}</div>
-              </Card>
-              <Card className={styles.summaryCard}>
-                <h3>Total Employees</h3>
-                <div className={styles.summaryValue}>{data.summary.total_employees}</div>
-              </Card>
-              <Card className={styles.summaryCard}>
-                <h3>Total Visits</h3>
-                <div className={styles.summaryValue}>{data.summary.total_visits}</div>
-              </Card>
-              <Card className={styles.summaryCard}>
-                <h3>Referrals</h3>
-                <div className={styles.summaryValue}>{data.summary.total_referrals}</div>
-              </Card>
-            </div>
+        {!loading && chartError && (
+          <div className={styles.errorBanner}>
+            <p>{chartError}</p>
+            <Button variant="brand" size="sm" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
+          </div>
+        )}
 
-            <div className={styles.departmentsGrid}>
-              {data.departments.map((dept) => (
-                <Card key={dept.department} className={styles.deptCard}>
-                  <h3>{dept.department}</h3>
-                  <div className={styles.deptStats}>
-                    <div className={styles.deptStat}>
-                      <span className={styles.statLabel}>Employees</span>
-                      <span className={styles.statValue}>{dept.total_employees}</span>
-                    </div>
-                    <div className={styles.deptStat}>
-                      <span className={styles.statLabel}>Visits</span>
-                      <span className={styles.statValue}>{dept.total_visits}</span>
-                    </div>
-                    <div className={styles.deptStat}>
-                      <span className={styles.statLabel}>Referrals</span>
-                      <span className={styles.statValue}>{dept.referred_cases}</span>
-                    </div>
-                    <div className={styles.deptStat}>
-                      <span className={styles.statLabel}>Unfit</span>
-                      <span className={styles.statValue}>{dept.unfit_employees}</span>
-                    </div>
+        {loading ? (
+          <Loading fullScreen />
+        ) : (
+          <>
+            <section className={styles.healthIndexSection}>
+              <h2 className={styles.sectionTitle}>Department Health Index</h2>
+              <div className={styles.gaugesGrid}>
+                {chartData.healthIndex.map((dept: any) => (
+                  <div key={dept.department} className={styles.gaugeCard}>
+                    <HealthIndexGauge data={dept} size={180} showLabel={true} animate={true} />
+                    <p className={styles.gaugeLabel}>{dept.department}</p>
                   </div>
-                  <div className={styles.healthIndex}>
-                    <span>Health Index:</span>
-                    <strong>{dept.health_index}%</strong>
-                  </div>
-                </Card>
-              ))}
-            </div>
+                ))}
+              </div>
+            </section>
+
+            <section className={styles.stackedBarSection}>
+              <Card>
+                <div className={styles.cardHeader}>
+                  <h3>Visits vs Referrals</h3>
+                  <Button variant="outline-secondary" size="sm" onClick={handleExport}>
+                    Export CSV
+                  </Button>
+                </div>
+                <VisitsReferralsStackedBar data={chartData.visitsReferrals} height={400} />
+              </Card>
+            </section>
           </>
         )}
       </main>

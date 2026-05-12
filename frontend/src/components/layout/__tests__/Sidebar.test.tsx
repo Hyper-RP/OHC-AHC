@@ -33,8 +33,8 @@ describe('Sidebar', () => {
     });
 
     renderWithRouter(<Sidebar />);
-    expect(screen.getByText('OHC')).toBeInTheDocument();
     expect(screen.getByText('Health Portal')).toBeInTheDocument();
+    expect(screen.getByText('Occupational Health Center')).toBeInTheDocument();
   });
 
   it('displays user full name', () => {

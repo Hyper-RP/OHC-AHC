@@ -30,40 +30,21 @@ describe('DiseaseTrends', () => {
     });
   });
 
-  it('renders total diagnoses after loading', async () => {
+  it('renders diagnosis area chart after loading', async () => {
     vi.mocked(getDiseaseTrends).mockResolvedValueOnce(mockDiseaseTrends());
     renderWithProviders(<DiseaseTrends />, { routerProps: { initialEntries: ['/reports/disease-trends'] } });
 
     await waitFor(() => {
-      expect(screen.getByText('Total Diagnoses')).toBeInTheDocument();
-      expect(screen.getByText('450')).toBeInTheDocument();
+      expect(screen.getByText('Diagnosis Volume Over Time')).toBeInTheDocument();
     });
   });
 
-  it('renders trend diagnosis names', async () => {
+  it('renders severity trends chart after loading', async () => {
     vi.mocked(getDiseaseTrends).mockResolvedValueOnce(mockDiseaseTrends());
     renderWithProviders(<DiseaseTrends />, { routerProps: { initialEntries: ['/reports/disease-trends'] } });
 
     await waitFor(() => {
-      expect(screen.getByText('Diagnosis Trends')).toBeInTheDocument();
-      // Upper Respiratory Infection appears in Most Common card + trends list
-      const uriElements = screen.getAllByText('Upper Respiratory Infection');
-      expect(uriElements.length).toBeGreaterThanOrEqual(1);
-      expect(screen.getByText('Back Pain')).toBeInTheDocument();
-    });
-  });
-
-  it('renders severity breakdown section', async () => {
-    vi.mocked(getDiseaseTrends).mockResolvedValueOnce(mockDiseaseTrends());
-    renderWithProviders(<DiseaseTrends />, { routerProps: { initialEntries: ['/reports/disease-trends'] } });
-
-    await waitFor(() => {
-      expect(screen.getByText('Severity Breakdown')).toBeInTheDocument();
-      // Check that the breakdown count values appear
-      expect(screen.getByText('200')).toBeInTheDocument();
-      expect(screen.getByText('150')).toBeInTheDocument();
-      expect(screen.getByText('80')).toBeInTheDocument();
-      expect(screen.getByText('20')).toBeInTheDocument();
+      expect(screen.getByText('Severity Distribution Trends')).toBeInTheDocument();
     });
   });
 
@@ -73,6 +54,16 @@ describe('DiseaseTrends', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Export PDF')).toBeInTheDocument();
+    });
+  });
+
+  it('shows error banner when API fails', async () => {
+    vi.mocked(getDiseaseTrends).mockRejectedValue(new Error('Failed to load trends'));
+    renderWithProviders(<DiseaseTrends />, { routerProps: { initialEntries: ['/reports/disease-trends'] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to load disease trends')).toBeInTheDocument();
+      expect(screen.getByText('Retry')).toBeInTheDocument();
     });
   });
 });

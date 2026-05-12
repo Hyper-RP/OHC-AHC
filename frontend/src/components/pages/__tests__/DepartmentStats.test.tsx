@@ -28,7 +28,6 @@ describe('DepartmentStats', () => {
   it('shows loading state initially', () => {
     vi.mocked(getDepartmentHealthStats).mockReturnValue(new Promise(() => {})); // never resolves
     renderWithProviders(<DepartmentStats />, { routerProps: { initialEntries: ['/reports/department-stats'] } });
-    // Loading component renders when loading is true
     expect(getDepartmentHealthStats).toHaveBeenCalled();
   });
 
@@ -41,25 +40,23 @@ describe('DepartmentStats', () => {
     });
   });
 
-  it('renders summary cards after loading', async () => {
+  it('renders health index gauges after loading', async () => {
     vi.mocked(getDepartmentHealthStats).mockResolvedValueOnce(mockDepartmentStats());
     renderWithProviders(<DepartmentStats />, { routerProps: { initialEntries: ['/reports/department-stats'] } });
 
     await waitFor(() => {
-      expect(screen.getByText('Total Departments')).toBeInTheDocument();
-      expect(screen.getByText('5')).toBeInTheDocument();
-      expect(screen.getByText('Total Employees')).toBeInTheDocument();
-      expect(screen.getByText('500')).toBeInTheDocument();
+      expect(screen.getByText('Department Health Index')).toBeInTheDocument();
+      expect(screen.getByText('Engineering')).toBeInTheDocument();
+      expect(screen.getByText('Operations')).toBeInTheDocument();
     });
   });
 
-  it('renders department cards', async () => {
+  it('renders visits vs referrals chart after loading', async () => {
     vi.mocked(getDepartmentHealthStats).mockResolvedValueOnce(mockDepartmentStats());
     renderWithProviders(<DepartmentStats />, { routerProps: { initialEntries: ['/reports/department-stats'] } });
 
     await waitFor(() => {
-      expect(screen.getByText('Engineering')).toBeInTheDocument();
-      expect(screen.getByText('Operations')).toBeInTheDocument();
+      expect(screen.getByText('Visits vs Referrals')).toBeInTheDocument();
     });
   });
 
@@ -69,6 +66,16 @@ describe('DepartmentStats', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Export CSV')).toBeInTheDocument();
+    });
+  });
+
+  it('shows error banner when API fails', async () => {
+    vi.mocked(getDepartmentHealthStats).mockRejectedValue(new Error('Failed to load stats'));
+    renderWithProviders(<DepartmentStats />, { routerProps: { initialEntries: ['/reports/department-stats'] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to load department stats')).toBeInTheDocument();
+      expect(screen.getByText('Retry')).toBeInTheDocument();
     });
   });
 });
