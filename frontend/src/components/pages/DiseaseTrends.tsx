@@ -3,7 +3,8 @@ import { Header } from '../layout';
 import { Card, FormInput, Loading, Button } from '../ui';
 import { getDiseaseTrends, exportAnalyticsSummary } from '../../services/reports';
 import { REPORT_PERIOD_OPTIONS } from '../../utils/constants';
-import type { DiseaseTrends as DiseaseTrendsType } from '../../types';
+import { DiagnosisAreaChart, SeverityTrendChart } from '../charts';
+import { transformDiseaseTrendsData } from '../../utils/charts/transformers';
 import styles from './DiseaseTrends.module.css';
 
 /**
@@ -13,16 +14,23 @@ import styles from './DiseaseTrends.module.css';
 export const DiseaseTrends: React.FC = () => {
   const [period, setPeriod] = useState(90);
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<DiseaseTrendsType | null>(null);
+  const [chartData, setChartData] = useState<any>({
+    diagnosisArea: [],
+    severityTrends: [],
+  });
+  const [chartError, setChartError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadTrends = async () => {
       setLoading(true);
+      setChartError(null);
       try {
         const result = await getDiseaseTrends(period);
-        setData(result);
-      } catch {
-        alert('Failed to load trends');
+        const transformed = transformDiseaseTrendsData(result);
+        setChartData(transformed);
+      } catch (error) {
+        console.error('Failed to load trends:', error);
+        setChartError('Failed to load disease trends');
       } finally {
         setLoading(false);
       }
@@ -63,59 +71,37 @@ export const DiseaseTrends: React.FC = () => {
         }
       />
       <main className={styles.trendsMain}>
-        {data && (
+        {!loading && chartError && (
+          <div className={styles.errorBanner}>
+            <p>{chartError}</p>
+            <Button variant="brand" size="sm" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
+          </div>
+        )}
+
+        {loading ? (
+          <Loading fullScreen />
+        ) : (
           <>
-            <div className={styles.statsGrid}>
-              <Card className={styles.statCard}>
-                <h3>Total Diagnoses</h3>
-                <div className={styles.statValue}>{data.total_diagnoses}</div>
-                <p>{data.period_start} to {data.period_end}</p>
+            <section className={styles.chartSection}>
+              <Card>
+                <div className={styles.cardHeader}>
+                  <h3>Diagnosis Volume Over Time</h3>
+                  <Button variant="outline-secondary" size="sm" onClick={handleExport}>
+                    Export PDF
+                  </Button>
+                </div>
+                <DiagnosisAreaChart data={chartData.diagnosisArea} height={400} />
               </Card>
-              <Card className={styles.statCard}>
-                <h3>Most Common</h3>
-                <div className={styles.statValue}>{data.trends[0]?.diagnosis_name || 'N/A'}</div>
-                <p>{data.trends[0]?.count || 0} cases</p>
+            </section>
+
+            <section className={styles.chartSection}>
+              <Card>
+                <h3>Severity Distribution Trends</h3>
+                <SeverityTrendChart data={chartData.severityTrends} height={350} />
               </Card>
-            </div>
-
-            <Card>
-              <div className={styles.cardHeader}>
-                <h3>Diagnosis Trends</h3>
-                <Button variant="outline-secondary" size="sm" onClick={handleExport}>
-                  Export PDF
-                </Button>
-              </div>
-              <div className={styles.trendsList}>
-                {data.trends.map((trend, index) => (
-                  <div key={index} className={styles.trendItem}>
-                    <div className={styles.trendInfo}>
-                      <strong>{trend.diagnosis_name}</strong>
-                      <span className={`${styles.severity} ${styles[trend.severity.toLowerCase()]}`}>
-                        {trend.severity}
-                      </span>
-                    </div>
-                    <div className={styles.trendStats}>
-                      <span className={styles.count}>{trend.count} cases</span>
-                      <span className={`${styles.change} ${trend.change_from_previous >= 0 ? styles.up : styles.down}`}>
-                        {trend.change_from_previous >= 0 ? '↑' : '↓'} {Math.abs(trend.percentage)}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            <Card>
-              <h3>Severity Breakdown</h3>
-              <div className={styles.severityGrid}>
-                {Object.entries(data.severity_breakdown).map(([severity, count]) => (
-                  <div key={severity} className={styles.severityItem}>
-                    <span className={styles.severityLabel}>{severity}</span>
-                    <span className={styles.severityCount}>{count}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
+            </section>
           </>
         )}
       </main>

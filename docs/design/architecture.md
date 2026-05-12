@@ -1,12 +1,13 @@
-# Phase 3: Design — Remove Python Frontend Dependencies
+# Phase 3: Design — Graphical Dashboard Redesign
 
-**Project:** OHC-AHC — Remove Django Template Frontend Dependencies
-**Date:** 2026-05-08
+**Project:** OHC-AHC Dashboard Redesign - Attractive Graphical Dashboard
+**Date:** 2026-05-11
 **Status:** In Progress
 
 ---
 
 ## Progress Bar
+
 ```
 [████████████████████████████████████████████████████] Phase 1: Planning (Completed)
 [████████████████████████████████████████████████████] Phase 2: Requirements (Completed)
@@ -18,471 +19,460 @@
 
 ---
 
-## Current Architecture
+## System Architecture
 
-### Before Cleanup
+### High-Level Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                         Browser (User)                                  │
+│                              Browser (User)                             │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
-│  ┌──────────────────────┐  ┌──────────────────────┐                   │
-│  │   Django Templates   │  │    React SPA         │                   │
-│  │   (Old Frontend)     │  │    (New Frontend)    │                   │
-│  │                      │  │                      │                   │
-│  │  - base.html         │  │  - Login.tsx         │                   │
-│  │  - dashboard.html    │  │  - Dashboard.tsx     │                   │
-│  │  - ohc_visit.html    │  │  - OHCVisitForm.tsx  │                   │
-│  │  - ... (15 files)    │  │  - ... (React pages) │                   │
-│  │                      │  │                      │                   │
-│  └──────────┬───────────┘  └──────────┬───────────┘                   │
-│             │                         │                               │
-│             └─────────┬───────────────┘                               │
-│                       │                                               │
-└───────────────────────┼───────────────────────────────────────────────┘
-                        │
-                        ↓
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │                        React Application                          │  │
+│  ├──────────────────────────────────────────────────────────────────┤  │
+│  │                                                                  │  │
+│  │  ┌────────────────────────────────────────────────────────────┐ │  │
+│  │  │                     Chart Components                        │ │  │
+│  │  │                                                           │ │  │
+│  │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │ │  │
+│  │  │  │ LineChart   │  │ BarChart    │  │ PieChart    │      │ │  │
+│  │  │  │ (Recharts)  │  │ (Recharts)  │  │ (Recharts)  │      │ │  │
+│  │  │  └─────────────┘  └─────────────┘  └─────────────┘      │ │  │
+│  │  │                                                           │ │  │
+│  │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │ │  │
+│  │  │  │ AreaChart   │  │ GaugeChart  │  │ StackedBar  │      │ │  │
+│  │  │  │ (Recharts)  │  │ (Custom)    │  │ (Recharts)  │      │ │  │
+│  │  │  └─────────────┘  └─────────────┘  └─────────────┘      │ │  │
+│  │  └────────────────────────────────────────────────────────────┘ │  │
+│  │                                                                  │  │
+│  │  ┌────────────────────────────────────────────────────────────┐ │  │
+│  │  │                  Data Transformation Layer                  │ │  │
+│  │  │                                                           │  │
+│  │  │  - visitTrendsTransformer                                 │ │  │
+│  │  │  - departmentStatsTransformer                             │ │  │
+│  │  │  - diseaseTrendsTransformer                               │ │  │
+│  │  │  - dailyMonthlyAggregator                                  │ │  │
+│  │  └────────────────────────────────────────────────────────────┘ │  │
+│  │                                                                  │  │
+│  │  ┌────────────────────────────────────────────────────────────┐ │  │
+│  │  │                       State Management                       │ │  │
+│  │  │                                                           │ │  │
+│  │  │  - useChartState (custom hook)                            │ │  │
+│  │  │  - useDateRange (custom hook)                             │ │  │
+│  │  │  - useDailyMonthlyToggle (custom hook)                    │ │  │
+│  │  └────────────────────────────────────────────────────────────┘ │  │
+│  │                                                                  │  │
+│  │  ┌────────────────────────────────────────────────────────────┐ │  │
+│  │  │                        Page Components                       │ │  │
+│  │  │                                                           │ │  │
+│  │  │  - Dashboard.tsx (with charts)                             │ │  │
+│  │  │  - DepartmentStats.tsx (with charts)                       │ │  │
+│  │  │  - DiseaseTrends.tsx (with charts)                         │ │  │
+│  │  └────────────────────────────────────────────────────────────┘ │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│                              │                                          │
+│                              ↓ HTTP (Axios + JWT)                        │
+└──────────────────────────────┼──────────────────────────────────────────┘
+                               │
+                               ↓
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    Django Backend                                     │
+│                         Django Backend (API)                             │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
-│  ┌────────────────────────────────────────────────────────────────┐    │
-│  │  URL Configuration                                              │    │
-│  │  ┌────────────────────────────────────────────────────────┐   │    │
-│  │  │ Template Routes (TO BE REMOVED)                         │   │    │
-│  │  │  - /                    → PublicLandingView             │   │    │
-│  │  │  - /dashboard/          → DashboardView                │   │    │
-│  │  │  - /ohc/visit-form/     → OHCVisitFormPageView         │   │    │
-│  │  │  - ... (13 routes)                                          │   │    │
-│  │  └────────────────────────────────────────────────────────┘   │    │
-│  │  ┌────────────────────────────────────────────────────────┐   │    │
-│  │  │ API Routes (TO BE KEPT)                                 │   │    │
-│  │  │  - /api/auth/token/                                     │   │    │
-│  │  │  - /api/ohc/visits/                                     │   │    │
-│  │  │  - /api/ahc/hospitals/                                  │   │    │
-│  │  │  - ... (all /api/* routes)                              │   │    │
-│  │  └────────────────────────────────────────────────────────┘   │    │
-│  └────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│  ┌────────────────────────────────────────────────────────────────┐    │
-│  │  Views                                                          │    │
-│  │  ┌────────────────────────────────────────────────────────┐   │    │
-│  │  │ Template Views (TO BE REMOVED)                         │   │    │
-│  │  │  - PublicLandingView                                    │   │    │
-│  │  │  - DashboardView                                         │   │    │
-│  │  │  - OHCVisitFormPageView                                 │   │    │
-│  │  │  - ... (13 views)                                       │   │    │
-│  │  └────────────────────────────────────────────────────────┘   │    │
-│  │  ┌────────────────────────────────────────────────────────┐   │    │
-│  │  │ API Views (TO BE KEPT)                                 │   │    │
-│  │  │  - EmployeeHealthHistoryAPIView                        │   │    │
-│  │  │  - DiseaseTrendsAPIView                                │   │    │
-│  │  │  - DepartmentHealthStatsAPIView                         │   │    │
-│  │  │  - ... (all APIView subclasses)                         │   │    │
-│  │  └────────────────────────────────────────────────────────┘   │    │
-│  └────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│  ┌────────────────────────────────────────────────────────────────┐    │
-│  │  Static Files                                                   │    │
-│  │  - /static/frontend/    → Old CSS/JS (TO BE REMOVED)            │    │
-│  │  - /static/react/       → React build (TO BE KEPT)               │    │
-│  │  - /static/admin/       → Django admin (TO BE KEPT)              │    │
-│  └────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│  ┌────────────────────────────────────────────────────────────────┐    │
-│  │  Templates                                                      │    │
-│  │  - /templates/frontend/   → Old templates (TO BE REMOVED)       │    │
-│  │  - /templates/registration/ → Login template (TO BE REMOVED)    │    │
-│  └────────────────────────────────────────────────────────────────┘    │
+│  API Endpoints:                                                         │
+│  - GET /api/reports/dashboard-home/                                     │
+│  - GET /api/reports/disease-trends/                                     │
+│  - GET /api/reports/department-health-stats/                            │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
-                        │
-                        ↓
+                               │
+                               ↓
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    SQLite Database                                      │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-### After Cleanup
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         Browser (User)                                  │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌────────────────────────────────────────────────────────────────┐    │
-│  │                    React SPA (Frontend)                        │    │
-│  │                                                                  │    │
-│  │  - Login.tsx         - Dashboard.tsx                            │    │
-│  │  - OHCVisitForm.tsx  - DiagnosisEntry.tsx                       │    │
-│  │  - ReferralPage.tsx  - HospitalSelection.tsx                    │    │
-│  │  - ReportsPage.tsx   - EmployeeHealthHistory.tsx                │    │
-│  │  - DiseaseTrends.tsx - DepartmentStats.tsx                      │    │
-│  │  - PaymentPage.tsx   - ...                                      │    │
-│  └────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-                        │
-                        ↓ (HTTP/HTTPS with JWT)
-┌─────────────────────────────────────────────────────────────────────────┐
-│              Django Backend (API-Only)                                 │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌────────────────────────────────────────────────────────────────┐    │
-│  │  URL Configuration                                              │    │
-│  │  ┌────────────────────────────────────────────────────────┐   │    │
-│  │  │ API Routes                                             │   │    │
-│  │  │  - /api/auth/token/                                     │   │    │
-│  │  │  - /api/auth/token/refresh/                             │   │    │
-│  │  │  - /api/accounts/me/                                    │   │    │
-│  │  │  - /api/ohc/visits/                                     │   │    │
-│  │  │  - /api/ohc/diagnosis-prescriptions/                    │   │    │
-│  │  │  - /api/ahc/hospitals/                                  │   │    │
-│  │  │  - /api/ahc/referrals/                                  │   │    │
-│  │  │  - /api/payments/invoices/                              │   │    │
-│  │  │  - /api/payments/payments/                              │   │    │
-│  │  │  - /api/reports/employee-health-history/                │   │    │
-│  │  │  - /api/reports/disease-trends/                         │   │    │
-│  │  │  - /api/reports/department-health-stats/                │   │    │
-│  │  │  - /api/reports/notifications/                          │   │    │
-│  │  │  - /api/reports/audit-logs/                             │   │    │
-│  │  │  - /api/reports/run-auto-alerts/                        │   │    │
-│  │  └────────────────────────────────────────────────────────┘   │    │
-│  │  ┌────────────────────────────────────────────────────────┐   │    │
-│  │  │ Export Routes                                           │   │    │
-│  │  │  - /exports/employee-health-history.csv                │   │    │
-│  │  │  - /exports/department-health-stats.csv                 │   │    │
-│  │  │  - /exports/analytics-summary.pdf                       │   │    │
-│  │  └────────────────────────────────────────────────────────┘   │    │
-│  │  ┌────────────────────────────────────────────────────────┐   │    │
-│  │  │ Admin Routes                                            │   │    │
-│  │  │  - /admin/                                              │   │    │
-│  │  │  - /admin/login/                                        │   │    │
-│  │  └────────────────────────────────────────────────────────┘   │    │
-│  └────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│  ┌────────────────────────────────────────────────────────────────┐    │
-│  │  Views (API + Export Only)                                     │    │
-│  │  ┌────────────────────────────────────────────────────────┐   │    │
-│  │  │ API Views (APIView subclasses)                         │   │    │
-│  │  │  - EmployeeHealthHistoryAPIView                        │   │    │
-│  │  │  - DiseaseTrendsAPIView                                │   │    │
-│  │  │  - DepartmentHealthStatsAPIView                         │   │    │
-│  │  │  - NotificationListAPIView                             │   │    │
-│  │  │  - AuditLogListAPIView                                 │   │    │
-│  │  │  - RunAutoAlertsAPIView                                │   │    │
-│  │  └────────────────────────────────────────────────────────┘   │    │
-│  │  ┌────────────────────────────────────────────────────────┐   │    │
-│  │  │ Export Views                                            │   │    │
-│  │  │  - EmployeeHealthHistoryExcelExportView                │   │    │
-│  │  │  - DepartmentHealthStatsExcelExportView                 │   │    │
-│  │  │  - AnalyticsPDFExportView                               │   │    │
-│  │  └────────────────────────────────────────────────────────┘   │    │
-│  └────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│  ┌────────────────────────────────────────────────────────────────┐    │
-│  │  Static Files                                                   │    │
-│  │  - /static/react/       → React build (served by Django)        │    │
-│  │  - /static/admin/       → Django admin                         │    │
-│  └────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│  ┌────────────────────────────────────────────────────────────────┐    │
-│  │  Settings                                                       │    │
-│  │  - LOGIN_URL = '/login'        (React route)                    │    │
-│  │  - LOGIN_REDIRECT_URL = '/dashboard' (React route)              │    │
-│  │  - LOGOUT_REDIRECT_URL = '/'    (React home)                    │    │
-│  └────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-                        │
-                        ↓
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    SQLite Database                                      │
+│                         PostgreSQL Database                              │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Implementation Plan
+## Component Architecture
 
-### Step 1: Remove Django Template Files
+### Component Hierarchy
 
-**Files to Delete:**
 ```
-myproject/templates/frontend/
-├── base.html
-├── dashboard.html
-├── department_health_stats.html
-├── diagnosis_entry.html
-├── disease_trends.html
-├── employee_health_history.html
-├── hospital_selection.html
-├── how_it_works.html
-├── ohc_complete_intake.html
-├── ohc_visit_form.html
-├── payment_page.html
-├── public_home.html
-├── referral_page.html
-├── reports_page.html
-└── analytics_pdf_fallback.html
-
-myproject/templates/registration/
-└── login.html
-```
-
-**Command:**
-```bash
-rm -rf myproject/templates/frontend myproject/templates/registration/login.html
-```
-
----
-
-### Step 2: Remove Old Static Files
-
-**Files to Delete:**
-```
-myproject/static/frontend/
-├── css/portal.css
-└── js/portal.js
-```
-
-**Command:**
-```bash
-rm -rf myproject/static/frontend
+App
+└── PortalLayout
+    ├── Sidebar
+    ├── Header
+    └── Routes
+        ├── Dashboard (Enhanced with Charts)
+        │   ├── DashboardCharts
+        │   │   ├── VisitTrendsChart (LineChart)
+        │   │   ├── DepartmentComparisonChart (BarChart)
+        │   │   ├── SeverityPieChart (PieChart)
+        │   │   └── DiagnosisTrendLineChart (LineChart)
+        │   ├── ChartControls
+        │   │   ├── DailyMonthlyToggle
+        │   │   └── PeriodSelector
+        │   └── Existing QuickActions & Activity
+        │
+        ├── DepartmentStats (Enhanced with Charts)
+        │   ├── DepartmentCharts
+        │   │   ├── HealthIndexGauge (Custom Gauge)
+        │   │   └── VisitsReferralsStackedBar (BarChart)
+        │   ├── ChartControls
+        │   │   ├── DailyMonthlyToggle
+        │   │   ├── DateRangePicker
+        │   │   └── ExportButton
+        │   └── Existing Export Functionality
+        │
+        └── DiseaseTrends (Enhanced with Charts)
+            ├── TrendsCharts
+            │   ├── DiagnosisAreaChart (AreaChart)
+            │   └── SeverityTrendChart (LineChart)
+            ├── ChartControls
+            │   ├── DailyMonthlyToggle
+            │   ├── DateRangePicker
+            │   └── ExportButton
+            └── Existing Export Functionality
 ```
 
 ---
 
-### Step 3: Remove Template-Rendering Views from `reports/views.py`
+## New Components to Create
 
-**Views to Remove:**
-```python
-# Remove these classes:
-- PublicLandingView (TemplateView)
-- PublicHowItWorksView (TemplateView)
-- FrontendBaseView (LoginRequiredMixin, TemplateView)
-- DashboardView (FrontendBaseView)
-- OHCVisitFormPageView (FrontendBaseView)
-- DiagnosisEntryPageView (FrontendBaseView)
-- CompleteOHCIntakePageView (FrontendBaseView)
-- ReferralPageView (FrontendBaseView)
-- HospitalSelectionPageView (FrontendBaseView)
-- ReportsPageView (FrontendBaseView)
-- EmployeeHealthHistoryPageView (FrontendBaseView)
-- DiseaseTrendsPageView (FrontendBaseView)
-- DepartmentHealthStatsPageView (FrontendBaseView)
-- PaymentPageView (FrontendBaseView)
+### 1. Chart Wrapper Components
+
+#### `ChartContainer.tsx`
+Generic wrapper for all charts with:
+- Loading state
+- Error state
+- Empty state
+- Export functionality
+- Title and legend
+- Responsive container
+
+```typescript
+interface ChartContainerProps {
+  title: string;
+  loading: boolean;
+  error: string | null;
+  empty: boolean;
+  onExport?: (format: 'png' | 'svg') => void;
+  children: React.ReactNode;
+}
 ```
 
-**Views to Keep:**
-```python
-# Keep these (API views):
-- EmployeeHealthHistoryAPIView (APIView)
-- DiseaseTrendsAPIView (APIView)
-- DepartmentHealthStatsAPIView (APIView)
-- NotificationListAPIView (APIView)
-- AuditLogListAPIView (APIView)
-- RunAutoAlertsAPIView (APIView)
+#### `ChartControls.tsx`
+Common controls for charts:
+- Daily/Monthly toggle
+- Period selector (7/30/90/180/365 days)
+- Date range picker
+- Apply button
+- Export dropdown
 
-# Keep these (Export views):
-- EmployeeHealthHistoryExcelExportView (LoginRequiredMixin, TemplateView)
-- DepartmentHealthStatsExcelExportView (LoginRequiredMixin, TemplateView)
-- AnalyticsPDFExportView (LoginRequiredMixin, TemplateView)
+```typescript
+interface ChartControlsProps {
+  period: number;
+  onPeriodChange: (period: number) => void;
+  dailyMonthly: 'daily' | 'monthly';
+  onDailyMonthlyChange: (value: 'daily' | 'monthly') => void;
+  dateRange?: { start: string; end: string };
+  onDateRangeChange?: (range: { start: string; end: string }) => void;
+  onExport?: (format: 'png' | 'svg') => void;
+}
 ```
 
-**Imports to Remove:**
-```python
-# Remove these imports if only used by template views:
-from django.views.generic import TemplateView
-from django.template.loader import render_to_string
+### 2. Dashboard Chart Components
+
+#### `VisitTrendsChart.tsx`
+Line chart showing daily/monthly visit trends.
+
+**Data Structure:**
+```typescript
+interface VisitTrendData {
+  date: string;
+  count: number;
+}
 ```
 
----
+**Features:**
+- Responsive line chart with data points
+- Hover tooltips
+- Smooth animations
+- Period-based X-axis labels
 
-### Step 4: Remove Template URL Patterns from `reports/urls.py`
+#### `DepartmentComparisonChart.tsx`
+Horizontal bar chart comparing departments.
 
-**URL Patterns to Remove:**
-```python
-urlpatterns = [
-    # Remove these:
-    path("", PublicLandingView.as_view(), name="public-home"),
-    path("how-it-works/", PublicHowItWorksView.as_view(), name="how-it-works"),
-    path("dashboard/", DashboardView.as_view(), name="dashboard-home"),
-    path("ohc/visit-form/", OHCVisitFormPageView.as_view(), name="ohc-visit-form"),
-    path("ohc/diagnosis-entry/", DiagnosisEntryPageView.as_view(), name="diagnosis-entry"),
-    path("ohc/complete-intake/", CompleteOHCIntakePageView.as_view(), name="complete-ohc-intake-page"),
-    path("ahc/referrals/", ReferralPageView.as_view(), name="referral-page"),
-    path("ahc/hospital-selection/", HospitalSelectionPageView.as_view(), name="hospital-selection"),
-    path("reports/medical/", ReportsPageView.as_view(), name="reports-page"),
-    path("reports/employee-history/", EmployeeHealthHistoryPageView.as_view(), name="employee-health-history-page"),
-    path("reports/disease-trends/", DiseaseTrendsPageView.as_view(), name="disease-trends-page"),
-    path("reports/department-stats/", DepartmentHealthStatsPageView.as_view(), name="department-health-stats-page"),
-    path("payments/", PaymentPageView.as_view(), name="payment-page"),
-
-    # Keep these (API and export):
-    path("api/reports/employee-health-history/", EmployeeHealthHistoryAPIView.as_view(), name="employee-health-history-api"),
-    path("api/reports/disease-trends/", DiseaseTrendsAPIView.as_view(), name="disease-trends-api"),
-    path("api/reports/department-health-stats/", DepartmentHealthStatsAPIView.as_view(), name="department-health-stats-api"),
-    path("api/reports/notifications/", NotificationListAPIView.as_view(), name="notifications-api"),
-    path("api/reports/audit-logs/", AuditLogListAPIView.as_view(), name="audit-logs-api"),
-    path("api/reports/run-auto-alerts/", RunAutoAlertsAPIView.as_view(), name="run-auto-alerts-api"),
-    path("exports/employee-health-history.csv", EmployeeHealthHistoryExcelExportView.as_view(), name="employee-history-export"),
-    path("exports/department-health-stats.csv", DepartmentHealthStatsExcelExportView.as_view(), name="department-stats-export"),
-    path("exports/analytics-summary.pdf", AnalyticsPDFExportView.as_view(), name="analytics-pdf-export"),
-]
+**Data Structure:**
+```typescript
+interface DepartmentComparisonData {
+  department: string;
+  visits: number;
+  employees: number;
+  referrals: number;
+}
 ```
 
-**Imports to Remove:**
-```python
-# Remove these imports:
-from reports.views import (
-    # Keep: AnalyticsPDFExportView, AuditLogListAPIView, etc.
-    # Remove:
-    CompleteOHCIntakePageView,
-    DashboardView,
-    DepartmentHealthStatsPageView,
-    DiagnosisEntryPageView,
-    DiseaseTrendsPageView,
-    EmployeeHealthHistoryPageView,
-    HospitalSelectionPageView,
-    NotificationListAPIView,  # Keep this one
-    OHCVisitFormPageView,
-    PaymentPageView,
-    PublicHowItWorksView,
-    PublicLandingView,
-    ReferralPageView,
-    ReportsPageView,
-    RunAutoAlertsAPIView,  # Keep this one
-)
+**Features:**
+- Horizontal bars with colors
+- Sorting options
+- Hover tooltips with full details
+
+#### `SeverityPieChart.tsx`
+Donut/pie chart for disease severity.
+
+**Data Structure:**
+```typescript
+interface SeverityData {
+  severity: 'MILD' | 'MODERATE' | 'SEVERE' | 'CRITICAL';
+  count: number;
+  color: string;
+}
 ```
 
----
+**Features:**
+- Donut chart with center text
+- Color-coded segments
+- Interactive legend
+- Hover effects
 
-### Step 5: Update Auth Settings in `myproject/settings.py`
+#### `DiagnosisTrendLineChart.tsx`
+Multi-line chart for top 5 diagnoses.
 
-**Before:**
-```python
-LOGIN_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/dashboard/'
-LOGOUT_REDIRECT_URL = '/'
+**Data Structure:**
+```typescript
+interface DiagnosisTrendData {
+  diagnosis: string;
+  data: Array<{ date: string; count: number }>;
+  color: string;
+}
 ```
 
-**After:**
-```python
-LOGIN_URL = '/login'
-LOGIN_REDIRECT_URL = '/dashboard'
-LOGOUT_REDIRECT_URL = '/'  # or '/login' if you prefer
+### 3. Department Stats Chart Components
+
+#### `HealthIndexGauge.tsx`
+Custom gauge/meter component showing health index.
+
+**Data Structure:**
+```typescript
+interface HealthIndexData {
+  department: string;
+  healthIndex: number; // 0-100
+  visits: number;
+  referrals: number;
+  unfit: number;
+}
 ```
 
----
+**Features:**
+- Circular gauge with color gradient
+- Animation on load
+- Hover with details
+- Responsive size
 
-### Step 6: Remove Django Auth URL Include (Optional)
+#### `VisitsReferralsStackedBar.tsx`
+Stacked bar chart for visits vs referrals.
 
-**File:** `myproject/myproject/urls.py`
-
-**Before:**
-```python
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('accounts/', include('django.contrib.auth.urls')),  # Remove this line
-    # ... other URLs
-]
+**Data Structure:**
+```typescript
+interface VisitsReferralsData {
+  department: string;
+  visits: number;
+  referrals: number;
+}
 ```
 
-**After:**
-```python
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    # accounts/ URLs removed - React handles auth
-    # ... other URLs
-]
+### 4. Disease Trends Chart Components
+
+#### `DiagnosisAreaChart.tsx`
+Area chart showing diagnosis volume over time.
+
+**Data Structure:**
+```typescript
+interface DiagnosisAreaData {
+  diagnosis: string;
+  data: Array<{ date: string; count: number }>;
+  color: string;
+}
 ```
 
-**Note:** Only remove this if Django admin doesn't need the auth URLs. Admin typically uses its own login flow at `/admin/login/`.
+**Features:**
+- Semi-transparent fill
+- Multiple diagnoses (up to 5)
+- Interactive legend
+- Zoom/pan support
 
----
+#### `SeverityTrendChart.tsx`
+Line chart showing severity distribution trends.
 
-## Verification Steps
-
-### 1. Verify API Endpoints
-
-```bash
-# Test authentication
-curl -X POST http://127.0.0.1:8000/api/auth/token/ \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin_test","password":"Test@12345"}'
-
-# Test protected endpoint
-curl -X GET http://127.0.0.1:8000/api/accounts/me/ \
-  -H "Authorization: Bearer <token>"
-```
-
-### 2. Verify Export Endpoints
-
-```bash
-# Test CSV export
-curl -X GET http://127.0.0.1:8000/exports/department-health-stats.csv \
-  -H "Authorization: Bearer <token>" \
-  --output test.csv
-
-# Test PDF export
-curl -X GET http://127.0.0.1:8000/exports/analytics-summary.pdf \
-  -H "Authorization: Bearer <token>" \
-  --output test.pdf
-```
-
-### 3. Verify Django Admin
-
-```bash
-# Navigate to http://127.0.0.1:8000/admin/ in browser
-# Login with superuser credentials
-# Verify all admin models are accessible
-```
-
-### 4. Verify React Frontend
-
-```bash
-# Start React dev server (if running separately)
-cd frontend
-npm run dev
-
-# Or navigate to the served React app
-# Open http://localhost:5173/ in browser
-# Test login with: admin_test / Test@12345
-# Navigate through all pages
-# Verify no console errors
+**Data Structure:**
+```typescript
+interface SeverityTrendData {
+  severity: string;
+  data: Array<{ date: string; count: number }>;
+  color: string;
+}
 ```
 
 ---
 
-## Rollback Plan
+## Data Flow Design
 
-If issues occur after cleanup:
+### Data Fetching Flow
 
-1. **Restore files from git:**
-   ```bash
-   git checkout -- myproject/templates/ myproject/static/frontend/
-   git checkout -- myproject/reports/views.py myproject/reports/urls.py
-   git checkout -- myproject/myproject/settings.py myproject/myproject/urls.py
-   ```
+```
+User Action (Page Load / Toggle Change)
+    ↓
+useEffect triggers data fetch
+    ↓
+API Service calls endpoint (with params)
+    ↓
+Django Backend returns data
+    ↓
+Data Transformer converts API response to chart format
+    ↓
+Daily/Monthly Aggregator applies aggregation if needed
+    ↓
+Chart Component receives formatted data
+    ↓
+Chart renders with Recharts
+    ↓
+User interacts (hover, click, etc.)
+```
 
-2. **Restart Django server**
+### State Management
 
-3. **Verify old routes work**
+```typescript
+// Global chart state (per page)
+interface ChartState {
+  period: number; // 7, 30, 90, 180, 365
+  dailyMonthly: 'daily' | 'monthly';
+  dateRange: { start: string; end: string } | null;
+  data: ChartData | null;
+  loading: boolean;
+  error: string | null;
+}
+
+// Custom Hook
+function useChartData<T>(
+  fetchFn: (params: ChartParams) => Promise<T>,
+  transformFn: (data: T) => ChartData
+): ChartState {
+  // Implementation
+}
+```
 
 ---
 
-## Next Steps
+## Styling & Theme
 
-1. Review this design document
-2. Create implementation branch
-3. Execute cleanup steps
-4. Run verification tests
-5. Commit changes
+### Color Palette
+
+```css
+/* Chart Colors */
+--chart-color-primary: #3b82f6;    /* Blue */
+--chart-color-secondary: #10b981;  /* Green */
+--chart-color-tertiary: #f59e0b;   /* Yellow */
+--chart-color-danger: #ef4444;     /* Red */
+--chart-color-purple: #8b5cf6;    /* Purple */
+--chart-color-cyan: #06b6d4;      /* Cyan */
+
+/* Severity Colors */
+--severity-mild: #10b981;      /* Green */
+--severity-moderate: #f59e0b;  /* Yellow */
+--severity-severe: #f97316;   /* Orange */
+--severity-critical: #ef4444; /* Red */
+
+/* Health Index Colors */
+--health-good: #10b981;    /* >80% */
+--health-warning: #f59e0b; /* 60-80% */
+--health-danger: #ef4444;  /* <60% */
+```
+
+### Responsive Breakpoints
+
+```css
+/* Mobile */
+@media (max-width: 640px) {
+  .chart-container { height: 250px; }
+  .legend { font-size: 12px; }
+}
+
+/* Tablet */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .chart-container { height: 300px; }
+}
+
+/* Desktop */
+@media (min-width: 1025px) {
+  .chart-container { height: 400px; }
+}
+```
+
+---
+
+## Performance Considerations
+
+### Bundle Optimization
+- Lazy load chart components: `React.lazy()`
+- Tree-shake unused chart types from Recharts
+- Use dynamic imports for heavy chart features
+
+### Data Optimization
+- Implement data pagination for large datasets
+- Cache transformed data in useMemo
+- Debounce rapid state changes (date range picker)
+
+### Rendering Optimization
+- Use React.memo for chart components
+- Virtualize long lists (if needed)
+- Implement shouldComponentUpdate for complex charts
+
+---
+
+## Accessibility Design
+
+### Keyboard Navigation
+- All charts are focusable via Tab
+- Arrow keys to navigate data points
+- Enter/Space to select and show details
+- Escape to close tooltips/modals
+
+### Screen Reader Support
+- Chart title announced on focus
+- Data points described in ARIA labels
+- Table version of chart data available
+- Status updates for data loading/changes
+
+### Visual Accessibility
+- Color contrast ratio >= 4.5:1
+- Patterns/icons alongside colors for data points
+- High contrast mode support
+- Focus indicators visible
+
+---
+
+## Testing Strategy
+
+### Unit Tests
+- Data transformation functions
+- Custom hooks (useChartState, useDateRange)
+- Component rendering with test data
+
+### Integration Tests
+- Chart data fetch → transform → render flow
+- User interactions (hover, click, toggle)
+- Export functionality
+
+### Visual Regression Tests
+- Screenshot comparisons for charts
+- Responsive layout verification
+- Dark mode (if implemented)
+
+---
 
 **Phase 3 Output:** `docs/design/architecture.md`
 
-**✅ Phase 3 done. Continue to Phase 4 — Development? (yes/no)**
-
-Run `/workflow-continue` to proceed.
+**✅ Phase 3 complete. Shall I continue to Phase 4 — Development? (yes/no)**

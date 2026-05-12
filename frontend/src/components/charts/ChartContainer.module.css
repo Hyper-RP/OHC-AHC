@@ -1,0 +1,131 @@
+.chartContainer {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.chartTitleSection {
+  flex: 1;
+}
+
+.chartTitle {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.chartDescription {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.chartActions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.exportMenu {
+  position: relative;
+}
+
+.exportButton {
+  min-width: 90px;
+}
+
+.exportDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  min-width: 150px;
+}
+
+.exportOption {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #374151;
+  transition: background-color 0.2s;
+}
+
+.exportOption:hover {
+  background-color: #f3f4f6;
+}
+
+.exportOption:first-child {
+  border-radius: 8px 8px 0 0;
+}
+
+.exportOption:last-child {
+  border-radius: 0 0 8px 8px;
+}
+
+.chartContent {
+  min-height: 300px;
+}
+
+.loadingState,
+.errorState,
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 1rem;
+  text-align: center;
+}
+
+.loadingText,
+.errorText,
+.emptyText {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.errorIcon,
+.emptyIcon {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.chartWrapper {
+  width: 100%;
+  height: 100%;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .chartHeader {
+    flex-direction: column;
+  }
+
+  .chartActions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .chartContent {
+    min-height: 250px;
+  }
+}

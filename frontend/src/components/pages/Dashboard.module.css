@@ -35,10 +35,23 @@
 }
 
 /* Sections */
+.chartsSection,
+.trendsSection,
 .actionsSection,
 .insightsSection,
 .recentSection {
   margin-bottom: 2rem;
+}
+
+/* Charts Grid */
+.chartsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.chartCard {
+  height: 400px;
 }
 
 .sectionTitle {
