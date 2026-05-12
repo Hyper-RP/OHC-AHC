@@ -59,7 +59,7 @@ describe('Sidebar', () => {
     expect(screen.getByText('NURSE')).toBeInTheDocument();
   });
 
-  it('renders correct nav items for ADMIN (all 11)', () => {
+  it('renders correct nav items for ADMIN (all 12)', () => {
     vi.mocked(useAuth).mockReturnValue({
       user: mockUser({ role: 'ADMIN' }),
       isAuthenticated: true, loading: false,
@@ -70,6 +70,7 @@ describe('Sidebar', () => {
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('OHC Visit Form')).toBeInTheDocument();
     expect(screen.getByText('Payments')).toBeInTheDocument();
+    expect(screen.getByText('Medicine Management')).toBeInTheDocument();
   });
 
   it('renders fewer nav items for NURSE', () => {
@@ -82,6 +83,7 @@ describe('Sidebar', () => {
     renderWithRouter(<Sidebar />);
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('OHC Visit Form')).toBeInTheDocument();
+    expect(screen.getByText('Medicine Management')).toBeInTheDocument();
     expect(screen.queryByText('Payments')).not.toBeInTheDocument();
   });
 

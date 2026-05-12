@@ -7,7 +7,14 @@ import { VISIT_TYPE_OPTIONS, TRIAGE_LEVEL_OPTIONS } from '../../utils/constants'
 import { aggregateVitals, validateVitals } from '../../services/vitals';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 import { VisitType, TriageLevel } from '../../types';
+import { loadMedicineRecords, type MedicineRecord } from './medicineInventory';
 import styles from './OHCVisitForm.module.css';
+
+interface DispensedMedicineForm {
+  medicineId: string;
+  quantity: string;
+  instructions: string;
+}
 
 /**
  * OHC Visit Form page component
@@ -45,6 +52,10 @@ export const OHCVisitForm: React.FC = () => {
 
   const [vitalsErrors, setVitalsErrors] = useState<Record<string, string>>({});
   const [vitalsPreview, setVitalsPreview] = useState<string>('{}');
+  const [medicineOptions, setMedicineOptions] = useState<MedicineRecord[]>([]);
+  const [dispensedMedicines, setDispensedMedicines] = useState<DispensedMedicineForm[]>([
+    { medicineId: '', quantity: '', instructions: '' },
+  ]);
 
   useEffect(() => {
     // Update vitals preview when vitals change
@@ -53,6 +64,10 @@ export const OHCVisitForm: React.FC = () => {
       setVitalsPreview(JSON.stringify(aggregated, null, 2));
     });
   }, [vitals]);
+
+  useEffect(() => {
+    setMedicineOptions(loadMedicineRecords());
+  }, []);
 
   const handleInputChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -77,6 +92,31 @@ export const OHCVisitForm: React.FC = () => {
     setVitalsErrors(errors);
   };
 
+  const handleDispensedMedicineChange = (
+    index: number,
+    field: keyof DispensedMedicineForm,
+    value: string
+  ) => {
+    setDispensedMedicines((current) =>
+      current.map((medicine, medicineIndex) =>
+        medicineIndex === index ? { ...medicine, [field]: value } : medicine
+      )
+    );
+  };
+
+  const addDispensedMedicineRow = () => {
+    setDispensedMedicines((current) => [
+      ...current,
+      { medicineId: '', quantity: '', instructions: '' },
+    ]);
+  };
+
+  const removeDispensedMedicineRow = (index: number) => {
+    setDispensedMedicines((current) =>
+      current.length === 1 ? current : current.filter((_, medicineIndex) => medicineIndex !== index)
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -97,12 +137,44 @@ export const OHCVisitForm: React.FC = () => {
       return;
     }
 
+    const usedMedicineRows = dispensedMedicines.filter(
+      (medicine) => medicine.medicineId || medicine.quantity || medicine.instructions.trim()
+    );
+
+    const incompleteMedicineRow = usedMedicineRows.find(
+      (medicine) => !medicine.medicineId || !medicine.quantity
+    );
+    if (incompleteMedicineRow) {
+      setError('Please select a medicine and quantity for every medicine entry');
+      show('Please select a medicine and quantity for every medicine entry', 'error');
+      return;
+    }
+
     setLoading(true);
 
     try {
+      const medicineSummary = usedMedicineRows
+        .map((medicine) => {
+          const selectedMedicine = medicineOptions.find((option) => option.id === medicine.medicineId);
+          const medicineName = selectedMedicine?.name || medicine.medicineId;
+          const extraInstructions = medicine.instructions.trim()
+            ? ` | Instructions: ${medicine.instructions.trim()}`
+            : '';
+          return `- ${medicineName} | Quantity: ${medicine.quantity}${extraInstructions}`;
+        })
+        .join('\n');
+
+      const combinedPreliminaryNotes = [
+        formData.preliminary_notes.trim(),
+        medicineSummary ? `Medicine Given To Patient:\n${medicineSummary}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n\n');
+
       const visitData = {
         ...formData,
         vitals: aggregateVitals(vitals),
+        preliminary_notes: combinedPreliminaryNotes,
       };
 
       await createVisit(visitData);
@@ -287,6 +359,77 @@ export const OHCVisitForm: React.FC = () => {
                 <div className={styles.vitalsPreview}>
                   <h4>Vitals Preview</h4>
                   <pre>{vitalsPreview}</pre>
+                </div>
+              )}
+            </div>
+
+            <div className={styles.formSection}>
+              <div className={styles.sectionHeaderRow}>
+                <h3>Medicine Given to Patient</h3>
+                <Button
+                  type="button"
+                  variant="outline-secondary"
+                  size="sm"
+                  onClick={addDispensedMedicineRow}
+                  disabled={medicineOptions.length === 0}
+                >
+                  Add Medicine
+                </Button>
+              </div>
+              {medicineOptions.length === 0 ? (
+                <Alert type="info">
+                  No medicines available yet. Add medicine records from Medicine Management first.
+                </Alert>
+              ) : (
+                <div className={styles.medicineList}>
+                  {dispensedMedicines.map((medicine, index) => (
+                    <div key={`${index}-${medicine.medicineId}`} className={styles.medicineCard}>
+                      <div className={styles.medicineCardHeader}>
+                        <h4>Medicine {index + 1}</h4>
+                        {dispensedMedicines.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => removeDispensedMedicineRow(index)}
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                      <div className={styles.formGrid}>
+                        <FormInput
+                          label="Medicine"
+                          type="select"
+                          value={medicine.medicineId}
+                          onChange={(value) => handleDispensedMedicineChange(index, 'medicineId', value)}
+                          options={[
+                            { value: '', label: 'Select medicine' },
+                            ...medicineOptions.map((option) => ({
+                              value: option.id,
+                              label: `${option.name} (${option.stock} ${option.unit})`,
+                            })),
+                          ]}
+                        />
+                        <FormInput
+                          label="Quantity Given"
+                          type="number"
+                          value={medicine.quantity}
+                          onChange={(value) => handleDispensedMedicineChange(index, 'quantity', value)}
+                          min="1"
+                        />
+                        <FormInput
+                          label="Instructions"
+                          type="textarea"
+                          value={medicine.instructions}
+                          onChange={(value) => handleDispensedMedicineChange(index, 'instructions', value)}
+                          placeholder="Optional instructions for the patient"
+                          rows={3}
+                          className={styles.fullWidth}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
