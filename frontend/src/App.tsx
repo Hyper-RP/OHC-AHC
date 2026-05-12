@@ -15,9 +15,12 @@ import {
   PaymentPage,
   ReportsPage,
   EmployeeHealthHistory,
+  EmployeeHealthHistoryDetail,
   DiseaseTrends,
   DepartmentStats,
   CompleteIntake,
+  MedicineManagement,
+  AddMedicine,
 } from './components/pages';
 
 /**
@@ -52,8 +55,11 @@ function App() {
               <Route path="ahc/referrals" element={<ReferralPage />} />
               <Route path="ahc/hospital-selection" element={<HospitalSelection />} />
               <Route path="payments" element={<PaymentPage />} />
+              <Route path="medicine-management" element={<MedicineManagement />} />
+              <Route path="medicine-management/add" element={<AddMedicine />} />
               <Route path="reports/medical" element={<ReportsPage />} />
               <Route path="reports/employee-history" element={<EmployeeHealthHistory />} />
+              <Route path="reports/employee-history/:employeeId" element={<EmployeeHealthHistoryDetail />} />
               <Route path="reports/disease-trends" element={<DiseaseTrends />} />
               <Route path="reports/department-stats" element={<DepartmentStats />} />
             </Route>

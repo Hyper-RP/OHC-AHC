@@ -4,9 +4,9 @@ import { getNavItemsForRole, hasAccessToRoute, NAV_ITEMS } from '../navigation';
 
 describe('navigation', () => {
   describe('getNavItemsForRole', () => {
-    it('returns all 11 items for ADMIN', () => {
+    it('returns all 12 items for ADMIN', () => {
       const items = getNavItemsForRole(Role.ADMIN);
-      expect(items).toHaveLength(11);
+      expect(items).toHaveLength(12);
     });
 
     it('returns correct items for NURSE', () => {
@@ -14,6 +14,7 @@ describe('navigation', () => {
       const urls = items.map((i) => i.url);
       expect(urls).toContain('/dashboard');
       expect(urls).toContain('/ohc/visit-form');
+      expect(urls).toContain('/medicine-management');
       expect(urls).not.toContain('/payments');
     });
 
@@ -31,6 +32,7 @@ describe('navigation', () => {
       const urls = items.map((i) => i.url);
       expect(urls).toContain('/ohc/visit-form');
       expect(urls).toContain('/ohc/diagnosis-entry');
+      expect(urls).toContain('/medicine-management');
       expect(urls).not.toContain('/payments');
     });
 
@@ -58,6 +60,10 @@ describe('navigation', () => {
   describe('hasAccessToRoute', () => {
     it('returns true for valid role/url combo', () => {
       expect(hasAccessToRoute('/dashboard', Role.ADMIN)).toBe(true);
+    });
+
+    it('returns true for medicine management clinical access', () => {
+      expect(hasAccessToRoute('/medicine-management', Role.NURSE)).toBe(true);
     });
 
     it('returns false for invalid role/url combo', () => {

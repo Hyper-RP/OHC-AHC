@@ -14,7 +14,7 @@
 
 .searchGrid {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto auto auto;
   gap: 1rem;
   align-items: end;
 }
@@ -53,6 +53,46 @@
   gap: 1rem;
 }
 
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid rgba(34, 81, 108, 0.12);
+  border-radius: 0.85rem;
+}
+
+.recordsTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+  background: #fff;
+}
+
+.recordsTable th,
+.recordsTable td {
+  padding: 0.9rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(34, 81, 108, 0.12);
+  font-size: 0.92rem;
+  color: #4f6472;
+  vertical-align: top;
+}
+
+.recordsTable th {
+  background: rgba(10, 95, 120, 0.06);
+  color: #11313d;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.recordsTable td:last-child,
+.recordsTable th:last-child {
+  white-space: nowrap;
+  width: 1%;
+}
+
+.recordsTable tbody tr:hover {
+  background: rgba(10, 95, 120, 0.03);
+}
+
 .visitItem {
   padding: 1rem;
   background: rgba(10, 95, 120, 0.03);
@@ -64,6 +104,17 @@
   margin: 0.35rem 0;
   font-size: 0.9rem;
   color: #5f7380;
+}
+
+.detailBlock {
+  margin-top: 0.75rem;
+}
+
+.detailList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-left: 0.5rem;
 }
 
 @media (max-width: 768px) {
