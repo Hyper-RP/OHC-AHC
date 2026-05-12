@@ -3,6 +3,15 @@ import { Link } from 'react-router-dom';
 import { Header } from '../layout';
 import { Card, Button, Loading } from '../ui';
 import { useAuth } from '../../contexts/AuthContext';
+import {
+  ChartContainer,
+  VisitTrendsChart,
+  DepartmentComparisonChart,
+  SeverityPieChart,
+  DiagnosisTrendLineChart,
+} from '../charts';
+import { transformDashboardData } from '../../utils/charts/transformers';
+import { getDashboardStats } from '../../services/reports';
 import styles from './Dashboard.module.css';
 
 /**
@@ -12,26 +21,114 @@ import styles from './Dashboard.module.css';
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [chartLoading, setChartLoading] = useState(true);
   const [stats, setStats] = useState({
     visitCount: 0,
     referralCount: 0,
     pendingInvoices: 0,
   });
+  const [chartData, setChartData] = useState<any>({
+    visitTrends: [],
+    departmentComparison: [],
+    severityBreakdown: [],
+    diagnosisTrends: [],
+  });
+  const [chartError, setChartError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate loading data
     const loadData = async () => {
-      // In a real app, fetch from API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setStats({
-        visitCount: 1234,
-        referralCount: 89,
-        pendingInvoices: 23,
-      });
-      setLoading(false);
+      try {
+        // Load basic stats (simulated)
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        setStats({
+          visitCount: 1234,
+          referralCount: 89,
+          pendingInvoices: 23,
+        });
+        setLoading(false);
+      } catch (error) {
+        console.error('Failed to load stats:', error);
+        setLoading(false);
+      }
+    };
+
+    const loadChartData = async () => {
+      try {
+        setChartLoading(true);
+        // Using dummy data as requested
+        await new Promise((resolve) => setTimeout(resolve, 800)); // Simulate network delay
+        
+        const dummyData = {
+          visitTrends: [
+            { date: new Date('2026-05-01'), count: 12 },
+            { date: new Date('2026-05-02'), count: 19 },
+            { date: new Date('2026-05-03'), count: 15 },
+            { date: new Date('2026-05-04'), count: 22 },
+            { date: new Date('2026-05-05'), count: 28 },
+            { date: new Date('2026-05-06'), count: 20 },
+            { date: new Date('2026-05-07'), count: 35 },
+          ],
+          departmentComparison: [
+            { name: 'Engineering', visits: 120, referrals: 15 },
+            { name: 'HR', visits: 45, referrals: 2 },
+            { name: 'Operations', visits: 85, referrals: 8 },
+            { name: 'Sales', visits: 60, referrals: 5 },
+          ],
+          severityBreakdown: [
+            { name: 'MILD', value: 65 },
+            { name: 'MODERATE', value: 25 },
+            { name: 'SERIOUS', value: 8 },
+            { name: 'CRITICAL', value: 2 },
+          ],
+          diagnosisTrends: [
+            {
+              diagnosis: 'Fever',
+              color: '#3b82f6',
+              data: [
+                { date: new Date('2026-05-01'), count: 10 },
+                { date: new Date('2026-05-02'), count: 12 },
+                { date: new Date('2026-05-03'), count: 15 },
+                { date: new Date('2026-05-04'), count: 20 },
+                { date: new Date('2026-05-05'), count: 18 },
+              ]
+            },
+            {
+              diagnosis: 'Cough',
+              color: '#10b981',
+              data: [
+                { date: new Date('2026-05-01'), count: 15 },
+                { date: new Date('2026-05-02'), count: 18 },
+                { date: new Date('2026-05-03'), count: 12 },
+                { date: new Date('2026-05-04'), count: 10 },
+                { date: new Date('2026-05-05'), count: 15 },
+              ]
+            },
+            {
+              diagnosis: 'Headache',
+              color: '#f59e0b',
+              data: [
+                { date: new Date('2026-05-01'), count: 8 },
+                { date: new Date('2026-05-02'), count: 10 },
+                { date: new Date('2026-05-03'), count: 11 },
+                { date: new Date('2026-05-04'), count: 9 },
+                { date: new Date('2026-05-05'), count: 12 },
+              ]
+            }
+          ]
+        };
+        
+        setChartData(dummyData);
+        setChartError(null);
+      } catch (error) {
+        console.error('Failed to load chart data:', error);
+        setChartError('Failed to load chart data');
+      } finally {
+        setChartLoading(false);
+      }
     };
 
     loadData();
+    loadChartData();
   }, []);
 
   if (loading) {
@@ -113,6 +210,57 @@ export const Dashboard: React.FC = () => {
       />
 
       <main className={styles.dashboardMain}>
+        <section className={styles.chartsSection}>
+          <h2 className={styles.sectionTitle}>Overview</h2>
+          <div className={styles.chartsGrid}>
+            <ChartContainer
+              title="Visit Trends"
+              description="Daily visits over time"
+              loading={chartLoading}
+              error={chartError}
+              empty={chartData.visitTrends.length === 0}
+              className={styles.chartCard}
+            >
+              <VisitTrendsChart data={chartData.visitTrends} height={300} />
+            </ChartContainer>
+
+            <ChartContainer
+              title="Department Comparison"
+              description="Visits by department"
+              loading={chartLoading}
+              error={chartError}
+              empty={chartData.departmentComparison.length === 0}
+              className={styles.chartCard}
+            >
+              <DepartmentComparisonChart data={chartData.departmentComparison} height={300} />
+            </ChartContainer>
+
+            <ChartContainer
+              title="Severity Breakdown"
+              description="Case severity distribution"
+              loading={chartLoading}
+              error={chartError}
+              empty={chartData.severityBreakdown.length === 0}
+              className={styles.chartCard}
+            >
+              <SeverityPieChart data={chartData.severityBreakdown} height={300} />
+            </ChartContainer>
+          </div>
+        </section>
+
+        <section className={styles.trendsSection}>
+          <h2 className={styles.sectionTitle}>Top Diagnoses Trends</h2>
+          <ChartContainer
+            title="Common Diagnoses Over Time"
+            description="Trends for top 5 diagnoses"
+            loading={chartLoading}
+            error={chartError}
+            empty={chartData.diagnosisTrends.length === 0}
+          >
+            <DiagnosisTrendLineChart data={chartData.diagnosisTrends} height={350} />
+          </ChartContainer>
+        </section>
+
         <section className={styles.welcomeSection}>
           <div className={styles.welcomeContent}>
             <h1>Welcome to OHC-AHC Health Portal</h1>
