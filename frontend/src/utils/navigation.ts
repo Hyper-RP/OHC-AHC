@@ -56,6 +56,13 @@ export const NAV_ITEMS: NavItem[] = [
     roles: [Role.ADMIN, Role.HR, Role.KAM],
   },
   {
+    label: 'Medicine Management',
+    url: '/medicine-management',
+    urlName: 'medicine_management',
+    icon: 'Rx',
+    roles: [Role.ADMIN, Role.NURSE, Role.DOCTOR],
+  },
+  {
     label: 'Medical Reports',
     url: '/reports/medical',
     urlName: 'medical_reports',

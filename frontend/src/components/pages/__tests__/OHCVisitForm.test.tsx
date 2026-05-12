@@ -47,6 +47,11 @@ describe('OHCVisitForm', () => {
     expect(screen.getByText('Additional Information')).toBeInTheDocument();
   });
 
+  it('renders medicine given to patient section', () => {
+    renderWithProviders(<OHCVisitForm />);
+    expect(screen.getByText('Medicine Given to Patient')).toBeInTheDocument();
+  });
+
   it('renders Cancel and Create Visit buttons', () => {
     renderWithProviders(<OHCVisitForm />);
     expect(screen.getByRole('button', { name: /Cancel/ })).toBeInTheDocument();
