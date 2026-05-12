@@ -9,7 +9,7 @@ vi.mock('../api', () => ({
 import api from '../api';
 import {
   getEmployeeHealthHistory, getDiseaseTrends, getDepartmentHealthStats,
-  exportEmployeeHealthHistory, exportDepartmentHealthStats, exportAnalyticsSummary,
+  exportEmployeeHealthHistory, exportEmployeeHealthHistoryExcel, exportDepartmentHealthStats, exportAnalyticsSummary,
   getDashboardStats,
 } from '../reports';
 
@@ -19,14 +19,24 @@ describe('reports service', () => {
   it('getEmployeeHealthHistory calls with employee param', async () => {
     vi.mocked(api.get).mockResolvedValueOnce({ data: {} });
     await getEmployeeHealthHistory('EMP-001');
-    expect(api.get).toHaveBeenCalledWith('/reports/employee-health-history/', { params: { employee: 'EMP-001' } });
+    expect(api.get).toHaveBeenCalledWith('/reports/employee-health-history/', {
+      params: { employee_code: 'EMP-001' },
+    });
   });
 
   it('getEmployeeHealthHistory passes date range params', async () => {
     vi.mocked(api.get).mockResolvedValueOnce({ data: {} });
     await getEmployeeHealthHistory('EMP-001', '2026-01-01', '2026-05-01');
     expect(api.get).toHaveBeenCalledWith('/reports/employee-health-history/', {
-      params: { employee: 'EMP-001', date_from: '2026-01-01', date_to: '2026-05-01' },
+      params: { employee_code: 'EMP-001', date_from: '2026-01-01', date_to: '2026-05-01' },
+    });
+  });
+
+  it('getEmployeeHealthHistory allows empty employee param', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({ data: {} });
+    await getEmployeeHealthHistory();
+    expect(api.get).toHaveBeenCalledWith('/reports/employee-health-history/', {
+      params: {},
     });
   });
 
@@ -64,7 +74,40 @@ describe('reports service', () => {
     const blob = mockBlob();
     vi.mocked(api.get).mockResolvedValueOnce({ data: blob });
     const result = await exportEmployeeHealthHistory('EMP-001');
-    expect(api.get).toHaveBeenCalledWith('/exports/employee-health-history.csv', expect.objectContaining({ responseType: 'blob' }));
+    expect(api.get).toHaveBeenCalledWith(
+      '/exports/employee-health-history.pdf',
+      expect.objectContaining({
+        params: { employee_code: 'EMP-001' },
+        responseType: 'blob',
+      })
+    );
+    expect(result).toBe(blob);
+  });
+
+  it('exportEmployeeHealthHistory allows empty employee param', async () => {
+    const blob = mockBlob();
+    vi.mocked(api.get).mockResolvedValueOnce({ data: blob });
+    await exportEmployeeHealthHistory();
+    expect(api.get).toHaveBeenCalledWith(
+      '/exports/employee-health-history.pdf',
+      expect.objectContaining({
+        params: {},
+        responseType: 'blob',
+      })
+    );
+  });
+
+  it('exportEmployeeHealthHistoryExcel returns blob', async () => {
+    const blob = mockBlob();
+    vi.mocked(api.get).mockResolvedValueOnce({ data: blob });
+    const result = await exportEmployeeHealthHistoryExcel();
+    expect(api.get).toHaveBeenCalledWith(
+      '/exports/employee-health-history.csv',
+      expect.objectContaining({
+        params: {},
+        responseType: 'blob',
+      })
+    );
     expect(result).toBe(blob);
   });
 

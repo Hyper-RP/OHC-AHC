@@ -1,6 +1,7 @@
 import api, { handleApiError } from './api';
 import type {
   EmployeeHealthHistory,
+  EmployeeHealthHistoryList,
   DiseaseTrends,
   DepartmentStats,
 } from '../types';
@@ -13,16 +14,17 @@ import type {
  * @returns Promise resolving to employee health history
  */
 export const getEmployeeHealthHistory = async (
-  employeeId: string,
+  employeeId?: string,
   dateFrom?: string,
   dateTo?: string
-): Promise<EmployeeHealthHistory> => {
+): Promise<EmployeeHealthHistory | EmployeeHealthHistoryList> => {
   try {
-    const params: Record<string, string> = { employee_code: employeeId };
+    const params: Record<string, string> = {};
+    if (employeeId) params.employee_code = employeeId;
     if (dateFrom) params.date_from = dateFrom;
     if (dateTo) params.date_to = dateTo;
 
-    const response = await api.get<EmployeeHealthHistory>(
+    const response = await api.get<EmployeeHealthHistory | EmployeeHealthHistoryList>(
       '/reports/employee-health-history/',
       { params }
     );
@@ -77,19 +79,48 @@ export const getDepartmentHealthStats = async (
 };
 
 /**
- * Export employee health history to CSV
+ * Export employee health history to PDF receipt
  * @param employeeId - Employee profile ID
  * @param dateFrom - Optional start date filter
  * @param dateTo - Optional end date filter
- * @returns Promise resolving to CSV blob
+ * @returns Promise resolving to PDF blob
  */
 export const exportEmployeeHealthHistory = async (
-  employeeId: string,
+  employeeId?: string,
   dateFrom?: string,
   dateTo?: string
 ): Promise<Blob> => {
   try {
-    const params: Record<string, string> = { employee_code: employeeId };
+    const params: Record<string, string> = {};
+    if (employeeId) params.employee_code = employeeId;
+    if (dateFrom) params.date_from = dateFrom;
+    if (dateTo) params.date_to = dateTo;
+
+    const response = await api.get('/exports/employee-health-history.pdf', {
+      params,
+      responseType: 'blob',
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(handleApiError(error), { cause: error });
+  }
+};
+
+/**
+ * Export employee health history to Excel-friendly CSV
+ * @param employeeId - Optional employee profile ID
+ * @param dateFrom - Optional start date filter
+ * @param dateTo - Optional end date filter
+ * @returns Promise resolving to CSV blob
+ */
+export const exportEmployeeHealthHistoryExcel = async (
+  employeeId?: string,
+  dateFrom?: string,
+  dateTo?: string
+): Promise<Blob> => {
+  try {
+    const params: Record<string, string> = {};
+    if (employeeId) params.employee_code = employeeId;
     if (dateFrom) params.date_from = dateFrom;
     if (dateTo) params.date_to = dateTo;
 

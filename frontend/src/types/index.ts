@@ -309,6 +309,7 @@ export interface Payment {
 
 // Reports Types
 export interface EmployeeHealthHistory {
+  mode?: 'detail';
   employee: {
     employee_code: string;
     user: { first_name: string; last_name: string };
@@ -320,7 +321,16 @@ export interface EmployeeHealthHistory {
     uuid: string;
     visit_date: string;
     visit_type: string;
+    triage_level: string;
+    visit_status: string;
     chief_complaint: string;
+    symptoms: string;
+    vitals: Record<string, string>;
+    preliminary_notes: string;
+    requires_referral: boolean;
+    doctor_name: string;
+    follow_up_date: string;
+    next_action?: string;
     diagnoses: Array<{
       diagnosis_name: string;
       severity: string;
@@ -338,6 +348,26 @@ export interface EmployeeHealthHistory {
     hospital_name: string;
     referral_status: string;
     created_at: string;
+  }>;
+}
+
+export interface EmployeeHealthHistoryList {
+  mode: 'list';
+  records: Array<{
+    employee_code: string;
+    employee_name: string;
+    visit_uuid: string;
+    visit_date: string;
+    visit_status: string;
+    doctor_name: string;
+    chief_complaint: string;
+    diagnosis_name: string;
+    severity: string;
+    fitness_decision: string;
+    medicine_given: string;
+    follow_up_date: string;
+    referral_status: string;
+    report_count: number;
   }>;
 }
 

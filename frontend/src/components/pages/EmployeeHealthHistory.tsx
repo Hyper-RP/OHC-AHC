@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Header } from '../layout';
 import { Card, FormInput, Button, Loading } from '../ui';
-import { getEmployeeHealthHistory, exportEmployeeHealthHistory } from '../../services/reports';
+import {
+  exportEmployeeHealthHistoryExcel,
+  getEmployeeHealthHistory,
+} from '../../services/reports';
 import { REPORT_PERIOD_OPTIONS } from '../../utils/constants';
-import type { EmployeeHealthHistory as EmployeeHealthHistoryType } from '../../types';
+import type {
+  EmployeeHealthHistoryList,
+} from '../../types';
 import styles from './EmployeeHealthHistory.module.css';
 
 /**
@@ -11,17 +17,21 @@ import styles from './EmployeeHealthHistory.module.css';
  * Display and export employee health records
  */
 export const EmployeeHealthHistory: React.FC = () => {
+  const navigate = useNavigate();
   const [employeeId, setEmployeeId] = useState('');
   const [period, setPeriod] = useState(90);
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<EmployeeHealthHistoryType | null>(null);
+  const [data, setData] = useState<EmployeeHealthHistoryList | null>(null);
 
-  const handleLoad = async () => {
-    if (!employeeId) return;
+  const loadHistory = async (targetEmployeeId?: string) => {
     setLoading(true);
     try {
-      const result = await getEmployeeHealthHistory(employeeId);
-      setData(result);
+      const result = await getEmployeeHealthHistory(targetEmployeeId || undefined);
+      if ('records' in result) {
+        setData(result);
+      } else if (targetEmployeeId) {
+        navigate(`/reports/employee-history/${targetEmployeeId}`);
+      }
     } catch {
       alert('Failed to load employee history');
     } finally {
@@ -29,19 +39,31 @@ export const EmployeeHealthHistory: React.FC = () => {
     }
   };
 
-  const handleExport = async () => {
-    if (!employeeId) return;
+  const handleLoad = async () => {
+    await loadHistory(employeeId || undefined);
+  };
+
+  const handleExportAll = async () => {
     try {
-      const blob = await exportEmployeeHealthHistory(employeeId);
+      const blob = await exportEmployeeHealthHistoryExcel(employeeId || undefined);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `employee_${employeeId}_history.csv`;
+      link.download = employeeId
+        ? `employee_${employeeId}_health_history.csv`
+        : 'all_employee_health_history.csv';
       link.click();
     } catch {
       alert('Export failed');
     }
   };
+
+  const handleViewRecord = async (targetEmployeeId: string) => {
+    setEmployeeId(targetEmployeeId);
+    navigate(`/reports/employee-history/${targetEmployeeId}`);
+  };
+
+  const isListMode = data !== null;
 
   return (
     <div className={styles.healthHistory}>
@@ -53,7 +75,7 @@ export const EmployeeHealthHistory: React.FC = () => {
               label="Employee ID"
               value={employeeId}
               onChange={setEmployeeId}
-              placeholder="Enter employee ID"
+              placeholder="Enter employee ID or leave blank"
             />
             <FormInput
               label="Period"
@@ -62,43 +84,57 @@ export const EmployeeHealthHistory: React.FC = () => {
               onChange={(v) => setPeriod(parseInt(v, 10))}
               options={REPORT_PERIOD_OPTIONS}
             />
+            <Button variant="outline-secondary" onClick={handleExportAll}>
+              Export Excel
+            </Button>
             <Button onClick={handleLoad}>Load</Button>
           </div>
         </Card>
 
         {loading && <Loading />}
 
-        {data && (
-          <>
-            <Card className={styles.summaryCard}>
-              <h3>Employee Summary</h3>
-              <p><strong>Name:</strong> {data.employee.user.first_name} {data.employee.user.last_name}</p>
-              <p><strong>Department:</strong> {data.employee.department}</p>
-              <p><strong>Designation:</strong> {data.employee.designation}</p>
-              <p><strong>Fitness Status:</strong> {data.employee.fitness_status}</p>
-            </Card>
-
-            <Card className={styles.visitsCard}>
-              <div className={styles.cardHeader}>
-                <h3>Visits ({data.visits.length})</h3>
-                <Button variant="outline-secondary" size="sm" onClick={handleExport}>
-                  Export CSV
-                </Button>
-              </div>
-              <div className={styles.visitsList}>
-                {data.visits.map((visit) => (
-                  <div key={visit.uuid} className={styles.visitItem}>
-                    <p><strong>Date:</strong> {visit.visit_date}</p>
-                    <p><strong>Type:</strong> {visit.visit_type}</p>
-                    <p><strong>Complaint:</strong> {visit.chief_complaint}</p>
-                    {visit.diagnoses.length > 0 && (
-                      <p><strong>Diagnosis:</strong> {visit.diagnoses[0].diagnosis_name}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </>
+        {isListMode && data && (
+          <Card className={styles.visitsCard}>
+            <div className={styles.cardHeader}>
+              <h3>Patient Records ({data.records.length})</h3>
+            </div>
+            <div className={styles.tableWrap}>
+              <table className={styles.recordsTable}>
+                <thead>
+                  <tr>
+                    <th>Employee ID</th>
+                    <th>Patient Name</th>
+                    <th>Visit Date</th>
+                    <th>Chief Complaint</th>
+                    <th>Doctor</th>
+                    <th>Fit/Unfit</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.records.map((record) => (
+                    <tr key={record.visit_uuid}>
+                      <td>{record.employee_code}</td>
+                      <td>{record.employee_name}</td>
+                      <td>{record.visit_date}</td>
+                      <td>{record.chief_complaint}</td>
+                      <td>{record.doctor_name}</td>
+                      <td>{record.fitness_decision || '-'}</td>
+                      <td>
+                        <Button
+                          variant="outline-secondary"
+                          size="sm"
+                          onClick={() => handleViewRecord(record.employee_code)}
+                        >
+                          View
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         )}
       </main>
     </div>
