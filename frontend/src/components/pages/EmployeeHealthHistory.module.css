@@ -1,13 +1,17 @@
 .healthHistory {
+  display: flex;
+  flex-direction: column;
   min-height: calc(100vh - 72px);
 }
 
 .healthMain {
   padding: 2rem;
-  max-width: 1000px;
+  max-width: 1400px;
   margin: 0 auto;
+  background: #f9fafb;
 }
 
+/* Search Card */
 .searchCard {
   margin-bottom: 2rem;
 }
@@ -19,13 +23,45 @@
   align-items: end;
 }
 
-.summaryCard,
-.visitsCard {
+@media (max-width: 768px) {
+  .searchGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Summary Section */
+.summarySection {
   margin-bottom: 2rem;
 }
 
-.summaryCard h3,
-.visitsCard h3 {
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 1.5rem;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1.5fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.summaryCard {
+  background: #ffffff;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.summaryCard h3 {
   font-size: 1.2rem;
   font-weight: 600;
   color: #11313d;
@@ -36,6 +72,91 @@
   margin: 0.5rem 0;
   font-size: 0.95rem;
   color: #5f7380;
+}
+
+.summaryHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.summaryName {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  flex: 1;
+}
+
+.summaryDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.summaryLabel {
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.statsCardWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Toggle Section */
+.toggleSection {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+/* Charts Section */
+.chartsSection {
+  margin-bottom: 2rem;
+}
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .chartsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chartCard {
+  background: #ffffff;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.chartTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 1rem;
+}
+
+.chartSection {
+  margin-bottom: 2rem;
+}
+
+/* Visits Section */
+.visitsCard {
+  margin-bottom: 2rem;
+}
+
+.visitsCard h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #11313d;
+  margin: 0 0 1rem;
 }
 
 .cardHeader {
@@ -51,6 +172,8 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  max-height: 500px;
+  overflow-y: auto;
 }
 
 .tableWrap {
@@ -94,16 +217,47 @@
 }
 
 .visitItem {
+  display: flex;
+  gap: 1rem;
   padding: 1rem;
   background: rgba(10, 95, 120, 0.03);
   border-radius: 0.75rem;
   border-left: 3px solid #0a5f78;
+  transition: background-color 0.2s ease;
 }
 
-.visitItem p {
-  margin: 0.35rem 0;
-  font-size: 0.9rem;
-  color: #5f7380;
+.visitItem:hover {
+  background-color: rgba(10, 95, 120, 0.06);
+}
+
+.visitDate {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: #3b82f6;
+  min-width: 100px;
+}
+
+.visitDetails {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.visitType {
+  font-size: 0.875rem;
+  color: #6b7280;
+  text-transform: capitalize;
+}
+
+.visitComplaint {
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.visitDiagnosis {
+  font-size: 0.875rem;
+  color: #111827;
 }
 
 .detailBlock {

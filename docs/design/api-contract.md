@@ -1,7 +1,7 @@
-# OHC-AHC Frontend Migration — API Contract
+# Graphical Dashboard — API Contract
 
-**Date:** 2026-05-06
-**Phase:** 3 — Design & Prototyping
+**Project:** OHC-AHC Dashboard Redesign - Graphical Dashboard
+**Date:** 2026-05-11
 **Status:** In Progress
 
 ---
@@ -14,969 +14,360 @@
 
 ---
 
-## Authentication Endpoints
+## Existing API Endpoints (To Be Used)
 
-### POST `/api/auth/token/`
+### GET `/api/reports/dashboard-home/`
 
-**Purpose:** Obtain JWT access and refresh tokens
+**Purpose:** Fetch dashboard statistics for charts
 
-**Request:**
+**Request Parameters:**
 ```typescript
-// FormData (multipart/form-data)
 {
-  username: string;  // email or username
-  password: string;
+  period?: number;    // Days to look back (default: 30)
+  daily_monthly?: 'daily' | 'monthly';  // Aggregation level (default: 'daily')
 }
 ```
 
 **Response (200):**
 ```typescript
 {
-  access: string;   // JWT access token (5 min expiry)
-  refresh: string;  // JWT refresh token (30 days expiry)
-}
-```
-
-**Response (401):**
-```typescript
-{
-  detail: string;  // "No active account found with the given credentials"
-}
-```
-
----
-
-### POST `/api/auth/token/refresh/`
-
-**Purpose:** Refresh expired access token
-
-**Request:**
-```typescript
-{
-  refresh: string;  // Refresh token
-}
-```
-
-**Response (200):**
-```typescript
-{
-  access: string;  // New access token
-}
-```
-
----
-
-## Accounts Endpoints
-
-### GET `/api/accounts/me/`
-
-**Purpose:** Get current authenticated user information
-
-**Authentication:** Required
-
-**Response (200):**
-```typescript
-{
-  id: number;
-  email: string;
-  username: string;
-  first_name: string;
-  last_name: string;
-  role: "ADMIN" | "NURSE" | "EHS" | "HR" | "KAM" | "DOCTOR" | "EMPLOYEE";
-  phone_number?: string;
-  is_verified: boolean;
-  must_change_password: boolean;
-  created_at: string;  // ISO 8601
-  updated_at: string;  // ISO 8601
-
-  // Extended data if employee
-  employee_profile?: {
-    id: number;
-    employee_code: string;
+  visit_trends: Array<{
+    date: string;      // YYYY-MM-DD
+    count: number;     // Number of visits
+  }>,
+  department_comparison: Array<{
     department: string;
-    designation: string;
-    work_location?: string;
-    date_of_birth?: string;  // YYYY-MM-DD
-    gender?: "MALE" | "FEMALE" | "OTHER";
-    blood_group?: string;
-    date_of_joining?: string;  // YYYY-MM-DD
-    fitness_status: "FIT" | "UNFIT" | "TEMPORARY_UNFIT" | "UNDER_OBSERVATION";
-    is_active_employee: boolean;
-  };
-
-  // Extended data if doctor/nurse
-  doctor_profile?: {
-    id: number;
-    doctor_type: "OHC" | "AHC";
-    registration_number: string;
-    specialization: string;
-    qualification?: string;
-    years_of_experience: number;
-    hospital?: {
-      id: number;
-      name: string;
-      code: string;
-    };
-    consultation_fee: number;
-    is_available_for_video: boolean;
-  };
-}
-```
-
----
-
-## OHC Endpoints
-
-### GET `/api/ohc/visits/`
-
-**Purpose:** List OHC visits
-
-**Authentication:** Required
-**Query Parameters:**
-```typescript
-{
-  page?: number;       // Default: 1
-  page_size?: number;   // Default: 20
-  employee?: string;    // Employee profile ID
-  status?: string;      // Filter by visit status
-  date_from?: string;   // YYYY-MM-DD
-  date_to?: string;     // YYYY-MM-DD
-}
-```
-
-**Response (200):**
-```typescript
-{
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: Array<{
-    uuid: string;              // UUID
-    employee: {
-      id: number;
-      employee_code: string;
-      user: {
-        first_name: string;
-        last_name: string;
-      };
-    };
-    consulted_doctor: {
-      id: number;
-      user: {
-        first_name: string;
-        last_name: string;
-      };
-      registration_number: string;
-      specialization: string;
-    };
-    visit_type: "WALK_IN" | "PERIODIC" | "PRE_EMPLOYMENT" | "FOLLOW_UP" | "EMERGENCY";
-    visit_status: "OPEN" | "IN_PROGRESS" | "REFERRED" | "CLOSED" | "CANCELLED";
-    triage_level: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
-    visit_date: string;        // ISO 8601
-    chief_complaint: string;
-    symptoms: string;
-    vitals: Record<string, string>;  // JSON object
-    preliminary_notes: string;
-    requires_referral: boolean;
-    follow_up_date?: string;     // YYYY-MM-DD
-    next_action?: string;
-    closed_at?: string;         // ISO 8601
-    created_at: string;         // ISO 8601
-    updated_at: string;         // ISO 8601
-  }>;
-}
-```
-
----
-
-### POST `/api/ohc/visits/`
-
-**Purpose:** Create a new OHC visit
-
-**Authentication:** Required (NURSE, DOCTOR roles)
-
-**Request:**
-```typescript
-{
-  employee: string;            // Employee profile ID
-  consulted_doctor: string;   // Doctor profile ID (auto-filled)
-  visit_type: "WALK_IN" | "PERIODIC" | "PRE_EMPLOYMENT" | "FOLLOW_UP" | "EMERGENCY";
-  visit_status: "OPEN";       // Default
-  triage_level: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
-  visit_date: string;          // ISO 8601
-  chief_complaint: string;
-  symptoms: string;
-  vitals: Record<string, string>;  // JSON object: { temperature: "98.6", blood_pressure: "120/80", ... }
-  preliminary_notes?: string;
-  requires_referral?: boolean;  // Default: false
-  follow_up_date?: string;    // YYYY-MM-DD
-  next_action?: string;
-}
-```
-
-**Response (201):**
-```typescript
-{
-  uuid: string;
-  // ... (same as GET response)
-}
-```
-
-**Response (400):**
-```typescript
-{
-  employee: ["This field is required."];
-  visit_type: ["This field is required."];
-  // ... validation errors
-}
-```
-
----
-
-### POST `/api/ohc/diagnosis-prescriptions/`
-
-**Purpose:** Create diagnosis with associated prescriptions
-
-**Authentication:** Required (DOCTOR, NURSE roles)
-
-**Request:**
-```typescript
-{
-  visit: string;              // Visit UUID
-  diagnosed_by: string;       // Doctor profile ID (auto-filled)
-  diagnosis: {
-    diagnosis_code?: string;
+    visits: number;
+    employees: number;
+    referrals: number;
+  }>,
+  severity_breakdown: {
+    MILD: number;
+    MODERATE: number;
+    SEVERE: number;
+    CRITICAL: number;
+  },
+  common_diagnoses: Array<{
     diagnosis_name: string;
-    diagnosis_notes: string;
-    severity: "MILD" | "MODERATE" | "SERIOUS" | "CRITICAL";
-    condition_status: "ACTIVE" | "STABLE" | "RESOLVED" | "CHRONIC";  // Default: ACTIVE
-    is_primary: boolean;       // Default: true
-    is_referral_required: boolean;  // Default: false
-    fitness_decision: "FIT" | "FIT_WITH_RESTRICTION" | "TEMPORARY_UNFIT" | "UNFIT";
-    work_restrictions?: string;
-    advised_rest_days: number;  // Default: 0
-    follow_up_date?: string;    // YYYY-MM-DD
-  };
-  prescriptions?: Array<{
-    medicine_name: string;
-    dosage: string;
-    frequency: string;
-    duration_days: number;
-    route?: string;
-    instructions?: string;
-    start_date: string;        // YYYY-MM-DD
-    status: "ACTIVE" | "COMPLETED" | "STOPPED";  // Default: ACTIVE
-  }>;
-}
-```
-
-**Response (201):**
-```typescript
-{
-  diagnosis: {
-    id: number;
-    uuid: string;
-    // ... diagnosis fields
-  };
-  prescriptions: Array<{
-    id: number;
-    uuid: string;
-    // ... prescription fields
-  }>;
-}
-```
-
----
-
-### GET `/api/ohc/medical-tests/`
-
-**Purpose:** List medical tests
-
-**Authentication:** Required
-**Query Parameters:**
-```typescript
-{
-  visit?: string;     // Visit UUID
-  status?: string;     // Filter by status
-  page?: number;       // Default: 1
-  page_size?: number;   // Default: 20
-}
-```
-
-**Response (200):**
-```typescript
-{
-  count: number;
-  results: Array<{
-    uuid: string;
-    visit: string;       // Visit UUID
-    diagnosis?: {
-      id: number;
-      diagnosis_name: string;
-    };
-    requested_by: {
-      id: number;
-      user: {
-        first_name: string;
-        last_name: string;
-      };
-    };
-    test_name: string;
-    test_type: string;
-    laboratory_name?: string;
-    priority: "ROUTINE" | "URGENT" | "STAT";
-    status: "ORDERED" | "SAMPLE_COLLECTED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
-    instructions?: string;
-    result_summary?: string;
-    result_value?: string;
-    result_unit?: string;
-    completed_at?: string;
-    created_at: string;
-  }>;
-}
-```
-
----
-
-## AHC Endpoints
-
-### GET `/api/ahc/hospitals/`
-
-**Purpose:** List partner hospitals
-
-**Authentication:** Required
-
-**Query Parameters:**
-```typescript
-{
-  status?: "ACTIVE" | "INACTIVE" | "SUSPENDED";
-  speciality?: string;
-  page?: number;
-  page_size?: number;
-}
-```
-
-**Response (200):**
-```typescript
-{
-  count: number;
-  results: Array<{
-    uuid: string;
-    name: string;
-    code: string;
-    hospital_status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
-    hospital_type?: string;
-    contact_person?: string;
-    phone_number?: string;
-    email?: string;
-    address_line_1: string;
-    address_line_2?: string;
-    city: string;
-    state: string;
-    postal_code?: string;
-    country: string;          // Default: "India"
-    accreditation_number?: string;
-    specialties: Array<string>;  // JSON array
-    supports_cashless: boolean;
-    is_available_for_video: boolean;
-    created_at: string;
-  }>;
-}
-```
-
----
-
-### GET `/api/ahc/referrals/`
-
-**Purpose:** List referrals
-
-**Authentication:** Required
-
-**Query Parameters:**
-```typescript
-{
-  employee?: string;        // Employee profile ID
-  status?: string;          // Filter by status
-  priority?: string;        // Filter by priority
-  page?: number;
-  page_size?: number;
-}
-```
-
-**Response (200):**
-```typescript
-{
-  count: number;
-  results: Array<{
-    uuid: string;
-    visit: string;           // Visit UUID
-    diagnosis?: {
-      id: number;
-      diagnosis_name: string;
-    };
-    employee: {
-      id: number;
-      employee_code: string;
-      user: {
-        first_name: string;
-        last_name: string;
-      };
-    };
-    referred_by: {
-      id: number;
-      user: {
-        first_name: string;
-        last_name: string;
-      };
-    };
-    hospital?: {
-      id: number;
-      name: string;
-      code: string;
-    };
-    referral_reason: string;
-    specialist_department?: string;
-    priority: "NORMAL" | "URGENT" | "EMERGENCY";
-    referral_status: "DRAFT" | "PENDING_HOSPITAL_SELECTION" | "SENT" | "ACCEPTED" | "IN_TREATMENT" | "COMPLETED" | "REJECTED" | "CANCELLED";
-    appointment_date?: string;  // ISO 8601
-    external_case_id?: string;
-    treatment_summary?: string;
-    closure_notes?: string;
-    created_at: string;
-  }>;
-}
-```
-
----
-
-### POST `/api/ahc/referrals/`
-
-**Purpose:** Create a new referral
-
-**Authentication:** Required (DOCTOR, NURSE, ADMIN roles)
-
-**Request:**
-```typescript
-{
-  visit: string;                // Visit UUID
-  diagnosis?: string;           // Diagnosis ID
-  employee: string;             // Employee profile ID
-  referred_by: string;          // Doctor profile ID (auto-filled)
-  hospital?: string;            // Hospital UUID
-  referral_reason: string;
-  specialist_department?: string;
-  priority: "NORMAL" | "URGENT" | "EMERGENCY";  // Default: NORMAL
-  referral_status: "PENDING_HOSPITAL_SELECTION";  // Default
-}
-```
-
-**Response (201):**
-```typescript
-{
-  uuid: string;
-  // ... (same as GET response)
-}
-```
-
----
-
-### GET `/api/ahc/medical-reports/`
-
-**Purpose:** List medical reports
-
-**Authentication:** Required
-
-**Query Parameters:**
-```typescript
-{
-  employee?: string;
-  hospital?: string;
-  report_type?: "LAB" | "IMAGING" | "DISCHARGE" | "FITNESS" | "PRESCRIPTION" | "OTHER";
-  page?: number;
-  page_size?: number;
-}
-```
-
-**Response (200):**
-```typescript
-{
-  count: number;
-  results: Array<{
-    uuid: string;
-    referral?: {
-      id: number;
-      uuid: string;
-    };
-    visit?: {
-      id: number;
-      uuid: string;
-    };
-    employee: {
-      id: number;
-      employee_code: string;
-      user: {
-        first_name: string;
-        last_name: string;
-      };
-    };
-    hospital?: {
-      id: number;
-      name: string;
-    };
-    uploaded_by: {
-      id: number;
-      username: string;
-      first_name?: string;
-      last_name?: string;
-    };
-    report_type: "LAB" | "IMAGING" | "DISCHARGE" | "FITNESS" | "PRESCRIPTION" | "OTHER";
-    title: string;
-    summary?: string;
-    report_file: string;         // File URL
-    report_date: string;         // YYYY-MM-DD
-    is_confidential: boolean;
-    verification_status: "PENDING" | "VERIFIED" | "REJECTED";  // Default: PENDING
-    created_at: string;
-  }>;
-}
-```
-
----
-
-## Payments Endpoints
-
-### GET `/api/payments/invoices/`
-
-**Purpose:** List invoices
-
-**Authentication:** Required
-
-**Query Parameters:**
-```typescript
-{
-  employee?: string;
-  status?: "DRAFT" | "ISSUED" | "PARTIALLY_PAID" | "PAID" | "OVERDUE" | "CANCELLED";
-  page?: number;
-  page_size?: number;
-}
-```
-
-**Response (200):**
-```typescript
-{
-  count: number;
-  results: Array<{
-    uuid: string;
-    invoice_number: string;
-    employee: {
-      id: number;
-      employee_code: string;
-      user: {
-        first_name: string;
-        last_name: string;
-      };
-    };
-    visit?: {
-      id: number;
-      uuid: string;
-    };
-    referral?: {
-      id: number;
-      uuid: string;
-    };
-    status: "DRAFT" | "ISSUED" | "PARTIALLY_PAID" | "PAID" | "OVERDUE" | "CANCELLED";
-    currency: string;           // Default: "INR"
-    subtotal_amount: number;
-    tax_amount: number;
-    discount_amount: number;
-    total_amount: number;
-    due_date?: string;        // YYYY-MM-DD
-    issued_at?: string;        // ISO 8601
-    paid_at?: string;          // ISO 8601
-    notes?: string;
-    created_at: string;
-  }>;
-}
-```
-
----
-
-### POST `/api/payments/payments/`
-
-**Purpose:** Create a payment
-
-**Authentication:** Required
-
-**Request:**
-```typescript
-{
-  invoice: string;            // Invoice UUID
-  employee: string;           // Employee profile ID
-  amount: number;
-  payment_method: "CASH" | "CARD" | "UPI" | "NETBANKING" | "RAZORPAY";  // Default: RAZORPAY
-  payment_status: "INITIATED";  // Default
-  provider: string;           // Default: "RAZORPAY"
-  provider_order_id?: string;   // From payment gateway
-  provider_payment_id?: string;  // From payment gateway
-  provider_signature?: string;  // From payment gateway
-  transaction_reference?: string;
-}
-```
-
-**Response (201):**
-```typescript
-{
-  uuid: string;
-  // ... (same as GET response)
-}
-```
-
----
-
-## Reports Endpoints
-
-### GET `/api/reports/employee-health-history/`
-
-**Purpose:** Get complete health history for an employee
-
-**Authentication:** Required (ADMIN, HR, EHS roles)
-
-**Query Parameters:**
-```typescript
-{
-  employee: string;     // Required: Employee profile ID
-  date_from?: string;   // YYYY-MM-DD
-  date_to?: string;     // YYYY-MM-DD
-}
-```
-
-**Response (200):**
-```typescript
-{
-  employee: {
-    employee_code: string;
-    user: {
-      first_name: string;
-      last_name: string;
-    };
-    department: string;
-    designation: string;
-    date_of_joining?: string;
-    fitness_status: string;
-  };
-  visits: Array<{
-    uuid: string;
-    visit_date: string;
-    visit_type: string;
-    chief_complaint: string;
-    diagnoses: Array<{
-      diagnosis_name: string;
-      severity: string;
-      fitness_decision: string;
-      diagnosed_at: string;
+    count: number;
+    trend: Array<{
+      date: string;
+      count: number;
     }>;
-    prescriptions: Array<{
-      medicine_name: string;
-      dosage: string;
-      start_date: string;
-      end_date?: string;
-    }>;
-  }>;
-  referrals: Array<{
-    uuid: string;
-    hospital_name: string;
-    referral_status: string;
-    created_at: string;
-  }>;
+  }>,
+  recent_activity: Array<{
+    type: 'visit' | 'diagnosis' | 'referral';
+    employee_id: string;
+    employee_name: string;
+    details: string;
+    timestamp: string;
+  }>
 }
 ```
+
+**Usage In:**
+- Dashboard.tsx → VisitTrendsChart
+- Dashboard.tsx → DepartmentComparisonChart
+- Dashboard.tsx → SeverityPieChart
+- Dashboard.tsx → DiagnosisTrendLineChart
 
 ---
 
 ### GET `/api/reports/disease-trends/`
 
-**Purpose:** Get disease trends and analytics
+**Purpose:** Fetch disease trends and analytics for charts
 
-**Authentication:** Required (ADMIN, HR, EHS roles)
-
-**Query Parameters:**
+**Request Parameters:**
 ```typescript
 {
-  period: number;        // Required: days to analyze (30, 90, 180, 365)
-  severity?: string;     // Filter by severity
+  period: number;           // Days to analyze (30, 90, 180, 365)
+  severity?: string;        // Optional: MILD, MODERATE, SEVERE, CRITICAL
+  date_from?: string;       // Optional: YYYY-MM-DD
+  date_to?: string;         // Optional: YYYY-MM-DD
+  daily_monthly?: 'daily' | 'monthly';  // Aggregation level (default: 'daily')
 }
 ```
 
 **Response (200):**
 ```typescript
 {
-  period_start: string;   // YYYY-MM-DD
-  period_end: string;     // YYYY-MM-DD
   total_diagnoses: number;
+  period_start: string;     // YYYY-MM-DD
+  period_end: string;       // YYYY-MM-DD
   trends: Array<{
     diagnosis_name: string;
     count: number;
-    severity: "MILD" | "MODERATE" | "SERIOUS" | "CRITICAL";
-    percentage: number;    // % of total diagnoses
-    change_from_previous: number;  // Percentage change
-  }>;
+    severity: string;
+    percentage: number;
+    change_from_previous: number;  // Positive = increase, Negative = decrease
+    trend_data: Array<{
+      date: string;
+      count: number;
+    }>;
+  }>,
   severity_breakdown: {
     MILD: number;
     MODERATE: number;
-    SERIOUS: number;
+    SEVERE: number;
     CRITICAL: number;
-  };
+  },
+  severity_trends: {
+    MILD: Array<{ date: string; count: number }>;
+    MODERATE: Array<{ date: string; count: number }>;
+    SEVERE: Array<{ date: string; count: number }>;
+    CRITICAL: Array<{ date: string; count: number }>;
+  }
 }
 ```
+
+**Usage In:**
+- DiseaseTrends.tsx → DiagnosisAreaChart
+- DiseaseTrends.tsx → SeverityTrendChart
 
 ---
 
 ### GET `/api/reports/department-health-stats/`
 
-**Purpose:** Get health statistics by department
+**Purpose:** Fetch department health statistics for charts
 
-**Authentication:** Required (ADMIN, HR, EHS roles)
-
-**Query Parameters:**
+**Request Parameters:**
 ```typescript
 {
-  period: number;        // Required: days to analyze (30, 90, 180, 365)
-  department?: string;   // Filter by department name
+  period: number;           // Days to analyze (30, 90, 180, 365)
+  department?: string;      // Optional: Filter by department
+  date_from?: string;       // Optional: YYYY-MM-DD
+  date_to?: string;         // Optional: YYYY-MM-DD
+  daily_monthly?: 'daily' | 'monthly';  // Aggregation level (default: 'daily')
 }
 ```
 
 **Response (200):**
 ```typescript
 {
-  period_start: string;
-  period_end: string;
   summary: {
     total_departments: number;
     total_employees: number;
     total_visits: number;
     total_referrals: number;
-    avg_health_index: number;
-  };
+  },
   departments: Array<{
     department: string;
     total_employees: number;
     total_visits: number;
     referred_cases: number;
     unfit_employees: number;
-    health_index: number;     // (visits / employees) * 100
-    top_diagnosis: {
-      diagnosis_name: string;
-      count: number;
-    };
-  }>;
+    health_index: number;    // 0-100
+    visit_trend: Array<{
+      date: string;
+      visits: number;
+      referrals: number;
+    }>;
+  }>
+}
+```
+
+**Usage In:**
+- DepartmentStats.tsx → HealthIndexGauge
+- DepartmentStats.tsx → VisitsReferralsStackedBar
+
+---
+
+## Data Transformation Functions
+
+### Transform Dashboard Data
+
+```typescript
+// Transform API response to chart data format
+function transformDashboardData(apiResponse: DashboardApiResponse): DashboardChartData {
+  return {
+    visitTrends: apiResponse.visit_trends.map(item => ({
+      date: new Date(item.date),
+      count: item.count
+    })),
+    departmentComparison: apiResponse.department_comparison.map(item => ({
+      name: item.department,
+      visits: item.visits,
+      employees: item.employees,
+      referrals: item.referrals
+    })),
+    severityBreakdown: Object.entries(apiResponse.severity_breakdown).map(([key, value]) => ({
+      severity: key,
+      count: value,
+      color: getSeverityColor(key)
+    })),
+    diagnosisTrends: apiResponse.common_diagnoses.slice(0, 5).map(item => ({
+      diagnosis: item.diagnosis_name,
+      data: item.trend.map(t => ({
+        date: new Date(t.date),
+        count: t.count
+      })),
+      color: getDiagnosisColor(item.diagnosis_name)
+    }))
+  };
+}
+```
+
+### Transform Disease Trends Data
+
+```typescript
+function transformDiseaseTrendsData(apiResponse: DiseaseTrendsApiResponse): DiseaseTrendsChartData {
+  return {
+    diagnosisArea: apiResponse.trends.slice(0, 5).map(item => ({
+      diagnosis: item.diagnosis_name,
+      data: item.trend_data.map(t => ({
+        date: new Date(t.date),
+        count: t.count
+      })),
+      color: getDiagnosisColor(item.diagnosis_name)
+    })),
+    severityTrends: Object.entries(apiResponse.severity_trends).map(([severity, data]) => ({
+      severity,
+      data: data.map(t => ({
+        date: new Date(t.date),
+        count: t.count
+      })),
+      color: getSeverityColor(severity)
+    }))
+  };
+}
+```
+
+### Transform Department Stats Data
+
+```typescript
+function transformDepartmentStatsData(apiResponse: DepartmentStatsApiResponse): DepartmentStatsChartData {
+  return {
+    healthIndex: apiResponse.departments.map(dept => ({
+      department: dept.department,
+      healthIndex: dept.health_index,
+      visits: dept.total_visits,
+      referrals: dept.referred_cases,
+      unfit: dept.unfit_employees
+    })),
+    visitsReferrals: apiResponse.departments.map(dept => ({
+      department: dept.department,
+      visits: dept.total_visits,
+      referrals: dept.referred_cases
+    }))
+  };
+}
+```
+
+### Daily/Monthly Aggregation
+
+```typescript
+function aggregateByPeriod(
+  data: Array<{ date: string; count: number }>,
+  period: 'daily' | 'monthly'
+): Array<{ date: string; count: number }> {
+  if (period === 'daily') {
+    return data;
+  }
+
+  // Monthly aggregation
+  const monthlyData: Record<string, number> = {};
+
+  data.forEach(item => {
+    const date = new Date(item.date);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    monthlyData[monthKey] = (monthlyData[monthKey] || 0) + item.count;
+  });
+
+  return Object.entries(monthlyData).map(([month, count]) => ({
+    date: month,
+    count
+  }));
 }
 ```
 
 ---
 
-### GET `/api/reports/notifications/`
+## Color Helper Functions
 
-**Purpose:** Get user notifications
-
-**Authentication:** Required
-
-**Query Parameters:**
 ```typescript
-{
-  type?: "APPOINTMENT" | "REFERRAL" | "PAYMENT" | "REPORT" | "FITNESS_ALERT" | "GENERAL";
-  unread_only?: boolean;
-  page?: number;
-  page_size?: number;
+function getSeverityColor(severity: string): string {
+  const colors = {
+    MILD: '#10b981',      // Green
+    MODERATE: '#f59e0b',  // Yellow
+    SEVERE: '#f97316',   // Orange
+    CRITICAL: '#ef4444'   // Red
+  };
+  return colors[severity as keyof typeof colors] || '#6b7280';
 }
-```
 
-**Response (200):**
-```typescript
-{
-  count: number;
-  unread_count: number;
-  results: Array<{
-    uuid: string;
-    title: string;
-    message: string;
-    notification_type: string;
-    channel: "IN_APP" | "EMAIL" | "SMS" | "WHATSAPP";
-    delivery_status: "PENDING" | "SENT" | "FAILED" | "READ";
-    scheduled_for?: string;
-    sent_at?: string;
-    read_at?: string;
-    related_model?: string;
-    related_object_uuid?: string;
-    created_at: string;
-  }>;
+function getDiagnosisColor(diagnosis: string): string {
+  // Hash-based color generation for consistent colors
+  const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+  const hash = diagnosis.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return colors[hash % colors.length];
+}
+
+function getHealthIndexColor(index: number): string {
+  if (index >= 80) return '#10b981';    // Green
+  if (index >= 60) return '#f59e0b';    // Yellow
+  return '#ef4444';                     // Red
 }
 ```
 
 ---
 
-### GET `/api/reports/audit-logs/`
+## Error Handling
 
-**Purpose:** Get system audit logs
+### API Error Response Format
 
-**Authentication:** Required (ADMIN role only)
-
-**Query Parameters:**
 ```typescript
-{
-  module?: string;       // Filter by module name
-  action?: string;       // Filter by action
-  actor?: number;        // Filter by user ID
-  date_from?: string;
-  date_to?: string;
-  page?: number;
-  page_size?: number;
+interface ApiError {
+  detail: string;          // Human-readable error message
+  code?: string;          // Error code for client handling
+  errors?: Record<string, string[]>;  // Validation errors
 }
 ```
 
-**Response (200):**
+### Error Handling Strategy
+
 ```typescript
-{
-  count: number;
-  results: Array<{
-    uuid: string;
-    actor?: {
-      id: number;
-      username: string;
-    };
-    module: string;
-    action: string;
-    target_model: string;
-    target_object_uuid: string;
-    object_snapshot: Record<string, any>;
-    ip_address?: string;
-    user_agent?: string;
-    remarks?: string;
-    created_at: string;
-  }>;
+async function fetchChartData<T>(
+  endpoint: string,
+  params: Record<string, any>
+): Promise<T> {
+  try {
+    const response = await api.get<T>(endpoint, { params });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const apiError = error.response?.data as ApiError;
+      throw new Error(apiError?.detail || 'Failed to load chart data');
+    }
+    throw new Error('An unexpected error occurred');
+  }
 }
 ```
 
 ---
 
-## Export Endpoints
+## Performance Considerations
 
-### GET `/exports/employee-health-history.csv`
+### Request Optimization
 
-**Purpose:** Export employee health history to Excel/CSV
+1. **Caching:** Use React Query or SWR for data caching
+2. **Debouncing:** Debounce date range picker changes
+3. **Parallel Requests:** Fetch multiple endpoints in parallel when possible
+4. **Request Cancellation:** Cancel pending requests on unmount
 
-**Authentication:** Required
-
-**Query Parameters:**
-```typescript
-{
-  employee: string;     // Required
-  date_from?: string;
-  date_to?: string;
-}
-```
-
-**Response (200):**
-```
-Content-Type: text/csv
-Content-Disposition: attachment; filename="employee_history.csv"
-
-Employee Code,Employee Name,Department,Visit Date,Visit Type,Diagnosis,Severity,Fitness Decision
-EMP-001,John Doe,Engineering,2026-05-01,WALK_IN,Headache,MILD,FIT
-...
-```
-
----
-
-### GET `/exports/department-health-stats.csv`
-
-**Purpose:** Export department health statistics to Excel/CSV
-
-**Authentication:** Required
-
-**Query Parameters:**
-```typescript
-{
-  period: number;        // Required
-  department?: string;
-}
-```
-
-**Response (200):**
-```
-Content-Type: text/csv
-Content-Disposition: attachment; filename="department_stats.csv"
-
-Department,Employees,Visits,Referrals,Unfit Employees,Health Index (%)
-Engineering,150,45,12,3,30
-...
-```
-
----
-
-### GET `/exports/analytics-summary.pdf`
-
-**Purpose:** Export analytics summary to PDF
-
-**Authentication:** Required
-
-**Query Parameters:**
-```typescript
-{
-  period: number;        // Required
-  report_type?: "summary" | "detailed" | "trends";
-}
-```
-
-**Response (200):**
-```
-Content-Type: application/pdf
-Content-Disposition: attachment; filename="analytics_summary.pdf"
-
-[PDF binary content]
-```
-
----
-
-## Error Response Format
-
-All error responses follow this format:
+### Caching Strategy
 
 ```typescript
-{
-  detail: string;  // Human-readable error message
-  // OR for validation errors
-  field_name: Array<string>;  // ["This field is required."]
-}
+// Using React Query
+const { data, isLoading, error } = useQuery({
+  queryKey: ['dashboard', period, dailyMonthly],
+  queryFn: () => fetchDashboardData({ period, daily_monthly: dailyMonthly }),
+  staleTime: 5 * 60 * 1000,  // 5 minutes
+  cacheTime: 10 * 60 * 1000  // 10 minutes
+});
 ```
-
-**Status Codes:**
-- `200 OK` — Success
-- `201 Created` — Resource created
-- `400 Bad Request` — Validation error
-- `401 Unauthorized` — Invalid/missing token
-- `403 Forbidden` — Insufficient permissions
-- `404 Not Found` — Resource not found
-- `422 Unprocessable Entity` — Business logic error
-- `500 Internal Server Error` — Server error
-
----
-
-## Pagination
-
-All list endpoints support pagination via `page` and `page_size` query parameters.
-
-**Default values:**
-- `page`: 1
-- `page_size`: 20
-
-**Response includes:**
-- `count`: Total number of items
-- `next`: URL of next page (or `null`)
-- `previous`: URL of previous page (or `null`)
-- `results`: Array of items
 
 ---
 
 **Phase 3 Output:** `docs/design/api-contract.md`
 
-**Next:** Data Model document
+**✅ Phase 3 complete. Shall I continue to Phase 4 — Development? (yes/no)**
