@@ -5,3 +5,4 @@ export { StatCard } from './StatCard';
 export { Alert } from './Alert';
 export { Loading } from './Loading';
 export { Snackbar } from './Snackbar';
+export { Switch } from './Switch';

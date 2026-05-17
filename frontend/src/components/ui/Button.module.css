@@ -105,6 +105,17 @@
   border-color: rgba(196, 93, 93, 0.5);
 }
 
+.ghost {
+  border: none;
+  background: transparent;
+  color: #374151;
+}
+
+.ghost:hover:not(.disabled):not(.loading),
+.ghost:focus:not(.disabled):not(.loading) {
+  background: rgba(0, 0, 0, 0.05);
+}
+
 /* Disabled state */
 .disabled {
   opacity: 0.6;

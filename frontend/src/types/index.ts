@@ -22,10 +22,10 @@ export interface AuthResponse {
 
 export interface User {
   id: number;
-  email: string;
   username: string;
   first_name: string;
   last_name: string;
+  email: string;
   role: Role;
   phone_number?: string;
   is_verified: boolean;
@@ -110,7 +110,7 @@ export interface Vitals {
 }
 
 export interface OHCVisit {
-  uuid: string;
+  id: number;
   employee: {
     id: number;
     employee_code: string;
@@ -134,6 +134,7 @@ export interface OHCVisit {
   follow_up_date?: string;
   next_action?: string;
   created_at: string;
+  updated_at: string;
 }
 
 export const Severity = {
@@ -153,9 +154,9 @@ export const FitnessDecision = {
 export type FitnessDecision = (typeof FitnessDecision)[keyof typeof FitnessDecision];
 
 export interface Diagnosis {
-  uuid: string;
-  visit: string;
-  diagnosed_by: string;
+  id: number;
+  visit: string | OHCVisit;
+  diagnosed_by: string | DoctorProfile;
   diagnosis_code?: string;
   diagnosis_name: string;
   diagnosis_notes?: string;
@@ -165,11 +166,13 @@ export interface Diagnosis {
   advised_rest_days: number;
   follow_up_date?: string;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Prescription {
-  uuid: string;
-  visit: string;
+  id: number;
+  visit: string | OHCVisit;
+  diagnosis: string | Diagnosis;
   medicine_name: string;
   dosage: string;
   frequency: string;
@@ -196,7 +199,7 @@ export const HospitalStatus = {
 export type HospitalStatus = (typeof HospitalStatus)[keyof typeof HospitalStatus];
 
 export interface Hospital {
-  uuid: string;
+  id: number;
   name: string;
   code: string;
   hospital_status: HospitalStatus;
@@ -210,6 +213,8 @@ export interface Hospital {
   specialties: string[];
   supports_cashless: boolean;
   is_available_for_video: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export const ReferralPriority = {
@@ -232,8 +237,8 @@ export const ReferralStatus = {
 export type ReferralStatus = (typeof ReferralStatus)[keyof typeof ReferralStatus];
 
 export interface Referral {
-  uuid: string;
-  visit: string;
+  id: number;
+  visit: string | OHCVisit;
   employee: {
     id: number;
     employee_code: string;
@@ -254,6 +259,7 @@ export interface Referral {
   referral_status: ReferralStatus;
   appointment_date?: string;
   created_at: string;
+  updated_at: string;
 }
 
 // Payments Types
@@ -268,7 +274,7 @@ export const InvoiceStatus = {
 export type InvoiceStatus = (typeof InvoiceStatus)[keyof typeof InvoiceStatus];
 
 export interface Invoice {
-  uuid: string;
+  id: number;
   invoice_number: string;
   employee: {
     id: number;
@@ -284,6 +290,7 @@ export interface Invoice {
   paid_at?: string;
   notes?: string;
   created_at: string;
+  updated_at: string;
 }
 
 export const PaymentMethod = {
@@ -296,7 +303,7 @@ export const PaymentMethod = {
 export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod];
 
 export interface Payment {
-  uuid: string;
+  id: number;
   invoice: string;
   employee: string;
   amount: number;
@@ -318,7 +325,7 @@ export interface EmployeeHealthHistory {
     fitness_status: string;
   };
   visits: Array<{
-    uuid: string;
+    id: number;
     visit_date: string;
     visit_type: string;
     triage_level: string;
@@ -344,7 +351,7 @@ export interface EmployeeHealthHistory {
     }>;
   }>;
   referrals: Array<{
-    uuid: string;
+    id: number;
     hospital_name: string;
     referral_status: string;
     created_at: string;
@@ -356,7 +363,7 @@ export interface EmployeeHealthHistoryList {
   records: Array<{
     employee_code: string;
     employee_name: string;
-    visit_uuid: string;
+    visit_id: number;
     visit_date: string;
     visit_status: string;
     doctor_name: string;
@@ -445,8 +452,8 @@ export interface SnackbarMessage {
 
 // Form Types
 export interface OHCVisitFormData {
-  employee: string;
-  consulted_doctor: string;
+  employee: number;
+  consulted_doctor?: number;
   visit_type: VisitType;
   triage_level: TriageLevel;
   visit_date: string;
@@ -460,8 +467,8 @@ export interface OHCVisitFormData {
 }
 
 export interface DiagnosisFormData {
-  visit: string;
-  diagnosed_by: string;
+  visit: number;
+  diagnosed_by: number;
   diagnosis: {
     diagnosis_code?: string;
     diagnosis_name: string;
@@ -489,19 +496,19 @@ export interface PrescriptionFormData {
 }
 
 export interface ReferralFormData {
-  visit: string;
-  diagnosis?: string;
-  employee: string;
-  referred_by: string;
-  hospital?: string;
+  visit: number;
+  diagnosis?: number;
+  employee: number;
+  referred_by: number;
+  hospital?: number;
   referral_reason: string;
   specialist_department?: string;
   priority: ReferralPriority;
 }
 
 export interface PaymentFormData {
-  invoice: string;
-  employee: string;
+  invoice: number;
+  employee: number;
   amount: number;
   payment_method: PaymentMethod;
   provider?: string;

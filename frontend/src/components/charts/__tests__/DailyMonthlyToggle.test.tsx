@@ -19,8 +19,9 @@ describe('DailyMonthlyToggle', () => {
     const dailyBtn = screen.getByRole('button', { name: 'View by day' });
     const monthlyBtn = screen.getByRole('button', { name: 'View by month' });
 
-    expect(dailyBtn).toHaveClass('active');
-    expect(monthlyBtn).not.toHaveClass('active');
+    // CSS modules generate hashed class names, so use aria-pressed to check active state
+    expect(dailyBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(monthlyBtn).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('should call onChange when button is clicked', async () => {

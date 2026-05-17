@@ -31,12 +31,12 @@ export const EmployeeVisitTypeChart: React.FC<EmployeeVisitTypeChartProps> = ({
   loading = false,
 }) => {
   if (loading) {
-    return <div className={styles.skeleton} style={{ height }} />;
+    return <div className={styles.skeleton} style={{ height }} data-testid="chart-skeleton" />;
   }
 
   if (data.length === 0) {
     return (
-      <div className={styles.empty} style={{ height }}>
+      <div className={styles.empty} style={{ height }} data-testid="chart-empty">
         <p>No visit type data available</p>
       </div>
     );
@@ -57,7 +57,7 @@ export const EmployeeVisitTypeChart: React.FC<EmployeeVisitTypeChartProps> = ({
   };
 
   return (
-    <div className={styles.chartContainer} style={{ height }}>
+    <div className={styles.chartContainer} style={{ height }} data-testid="chart-container">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />

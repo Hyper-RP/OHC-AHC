@@ -20,16 +20,15 @@ interface EmployeeDiagnosisDonutChartProps {
 export const EmployeeDiagnosisDonutChart: React.FC<EmployeeDiagnosisDonutChartProps> = ({
   data,
   height = 300,
-  maxItems = 5,
   loading = false,
 }) => {
   if (loading) {
-    return <div className={styles.skeleton} style={{ height }} />;
+    return <div className={styles.skeleton} style={{ height }} data-testid="chart-skeleton" />;
   }
 
   if (data.length === 0) {
     return (
-      <div className={styles.empty} style={{ height }}>
+      <div className={styles.empty} style={{ height }} data-testid="chart-empty">
         <p>No diagnosis data available</p>
       </div>
     );
@@ -52,7 +51,9 @@ export const EmployeeDiagnosisDonutChart: React.FC<EmployeeDiagnosisDonutChartPr
   };
 
   const CustomLabel = ({ viewBox }: any) => {
+    if (!viewBox) return null;
     const { cx, cy } = viewBox;
+    if (cx === undefined || cy === undefined) return null;
     return (
       <text x={cx} y={cy} dy={-10} textAnchor="middle" className={styles.centerLabel}>
         {totalCount}
@@ -61,7 +62,7 @@ export const EmployeeDiagnosisDonutChart: React.FC<EmployeeDiagnosisDonutChartPr
   };
 
   return (
-    <div className={styles.chartContainer} style={{ height }}>
+    <div className={styles.chartContainer} style={{ height }} data-testid="chart-container">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie

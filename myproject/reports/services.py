@@ -67,7 +67,7 @@ def notify_employee_health_status(employee_profile, diagnosis):
         message=message,
         notification_type=Notification.NotificationType.FITNESS_ALERT,
         related_model="Diagnosis",
-        related_object_uuid=str(diagnosis.uuid),
+        related_object_uuid=str(diagnosis.id),
     )
 
 
@@ -84,7 +84,7 @@ def notify_follow_up(employee_profile, visit):
         ),
         notification_type=Notification.NotificationType.APPOINTMENT,
         related_model="OHCVisit",
-        related_object_uuid=str(visit.uuid),
+        related_object_uuid=str(visit.id),
     )
 
 
@@ -101,7 +101,7 @@ def notify_referral(employee_profile, referral):
         ),
         notification_type=Notification.NotificationType.REFERRAL,
         related_model="Referral",
-        related_object_uuid=str(referral.uuid),
+        related_object_uuid=str(referral.id),
     )
 
 
@@ -123,7 +123,7 @@ def generate_expired_certificate_alerts():
                 ),
                 notification_type=Notification.NotificationType.FITNESS_ALERT,
                 related_model="EmployeeProfile",
-                related_object_uuid=str(profile.uuid),
+                related_object_uuid=str(profile.id),
             )
         )
     return alerts
@@ -147,7 +147,7 @@ def generate_upcoming_checkup_alerts(days_ahead=7):
                 ),
                 notification_type=Notification.NotificationType.APPOINTMENT,
                 related_model="OHCVisit",
-                related_object_uuid=str(visit.uuid),
+                related_object_uuid=str(visit.id),
                 scheduled_for=timezone.now(),
             )
         )

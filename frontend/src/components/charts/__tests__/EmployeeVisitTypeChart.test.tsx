@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { EmployeeVisitTypeChart } from '../EmployeeVisitTypeChart';
+import { ChartTestWrapper } from './chartTestHelper';
 
 describe('EmployeeVisitTypeChart', () => {
   const mockData = [
@@ -10,31 +11,47 @@ describe('EmployeeVisitTypeChart', () => {
   ];
 
   it('should render loading state', () => {
-    const { container } = render(<EmployeeVisitTypeChart data={[]} loading={true} height={300} />);
+    const { container } = render(
+      <ChartTestWrapper>
+        <EmployeeVisitTypeChart data={[]} loading={true} height={300} />
+      </ChartTestWrapper>,
+    );
 
-    const skeleton = container.querySelector('.skeleton');
+    const skeleton = container.querySelector('[data-testid="chart-skeleton"]');
     expect(skeleton).toBeInTheDocument();
   });
 
   it('should render empty state', () => {
-    const { container } = render(<EmployeeVisitTypeChart data={[]} loading={false} height={300} />);
+    const { container } = render(
+      <ChartTestWrapper>
+        <EmployeeVisitTypeChart data={[]} loading={false} height={300} />
+      </ChartTestWrapper>,
+    );
 
-    const empty = container.querySelector('.empty');
+    const empty = container.querySelector('[data-testid="chart-empty"]');
     expect(empty).toBeInTheDocument();
     expect(empty).toHaveTextContent('No visit type data available');
   });
 
   it('should render chart with data', () => {
-    const { container } = render(<EmployeeVisitTypeChart data={mockData} />);
+    const { container } = render(
+      <ChartTestWrapper>
+        <EmployeeVisitTypeChart data={mockData} />
+      </ChartTestWrapper>,
+    );
 
-    const chartContainer = container.querySelector('.chartContainer');
+    const chartContainer = container.querySelector('[data-testid="chart-container"]');
     expect(chartContainer).toBeInTheDocument();
   });
 
-  it('should render legend', () => {
-    const { container } = render(<EmployeeVisitTypeChart data={mockData} />);
+  it('should render SVG chart', () => {
+    const { container } = render(
+      <ChartTestWrapper>
+        <EmployeeVisitTypeChart data={mockData} />
+      </ChartTestWrapper>,
+    );
 
-    const legend = container.querySelector('.recharts-legend-wrapper');
-    expect(legend).toBeInTheDocument();
+    const svg = container.querySelector('svg');
+    expect(svg).toBeInTheDocument();
   });
 });

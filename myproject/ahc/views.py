@@ -10,14 +10,14 @@ from ahc.serializers import HospitalSerializer, MedicalReportSerializer, Referra
 class HospitalViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = HospitalSerializer
     permission_classes = [permissions.IsAuthenticated, HasHealthPortalAccess]
-    lookup_field = 'uuid'
+    lookup_field = 'id'
     queryset = Hospital.objects.filter(hospital_status=Hospital.HospitalStatus.ACTIVE).order_by("name")
 
 
 class ReferralViewSet(viewsets.ModelViewSet):
     serializer_class = ReferralSerializer
     permission_classes = [permissions.IsAuthenticated]
-    lookup_field = 'uuid'
+    lookup_field = 'id'
 
     def get_permissions(self):
         if self.action in {"create", "update", "partial_update", "destroy", "select_hospital"}:
@@ -73,7 +73,7 @@ class MedicalReportViewSet(
 ):
     serializer_class = MedicalReportSerializer
     permission_classes = [permissions.IsAuthenticated]
-    lookup_field = 'uuid'
+    lookup_field = 'id'
 
     def get_permissions(self):
         if self.action == "create":

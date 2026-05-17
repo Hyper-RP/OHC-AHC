@@ -61,7 +61,7 @@ def build_employee_health_history(employee_queryset=None):
             {
                 "employee_code": visit.employee.employee_code,
                 "employee_name": visit.employee.user.get_full_name() or visit.employee.user.username,
-                "visit_uuid": visit.uuid,
+                "visit_uuid": visit.id,
                 "visit_date": visit.visit_date,
                 "visit_status": visit.visit_status,
                 "doctor_name": visit.consulted_doctor.user.get_full_name() or visit.consulted_doctor.user.username,
@@ -164,7 +164,7 @@ def build_employee_health_history_detail(employee):
         },
         "visits": [
             {
-                "uuid": str(v.uuid),
+                "uuid": str(v.id),
                 "visit_date": str(v.visit_date.date()) if hasattr(v.visit_date, "date") else str(v.visit_date),
                 "visit_type": v.visit_type,
                 "triage_level": v.triage_level,
@@ -213,7 +213,7 @@ def build_employee_health_history_detail(employee):
         ],
         "referrals": [
             {
-                "uuid": str(r.uuid),
+                "uuid": str(r.id),
                 "hospital_name": r.hospital.name if r.hospital else "Unknown",
                 "referral_status": r.referral_status,
                 "created_at": str(r.created_at.date()) if hasattr(r.created_at, "date") else str(r.created_at),
