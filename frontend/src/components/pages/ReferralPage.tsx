@@ -44,7 +44,16 @@ export const ReferralPage: React.FC = () => {
 
     setLoading(true);
     try {
-      await createReferral(formData);
+      await createReferral({
+        visit: parseInt(formData.visit, 10) || 0,
+        diagnosis: formData.diagnosis ? parseInt(formData.diagnosis, 10) : undefined,
+        employee: parseInt(formData.employee, 10) || 0,
+        referred_by: parseInt(formData.referred_by, 10) || 0,
+        hospital: formData.hospital ? parseInt(formData.hospital, 10) : undefined,
+        referral_reason: formData.referral_reason,
+        specialist_department: formData.specialist_department,
+        priority: formData.priority,
+      });
       show('Referral created successfully!', 'success');
       navigate('/dashboard');
     } catch (err) {

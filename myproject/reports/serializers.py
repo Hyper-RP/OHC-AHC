@@ -4,7 +4,7 @@ from reports.models import AuditLog, Notification
 
 
 class EmployeeHealthHistorySerializer(serializers.Serializer):
-    visit_uuid = serializers.UUIDField()
+    visit_id = serializers.IntegerField()
     visit_date = serializers.DateTimeField()
     visit_status = serializers.CharField()
     doctor_name = serializers.CharField()
@@ -16,12 +16,10 @@ class EmployeeHealthHistorySerializer(serializers.Serializer):
     referral_status = serializers.CharField(allow_blank=True)
     report_count = serializers.IntegerField()
 
-
 class DiseaseTrendSerializer(serializers.Serializer):
     diagnosis_name = serializers.CharField()
     severity = serializers.CharField()
     total_cases = serializers.IntegerField()
-
 
 class DepartmentHealthStatSerializer(serializers.Serializer):
     department = serializers.CharField()
@@ -30,14 +28,14 @@ class DepartmentHealthStatSerializer(serializers.Serializer):
     referred_cases = serializers.IntegerField()
     unfit_employees = serializers.IntegerField()
 
-
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = "__all__"
-
+        read_only_fields = ("id", "created_at", "updated_at")
 
 class AuditLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = AuditLog
         fields = "__all__"
+        read_only_fields = ("id", "created_at", "updated_at")

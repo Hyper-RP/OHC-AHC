@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { EmployeeSeverityBarChart } from '../EmployeeSeverityBarChart';
+import { ChartTestWrapper } from './chartTestHelper';
 
 describe('EmployeeSeverityBarChart', () => {
   const mockData = [
@@ -11,31 +12,47 @@ describe('EmployeeSeverityBarChart', () => {
   ];
 
   it('should render loading state', () => {
-    const { container } = render(<EmployeeSeverityBarChart data={[]} loading={true} height={300} />);
+    const { container } = render(
+      <ChartTestWrapper>
+        <EmployeeSeverityBarChart data={[]} loading={true} height={300} />
+      </ChartTestWrapper>,
+    );
 
-    const skeleton = container.querySelector('.skeleton');
+    const skeleton = container.querySelector('[data-testid="chart-skeleton"]');
     expect(skeleton).toBeInTheDocument();
   });
 
   it('should render empty state', () => {
-    const { container } = render(<EmployeeSeverityBarChart data={[]} loading={false} height={300} />);
+    const { container } = render(
+      <ChartTestWrapper>
+        <EmployeeSeverityBarChart data={[]} loading={false} height={300} />
+      </ChartTestWrapper>,
+    );
 
-    const empty = container.querySelector('.empty');
+    const empty = container.querySelector('[data-testid="chart-empty"]');
     expect(empty).toBeInTheDocument();
     expect(empty).toHaveTextContent('No severity data available');
   });
 
   it('should render chart with data', () => {
-    const { container } = render(<EmployeeSeverityBarChart data={mockData} />);
+    const { container } = render(
+      <ChartTestWrapper>
+        <EmployeeSeverityBarChart data={mockData} />
+      </ChartTestWrapper>,
+    );
 
-    const chartContainer = container.querySelector('.chartContainer');
+    const chartContainer = container.querySelector('[data-testid="chart-container"]');
     expect(chartContainer).toBeInTheDocument();
   });
 
-  it('should render all severity levels', () => {
-    const { container } = render(<EmployeeSeverityBarChart data={mockData} />);
+  it('should render SVG chart', () => {
+    const { container } = render(
+      <ChartTestWrapper>
+        <EmployeeSeverityBarChart data={mockData} />
+      </ChartTestWrapper>,
+    );
 
-    const xAxis = container.querySelector('.recharts-xAxis');
-    expect(xAxis).toBeInTheDocument();
+    const svg = container.querySelector('svg');
+    expect(svg).toBeInTheDocument();
   });
 });

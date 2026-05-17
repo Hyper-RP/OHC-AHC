@@ -227,24 +227,28 @@ export const AddMedicine: React.FC = () => {
           <div className={styles.actionGrid}>
             <FormInput
               label="Medicine ID"
+              name="medicine-id"
               value={newMedicine.id}
               onChange={(value) => handleChange('id', value)}
               placeholder="MED-001"
             />
             <FormInput
               label="Medicine Name"
+              name="medicine-name"
               value={newMedicine.name}
               onChange={(value) => handleChange('name', value)}
               placeholder="Paracetamol 650"
             />
             <FormInput
               label="Unit"
+              name="unit"
               value={newMedicine.unit}
               onChange={(value) => handleChange('unit', value)}
               placeholder="tablets"
             />
             <FormInput
               label="Opening Stock"
+              name="stock"
               type="number"
               value={newMedicine.stock}
               onChange={(value) => handleChange('stock', value)}
@@ -252,6 +256,7 @@ export const AddMedicine: React.FC = () => {
             />
             <FormInput
               label="Reorder Level"
+              name="reorder-level"
               type="number"
               value={newMedicine.reorderLevel}
               onChange={(value) => handleChange('reorderLevel', value)}
@@ -259,18 +264,21 @@ export const AddMedicine: React.FC = () => {
             />
             <FormInput
               label="Batch"
+              name="batch"
               value={newMedicine.batch}
               onChange={(value) => handleChange('batch', value)}
               placeholder="PCM-24-A"
             />
             <FormInput
               label="Expiry Date"
+              name="expiry"
               type="date"
               value={newMedicine.expiry}
               onChange={(value) => handleChange('expiry', value)}
             />
             <FormInput
               label="Supplier"
+              name="supplier"
               value={newMedicine.supplier}
               onChange={(value) => handleChange('supplier', value)}
               placeholder="Supplier name"

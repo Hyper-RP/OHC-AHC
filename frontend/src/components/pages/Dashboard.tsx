@@ -10,8 +10,6 @@ import {
   SeverityPieChart,
   DiagnosisTrendLineChart,
 } from '../charts';
-import { transformDashboardData } from '../../utils/charts/transformers';
-import { getDashboardStats } from '../../services/reports';
 import styles from './Dashboard.module.css';
 
 /**
@@ -57,7 +55,7 @@ export const Dashboard: React.FC = () => {
         setChartLoading(true);
         // Using dummy data as requested
         await new Promise((resolve) => setTimeout(resolve, 800)); // Simulate network delay
-        
+
         const dummyData = {
           visitTrends: [
             { date: new Date('2026-05-01'), count: 12 },
@@ -69,16 +67,16 @@ export const Dashboard: React.FC = () => {
             { date: new Date('2026-05-07'), count: 35 },
           ],
           departmentComparison: [
-            { name: 'Engineering', visits: 120, referrals: 15 },
-            { name: 'HR', visits: 45, referrals: 2 },
-            { name: 'Operations', visits: 85, referrals: 8 },
-            { name: 'Sales', visits: 60, referrals: 5 },
+            { department: 'Engineering', visits: 120, employees: 45, referrals: 15 },
+            { department: 'HR', visits: 45, employees: 12, referrals: 2 },
+            { department: 'Operations', visits: 85, employees: 30, referrals: 8 },
+            { department: 'Sales', visits: 60, employees: 20, referrals: 5 },
           ],
           severityBreakdown: [
-            { name: 'MILD', value: 65 },
-            { name: 'MODERATE', value: 25 },
-            { name: 'SERIOUS', value: 8 },
-            { name: 'CRITICAL', value: 2 },
+            { severity: 'MILD', count: 65, color: '#10b981' },
+            { severity: 'MODERATE', count: 25, color: '#f59e0b' },
+            { severity: 'SEVERE', count: 8, color: '#f97316' },
+            { severity: 'CRITICAL', count: 2, color: '#ef4444' },
           ],
           diagnosisTrends: [
             {
@@ -116,7 +114,7 @@ export const Dashboard: React.FC = () => {
             }
           ]
         };
-        
+
         setChartData(dummyData);
         setChartError(null);
       } catch (error) {
@@ -135,6 +133,7 @@ export const Dashboard: React.FC = () => {
     return <Loading fullScreen text="Loading dashboard..." />;
   }
 
+  /* Commented out - sections are not currently used
   const quickActions = [
     {
       title: 'New OHC Visit',
@@ -200,6 +199,7 @@ export const Dashboard: React.FC = () => {
       trendColor: 'success' as const,
     },
   ];
+  */
 
   return (
     <div className={styles.dashboard}>
@@ -261,7 +261,7 @@ export const Dashboard: React.FC = () => {
           </ChartContainer>
         </section>
 
-        <section className={styles.welcomeSection}>
+        {/* <section className={styles.welcomeSection}>
           <div className={styles.welcomeContent}>
             <h1>Welcome to OHC-AHC Health Portal</h1>
             <p>
@@ -269,9 +269,9 @@ export const Dashboard: React.FC = () => {
               comprehensive health reports.
             </p>
           </div>
-        </section>
+        </section> */}
 
-        <section className={styles.actionsSection}>
+        {/* <section className={styles.actionsSection}>
           <h2 className={styles.sectionTitle}>Quick Actions</h2>
           <div className={styles.actionsGrid}>
             {quickActions.map((action) => (
@@ -284,26 +284,26 @@ export const Dashboard: React.FC = () => {
               </Link>
             ))}
           </div>
-        </section>
+        </section> */}
 
-        <section className={styles.insightsSection}>
-          <h2 className={styles.sectionTitle}>Key Insights</h2>
-          <div className={styles.insightsGrid}>
-            {insights.map((insight) => (
-              <Card key={insight.title}>
-                <div className={styles.insightHeader}>
-                  <h4>{insight.title}</h4>
-                  {insight.trend && (
-                    <span className={`${styles.insightTrend} ${styles[insight.trendColor]}`}>
-                      {insight.trend}
-                    </span>
-                  )}
-                </div>
-                <div className={styles.insightValue}>{insight.value}</div>
-              </Card>
-            ))}
-          </div>
-        </section>
+        {/* <section className={styles.insightsSection}> */}
+        {/* <h2 className={styles.sectionTitle}>Key Insights</h2> */}
+        {/* <div className={styles.insightsGrid}> */}
+        {/* {insights.map((insight) => ( */}
+        {/* // <Card key={insight.title}> */}
+        {/* //  <div className={styles.insightHeader}> */}
+        {/* //  <h4>{insight.title}</h4> */}
+        {/* //{insight.trend && ( */}
+        {/* //<span className={`${styles.insightTrend} ${styles[insight.trendColor]}`}> */}
+        {/* //{insight.trend} */}
+        {/* //</span> */}
+        {/* //)} */}
+        {/* //</div> */}
+        {/* //<div className={styles.insightValue}>{insight.value}</div> */}
+        {/* //</Card> */}
+        {/* //))} */}
+        {/* //</div> */}
+        {/* // </section> */}
 
         <section className={styles.recentSection}>
           <div className={styles.sectionHead}>

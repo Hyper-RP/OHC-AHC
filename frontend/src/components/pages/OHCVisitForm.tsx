@@ -173,6 +173,7 @@ export const OHCVisitForm: React.FC = () => {
 
       const visitData = {
         ...formData,
+        employee: parseInt(formData.employee, 10) || 0,
         vitals: aggregateVitals(vitals),
         preliminary_notes: combinedPreliminaryNotes,
       };

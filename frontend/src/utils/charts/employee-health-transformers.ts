@@ -90,7 +90,7 @@ export function transformEmployeeHealthHistory(
   apiData: any,
   dailyMonthly: 'daily' | 'monthly'
 ): TransformedChartData {
-  const { employee, visits } = apiData;
+  const { visits } = apiData;
 
   return {
     summary: transformSummary(apiData),
@@ -128,7 +128,7 @@ function transformSummary(apiData: any) {
 /**
  * Calculate health score (0-100)
  */
-function calculateHealthScore(visits: any[], fitnessStatus: string): number {
+export function calculateHealthScore(visits: any[], fitnessStatus: string): number {
   let score = 100;
 
   // Base score from fitness status
@@ -244,7 +244,7 @@ function calculateFitnessTrend(visits: any[]): QuickStatsData['fitnessTrend'] {
 /**
  * Transform visit frequency data
  */
-function transformVisitFrequency(
+export function transformVisitFrequency(
   visits: any[],
   dailyMonthly: 'daily' | 'monthly'
 ): VisitFrequencyData[] {
@@ -275,7 +275,7 @@ function transformVisitFrequency(
 /**
  * Transform visit types data
  */
-function transformVisitTypes(visits: any[]): VisitTypeData[] {
+export function transformVisitTypes(visits: any[]): VisitTypeData[] {
   const counts: Record<string, number> = {
     Routine: 0,
     'Walk-in': 0,
@@ -314,7 +314,7 @@ function mapVisitType(apiType: string): string {
 /**
  * Transform diagnosis distribution data
  */
-function transformDiagnosisDistribution(
+export function transformDiagnosisDistribution(
   visits: any[],
   maxItems: number = 5
 ): DiagnosisDistributionData[] {
@@ -355,7 +355,7 @@ function transformDiagnosisDistribution(
 /**
  * Transform severity breakdown data
  */
-function transformSeverityBreakdown(visits: any[]): SeverityBreakdownData[] {
+export function transformSeverityBreakdown(visits: any[]): SeverityBreakdownData[] {
   const counts: Record<string, number> = {
     MILD: 0,
     MODERATE: 0,
@@ -377,7 +377,7 @@ function transformSeverityBreakdown(visits: any[]): SeverityBreakdownData[] {
     severity,
     count: counts[severity],
     color: SEVERITY_COLORS[severity],
-  }));
+  })) as SeverityBreakdownData[];
 }
 
 /**
@@ -407,7 +407,6 @@ function transformHealthIndexTrend(
   const sortedKeys = Object.keys(groupedVisits).sort();
 
   sortedKeys.forEach((dateKey) => {
-    const periodVisits = groupedVisits[dateKey];
     const periodDate = parseISO(dateKey);
 
     const contextVisits = visits.filter((visit) => {

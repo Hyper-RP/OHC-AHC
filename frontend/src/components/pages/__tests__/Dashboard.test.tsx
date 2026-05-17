@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { screen, waitFor, act } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { renderWithProviders, mockUser } from '../../../tests/test-utils';
 import { Dashboard } from '../Dashboard';
 
@@ -32,37 +32,43 @@ describe('Dashboard', () => {
     }, { timeout: 3000 });
   });
 
-  it('renders quick action cards after loading', async () => {
-    renderWithProviders(<Dashboard />, { routerProps: { initialEntries: ['/dashboard'] } });
-
-    // Wait for the 1000ms simulated loading + render
-    await waitFor(() => {
-      expect(screen.getByText('Quick Actions')).toBeInTheDocument();
-      expect(screen.getByText('Diagnosis Entry')).toBeInTheDocument();
-    }, { timeout: 3000 });
-  });
-
-  it('renders key insights after loading', async () => {
-    renderWithProviders(<Dashboard />, { routerProps: { initialEntries: ['/dashboard'] } });
-
-    await waitFor(() => {
-      expect(screen.getByText('Most Common Diagnosis')).toBeInTheDocument();
-    }, { timeout: 3000 });
-  });
-
-  it('renders recent activity section after loading', async () => {
-    renderWithProviders(<Dashboard />, { routerProps: { initialEntries: ['/dashboard'] } });
-
-    await waitFor(() => {
-      expect(screen.getByText('Recent Activity')).toBeInTheDocument();
-    }, { timeout: 3000 });
-  });
-
   it('renders portal title after loading', async () => {
     renderWithProviders(<Dashboard />, { routerProps: { initialEntries: ['/dashboard'] } });
 
     await waitFor(() => {
-      expect(screen.getByText('Welcome to OHC-AHC Health Portal')).toBeInTheDocument();
+      expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    }, { timeout: 3000 });
+  });
+
+  it('renders overview section with charts', async () => {
+    renderWithProviders(<Dashboard />, { routerProps: { initialEntries: ['/dashboard'] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Overview')).toBeInTheDocument();
+      expect(screen.getByText('Visit Trends')).toBeInTheDocument();
+      expect(screen.getByText('Department Comparison')).toBeInTheDocument();
+      expect(screen.getByText('Severity Breakdown')).toBeInTheDocument();
+    }, { timeout: 3000 });
+  });
+
+  it('renders trends section', async () => {
+    renderWithProviders(<Dashboard />, { routerProps: { initialEntries: ['/dashboard'] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Top Diagnoses Trends')).toBeInTheDocument();
+      expect(screen.getByText('Common Diagnoses Over Time')).toBeInTheDocument();
+    }, { timeout: 3000 });
+  });
+
+  it('renders recent activity section', async () => {
+    renderWithProviders(<Dashboard />, { routerProps: { initialEntries: ['/dashboard'] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Recent Activity')).toBeInTheDocument();
+      expect(screen.getByText('View All')).toBeInTheDocument();
+      expect(screen.getByText('New OHC Visit')).toBeInTheDocument();
+      expect(screen.getByText('Diagnosis Completed')).toBeInTheDocument();
+      expect(screen.getByText('Referral Created')).toBeInTheDocument();
     }, { timeout: 3000 });
   });
 });

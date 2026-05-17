@@ -41,8 +41,8 @@ export const PaymentPage: React.FC = () => {
 
     try {
       await createPayment({
-        invoice: selectedInvoice.uuid,
-        employee: selectedInvoice.employee.id.toString(),
+        invoice: selectedInvoice.id,
+        employee: selectedInvoice.employee.id,
         amount: parseFloat(paymentAmount),
         payment_method: paymentMethod as 'RAZORPAY' | 'UPI' | 'CARD',
         provider: 'RAZORPAY',
@@ -72,8 +72,8 @@ export const PaymentPage: React.FC = () => {
             <div className={styles.invoiceList}>
               {invoices.map((invoice) => (
                 <Card
-                  key={invoice.uuid}
-                  className={`${styles.invoiceCard} ${selectedInvoice?.uuid === invoice.uuid ? styles.selected : ''}`}
+                  key={invoice.id}
+                  className={`${styles.invoiceCard} ${selectedInvoice?.id === invoice.id ? styles.selected : ''}`}
                   onClick={() => {
                     setSelectedInvoice(invoice);
                     setPaymentAmount(invoice.total_amount.toString());

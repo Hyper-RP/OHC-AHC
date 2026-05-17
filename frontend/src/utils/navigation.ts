@@ -27,13 +27,13 @@ export const NAV_ITEMS: NavItem[] = [
     icon: '🔬',
     roles: [Role.ADMIN, Role.DOCTOR],
   },
-  {
-    label: 'Complete Intake',
-    url: '/ohc/complete-intake',
-    urlName: 'complete_intake',
-    icon: '✅',
-    roles: [Role.ADMIN, Role.NURSE, Role.DOCTOR],
-  },
+  // {
+  //   label: 'Complete Intake',
+  //   url: '/ohc/complete-intake',
+  //   urlName: 'complete_intake',
+  //   icon: '✅',
+  //   roles: [Role.ADMIN, Role.NURSE, Role.DOCTOR],
+  // },
   {
     label: 'Referrals',
     url: '/ahc/referrals',
@@ -41,13 +41,13 @@ export const NAV_ITEMS: NavItem[] = [
     icon: '🏢',
     roles: [Role.ADMIN, Role.NURSE, Role.EHS, Role.HR, Role.DOCTOR],
   },
-  {
-    label: 'Hospital Selection',
-    url: '/ahc/hospital-selection',
-    urlName: 'hospital_selection',
-    icon: '🏨',
-    roles: [Role.ADMIN, Role.NURSE, Role.EHS, Role.HR, Role.KAM, Role.DOCTOR],
-  },
+  // {
+  //   label: 'Hospital Selection',
+  //   url: '/ahc/hospital-selection',
+  //   urlName: 'hospital_selection',
+  //   icon: '🏨',
+  //   roles: [Role.ADMIN, Role.NURSE, Role.EHS, Role.HR, Role.KAM, Role.DOCTOR],
+  // },
   {
     label: 'Payments',
     url: '/payments',
