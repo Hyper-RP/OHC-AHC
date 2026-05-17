@@ -1,13 +1,4 @@
-# Multi-stage build for Django + React
-FROM node:20-alpine AS frontend-builder
-
-WORKDIR /app/frontend
-COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci --legacy-peer-deps
-COPY frontend/ ./
-RUN npm run build
-
-# Python stage
+# Django Dockerfile (React already built locally)
 FROM python:3.11-slim
 
 # Install system dependencies
@@ -26,14 +17,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 # Install Python dependencies
-COPY myproject/requirements.txt ./myproject/requirements.txt
-RUN pip install --no-cache-dir --user -r myproject/requirements.txt
+COPY myproject/requirements.txt ./myproject/
+RUN pip install --no-cache-dir -r myproject/requirements.txt
 
-# Copy project files
+# Copy Django project (includes pre-built React in static/react)
 COPY myproject/ ./myproject/
-
-# Copy React build from frontend stage
-COPY --from=frontend-builder /app/frontend/dist ./myproject/static/react/
 
 # Collect static files
 RUN cd myproject && python manage.py collectstatic --noinput --clear
@@ -41,9 +29,9 @@ RUN cd myproject && python manage.py collectstatic --noinput --clear
 # Expose port
 EXPOSE 8000
 
-# Health check - check if server responds
+# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/admin/ || exit 1
 
-# Run server (use gunicorn in production)
+# Run server with gunicorn
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120", "myproject.wsgi:application"]
