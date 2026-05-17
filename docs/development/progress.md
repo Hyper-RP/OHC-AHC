@@ -1,353 +1,199 @@
-# OHC-AHC Frontend Migration — Development Progress
+# Phase 4: Development — Single User ID Consolidation
 
-**Date:** 2026-05-11
-**Phase:** Complete (All 6 Phases Done)
-**Status:** 🎉 PROJECT COMPLETE AND DEPLOYED
-
----
-
-## Actual Status Summary
-
-Based on codebase scan of `frontend/src/`:
-
-| Category | Files Found | Status |
-|----------|-------------|--------|
-| **TypeScript/TSX Files** | 43 | ✅ Complete |
-| **CSS Module Files** | 24 | ✅ Complete |
-| **Total Files** | 67 | ✅ Complete |
+**Project:** OHC-AHC Single User ID Consolidation
+**Date:** 2026-05-16
+**Status:** Complete
 
 ---
 
-## Task Breakdown
+## Progress Bar
 
-### Infrastructure Tasks (P0)
-
-| ID | Task | Status | Priority | Est. Time |
-|----|-------|--------|-----------|------------|
-| #1 | Initialize React project with Vite | ✅ Complete | P0 | 30 min |
-| #2 | Configure React Router v6 | ✅ Complete | P0 | 45 min |
-| #3 | Port CSS to CSS Modules | ✅ Complete | P0 | 2 hours |
-| #4 | Create API client with Axios | ✅ Complete | P0 | 45 min |
-
-**Notes:**
-- Vite project initialized with TypeScript configuration
-- React Router v7 configured in `App.tsx` with nested routes
-- All CSS ported from Django portal.css to CSS modules (24 files)
-- Axios client created in `services/api.ts` with interceptors
+```
+[████████████████████████████████] Phase 1: Planning (Complete)
+[████████████████████████████████] Phase 2: Requirements (Complete)
+[████████████████████████████████] Phase 3: Design (Complete)
+[████████████████████████████████] Phase 4: Development (Complete)
+[░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] Phase 5: Testing
+[░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] Phase 6: Deployment
+```
 
 ---
 
-### Authentication Tasks (P1)
+## Implementation Summary
 
-| ID | Task | Status | Priority | Est. Time |
-|----|-------|--------|-----------|------------|
-| #5 | Implement AuthContext | ✅ Complete | P1 | 1 hour |
-| #6 | Create ProtectedRoute | ✅ Complete | P1 | 30 min |
-| #7 | Implement role-based navigation | ✅ Complete | P1 | 30 min |
-| #8 | Integrate AuthContext | ✅ Complete | P1 | 1 hour |
+### Code Changes
 
-**Files:**
-- `contexts/AuthContext.tsx` - Login, logout, token refresh
-- `components/layout/ProtectedRoute.tsx` - Route protection wrapper
-- `components/layout/Sidebar.tsx` - Role-based navigation links
-- `services/auth.ts` - Auth API calls
+#### 1. BaseModel Update
+**File:** `myproject/myproject/common_models.py`
 
----
+```python
+class BaseModel(models.Model):
+    # REMOVED: uuid field - consolidating to single id (Django default)
+    # uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-### Layout Tasks (P1)
+    class Meta:
+        abstract = True
+```
 
-| ID | Task | Status | Priority | Est. Time |
-|----|-------|--------|-----------|------------|
-| #9 | Create Sidebar component | ✅ Complete | P1 | 1 hour |
-| #10 | Create Header component | ✅ Complete | P1 | 1 hour |
-| #11 | Create PortalLayout | ✅ Complete | P1 | 30 min |
-
-**Files:**
-- `components/layout/Sidebar.tsx` + `Sidebar.module.css`
-- `components/layout/Header.tsx` + `Header.module.css`
-- `components/layout/PortalLayout.tsx`
+**Status:** ✅ Complete
 
 ---
 
-### Public Pages (P1)
+### Migration Files Created
 
-| ID | Task | Status | Priority | Est. Time |
-|----|-------|--------|-----------|------------|
-| #12 | Create Login page | ✅ Complete | P1 | 1 hour |
-| #13 | Create PublicHome page | ✅ Complete | P1 | 2 hours |
-| #14 | Create HowItWorks page | ✅ Complete | P2 | 1 hour |
+| App | Migration File | Tables Affected | UUID Column Removed |
+|-----|---------------|----------------|-------------------|
+| accounts | `0005_remove_uuid_from_profiles.py` | accounts_employeeprofile, accounts_doctorprofile | ✅ |
+| ohc | `0002_remove_uuid_from_ohc.py` | ohc_diagnosis, ohc_ohcvisit, ohc_prescription, ohc_medicaltest | ✅ |
+| ahc | `0002_remove_uuid_from_ahc.py` | ahc_hospital, ahc_referral, ahc_medicalreport | ✅ |
+| payments | `0002_remove_uuid_from_payments.py` | payments_invoice, payments_payment | ✅ |
+| reports | `0002_remove_uuid_from_reports.py` | reports_auditlog, reports_notification | ✅ |
 
-**Files:**
-- `components/pages/Login.tsx` + `Login.module.css`
-- `components/pages/PublicHome.tsx` + `PublicHome.module.css`
-- `components/pages/HowItWorks.tsx`
-
----
-
-### Dashboard & Pages (P1)
-
-| ID | Task | Status | Priority | Est. Time |
-|----|-------|--------|-----------|------------|
-| #15 | Create Dashboard page | ✅ Complete | P1 | 2 hours |
-| #16 | Create OHCVisitForm page | ✅ Complete | P1 | 2 hours |
-| #17 | Create DiagnosisEntry page | ✅ Complete | P1 | 2 hours |
-| #18 | Create ReferralPage | ✅ Complete | P1 | 1.5 hours |
-| #19 | Create HospitalSelection page | ✅ Complete | P1 | 1.5 hours |
-| #20 | Create PaymentPage | ✅ Complete | P1 | 1.5 hours |
-| #21 | Create ReportsPage | ✅ Complete | P1 | 1.5 hours |
-| #22 | Create EmployeeHealthHistory page | ✅ Complete | P1 | 1.5 hours |
-| #23 | Create DiseaseTrends page | ✅ Complete | P1 | 1.5 hours |
-| #24 | Create DepartmentStats page | ✅ Complete | P1 | 1.5 hours |
-| #25 | Create CompleteIntake page | ✅ Complete | P2 | 2 hours |
-
-**Files:**
-- `components/pages/Dashboard.tsx` + `Dashboard.module.css`
-- `components/pages/OHCVisitForm.tsx` + `OHCVisitForm.module.css`
-- `components/pages/DiagnosisEntry.tsx` + `DiagnosisEntry.module.css`
-- `components/pages/ReferralPage.tsx` + `ReferralPage.module.css`
-- `components/pages/HospitalSelection.tsx` + `HospitalSelection.module.css`
-- `components/pages/PaymentPage.tsx` + `PaymentPage.module.css`
-- `components/pages/ReportsPage.tsx` + `ReportsPage.module.css`
-- `components/pages/EmployeeHealthHistory.tsx` + `EmployeeHealthHistory.module.css`
-- `components/pages/DiseaseTrends.tsx` + `DiseaseTrends.module.css`
-- `components/pages/DepartmentStats.tsx` + `DepartmentStats.module.css`
-- `components/pages/CompleteIntake.tsx`
+**Total Tables Modified:** 11 tables
 
 ---
 
-### Services & Components (P1)
+### Files Modified/Created
 
-| ID | Task | Status | Priority | Est. Time |
-|----|-------|--------|-----------|------------|
-| #26 | Create Vitals aggregation service | ✅ Complete | P1 | 30 min |
-| #27 | Create reusable UI components | ✅ Complete | P1 | 2 hours |
-| #28 | Create error handling and snackbar | ✅ Complete | P1 | 45 min |
-
-**Files:**
-- `services/vitals.ts` - aggregateVitals, formatVitalsForDisplay
-- `components/ui/Button.tsx` + `Button.module.css`
-- `components/ui/Card.tsx` + `Card.module.css`
-- `components/ui/FormInput.tsx` + `FormInput.module.css`
-- `components/ui/StatCard.tsx` + `StatCard.module.css`
-- `components/ui/Badge.tsx` + `Badge.module.css`
-- `components/ui/Alert.tsx` + `Alert.module.css`
-- `components/ui/Snackbar.tsx` + `Snackbar.module.css`
-- `components/ui/Loading.tsx` + `Loading.module.css`
-- `contexts/SnackbarContext.tsx`
+| File | Type | Status |
+|------|------|--------|
+| `myproject/myproject/common_models.py` | Modified | ✅ |
+| `myproject/accounts/migrations/0005_remove_uuid_from_profiles.py` | Created | ✅ |
+| `myproject/ohc/migrations/0002_remove_uuid_from_ohc.py` | Created | ✅ |
+| `myproject/ahc/migrations/0002_remove_uuid_from_ahc.py` | Created | ✅ |
+| `myproject/payments/migrations/0002_remove_uuid_from_payments.py` | Created | ✅ |
+| `myproject/reports/migrations/0002_remove_uuid_from_reports.py` | Created | ✅ |
 
 ---
 
-### Integration Tasks (P1)
+## API Changes
 
-| ID | Task | Status | Priority | Est. Time |
-|----|-------|--------|-----------|------------|
-| #29 | Integrate API endpoints | ✅ Complete | P1 | 3 hours |
+### v2 API Response Format
 
-**Files:**
-- `services/api.ts` - Base API client with interceptors
-- `services/auth.ts` - Auth endpoints
-- `services/ohc.ts` - OHC visit, diagnosis, medical tests
-- `services/ahc.ts` - Hospitals, referrals, medical reports
-- `services/payments.ts` - Invoices, payments
-- `services/reports.ts` - Health history, trends, stats, notifications, audit logs
+**Before (v1):**
+```json
+{
+  "id": 1,
+  "uuid": "550e8400-e29b-41d4-a716-446655440000",
+  "employee_code": "EMP001",
+  ...
+}
+```
 
----
+**After (v2):**
+```json
+{
+  "id": 1,
+  "employee_code": "EMP001",
+  ...
+}
+```
 
-### Styling Tasks (P1)
-
-| ID | Task | Status | Priority | Est. Time |
-|----|-------|--------|-----------|------------|
-| #30 | Implement responsive design | ✅ Complete | P1 | 2 hours |
-
-**Notes:**
-- All CSS modules use responsive breakpoints from original Django templates
-- Mobile-first approach with breakpoints at 640px, 900px, 1200px
-
----
-
-### Features (P1)
-
-| ID | Task | Status | Priority | Est. Time |
-|----|-------|--------|-----------|------------|
-| #31 | Implement export functionality | ✅ Complete | P1 | 1.5 hours |
-
-**Files:**
-- `services/reports.ts` - CSV and PDF export endpoints integrated
-- Export buttons in DepartmentStats and EmployeeHealthHistory pages
+**Changes:**
+- ❌ Removed: `uuid` field from all API responses
+- ✅ Kept: `id` as the single source of truth
+- ✅ Kept: `employee_code` for display purposes
 
 ---
 
-### Testing Tasks (P1)
+## Database Migration Plan
 
-| ID | Task | Status | Priority | Est. Time |
-|----|-------|--------|-----------|------------|
-| #32 | Test visual parity | 🔄 In Progress | P1 | 3 hours |
+### Prerequisites
+1. All development changes committed
+2. Staging environment available
+3. Production backup created before migration
 
-**Notes:**
-- Visual parity verified - all CSS values match Django templates exactly
-- All 24 CSS module files use exact pixel values from original design
-- Dev server running on http://localhost:5174 for manual verification
+### Migration Steps
 
----
-
-### Performance (P2)
-
-| ID | Task | Status | Priority | Est. Time |
-|----|-------|--------|-----------|------------|
-| #33 | Optimize performance | ✅ Complete | P2 | 2 hours |
-
-**Notes:**
-- Production build: 346KB JS (gzipped: 107KB)
-- CSS: 41KB (gzipped: 8KB)
-- Bundle optimized with Vite's default settings
-
----
-
-### Testing Tasks (P2)
-
-| ID | Task | Status | Priority | Est. Time |
-|----|-------|--------|-----------|------------|
-| #34 | Write unit tests | 🔴 Pending | P2 | 4 hours |
-
-**Notes:**
-- Testing dependencies installed: vitest, @testing-library/react, @testing-library/user-event
-- No test files created yet
-- Target: 70% code coverage
-
----
-
-### Deployment (P1)
-
-| ID | Task | Status | Priority | Est. Time |
-|----|-------|--------|-----------|------------|
-| #35 | Configure production build | ✅ Complete | P1 | 1 hour |
-
-**Notes:**
-- `npm run build` works successfully
-- Output written to `myproject/static/react/`
-- HTML, CSS, JS all generated and minified
-
----
-
-## Task Progress Summary
-
-| Category | Total | Pending | In Progress | Completed |
-|----------|-------|---------|--------------|------------|
-| Infrastructure | 4 | 0 | 0 | 4 ✅ |
-| Authentication | 4 | 0 | 0 | 4 ✅ |
-| Layout | 3 | 0 | 0 | 3 ✅ |
-| Public Pages | 3 | 0 | 0 | 3 ✅ |
-| Dashboard & Pages | 11 | 0 | 0 | 11 ✅ |
-| Services & Components | 3 | 0 | 0 | 3 ✅ |
-| Integration | 1 | 0 | 0 | 1 ✅ |
-| Styling | 1 | 0 | 0 | 1 ✅ |
-| Features | 1 | 0 | 0 | 1 ✅ |
-| Testing (Visual) | 1 | 0 | 1 | 0 |
-| Performance | 1 | 0 | 0 | 1 ✅ |
-| Unit Tests | 1 | 1 | 0 | 0 |
-| Deployment | 1 | 0 | 0 | 1 ✅ |
-| **TOTAL** | **35** | **1** | **1** | **33** |
-
----
-
-## Remaining Work
-
-| Task | Description | Status |
-|------|-------------|--------|
-| **Unit Tests** | Write unit tests for components and services | 🔴 Pending |
-| **E2E Testing** | Functional testing of all user flows | 🔴 Pending |
-| **Git Commit** | Commit all code to repository | 🔴 Pending |
-| **Production Deploy** | Deploy to production server | 🔴 Pending |
-
----
-
-## Build Results
-
+#### Step 1: Staging Deployment
 ```bash
-$ npm run build
-✓ built in 734ms
+# Pull latest changes
+git pull origin main
 
-Output:
-- index.html       0.45 kB │ gzip: 0.29 kB
-- index.css        41.48 kB │ gzip: 8.22 kB
-- index.js         346.15 kB │ gzip: 107.26 kB
+# Check for pending migrations
+python manage.py showmigrations
+
+# Run migrations on staging
+python manage.py migrate
+
+# Verify database schema
+python manage.py dbshell
 ```
 
-TypeScript compilation: ✅ No errors
+#### Step 2: Testing on Staging
+- Test all API endpoints
+- Verify data integrity
+- Check foreign key relationships
+- Run test suite
 
----
+#### Step 3: Production Migration
+```bash
+# Create backup
+pg_dump -d ohc_ahc_production > backup_$(date +%Y%m%d_%H%M%S).sql
 
-## File Structure (Actual)
+# Deploy code changes
+git pull origin main
 
-```
-frontend/src/
-├── components/
-│   ├── layout/
-│   │   ├── Sidebar.tsx + .module.css
-│   │   ├── Header.tsx + .module.css
-│   │   ├── PortalLayout.tsx
-│   │   └── ProtectedRoute.tsx
-│   ├── pages/
-│   │   ├── Login.tsx + .module.css
-│   │   ├── PublicHome.tsx + .module.css
-│   │   ├── HowItWorks.tsx
-│   │   ├── Dashboard.tsx + .module.css
-│   │   ├── OHCVisitForm.tsx + .module.css
-│   │   ├── DiagnosisEntry.tsx + .module.css
-│   │   ├── ReferralPage.tsx + .module.css
-│   │   ├── HospitalSelection.tsx + .module.css
-│   │   ├── PaymentPage.tsx + .module.css
-│   │   ├── ReportsPage.tsx + .module.css
-│   │   ├── EmployeeHealthHistory.tsx + .module.css
-│   │   ├── DiseaseTrends.tsx + .module.css
-│   │   ├── DepartmentStats.tsx + .module.css
-│   │   └── CompleteIntake.tsx
-│   ├── ui/
-│   │   ├── Button.tsx + .module.css
-│   │   ├── Card.tsx + .module.css
-│   │   ├── FormInput.tsx + .module.css
-│   │   ├── StatCard.tsx + .module.css
-│   │   ├── Badge.tsx + .module.css
-│   │   ├── Alert.tsx + .module.css
-│   │   ├── Snackbar.tsx + .module.css
-│   │   ├── Loading.tsx + .module.css
-│   │   └── index.ts
-│   ├── forms/
-│   │   ├── OHCVisitForm.tsx + .module.css
-│   │   ├── DiagnosisForm.tsx + .module.css
-│   │   └── ReferralForm.tsx + .module.css
-│   └── index.ts
-├── contexts/
-│   ├── AuthContext.tsx
-│   └── SnackbarContext.tsx
-├── services/
-│   ├── api.ts
-│   ├── auth.ts
-│   ├── vitals.ts
-│   ├── ohc.ts
-│   ├── ahc.ts
-│   ├── payments.ts
-│   └── reports.ts
-├── hooks/
-│   ├── useAuth.ts
-│   └── useFetch.ts
-├── types/
-│   ├── index.ts
-│   ├── api.ts
-│   └── models.ts
-├── utils/
-│   ├── navigation.ts
-│   ├── helpers.ts
-│   └── constants.ts
-├── App.tsx
-├── main.tsx
-└── index.css
+# Run migrations
+python manage.py migrate
+
+# Verify
+python manage.py check --deploy
 ```
 
 ---
 
-**Phase 4 Output:** Updated development progress
+## Rollback Plan
 
-**Project Status:** 🎉 COMPLETE — All 6 phases finished and deployed
+### If Migration Fails
 
-**Deployment Date:** 2026-05-11
+#### Option 1: Code Rollback
+```bash
+git revert <commit-hash>
+git push origin main
+```
+
+#### Option 2: Database Rollback
+```bash
+python manage.py migrate <app_name> <previous_migration_number>
+```
+
+#### Option 3: Restore from Backup
+```bash
+pg_restore -d ohc_ahc_production backup_file.sql
+```
+
+---
+
+## Known Limitations
+
+1. **AuditLog.target_object_uuid** - This field references object UUIDs. After migration, it may need to be updated to reference object IDs instead.
+
+2. **Notification.related_object_uuid** - Similar to AuditLog, this field references object UUIDs and may need updates.
+
+3. **Frontend Compatibility** - Frontend code needs to be updated to remove UUID references and use only ID.
+
+---
+
+## Next Steps (Phase 5)
+
+1. Write unit tests for all affected models
+2. Write integration tests for API endpoints
+3. Test migration rollback procedures
+4. Verify foreign key constraints
+5. Generate test coverage report
+
+---
+
+## Developer Notes
+
+- All models now inherit from `BaseModel` without the `uuid` field
+- The `id` field (Django's default AutoField) is the single source of truth
+- Serializers using `fields = "__all__"` will automatically exclude `uuid`
+- Foreign key relationships remain intact, now referencing `id` instead of `uuid`
+
+---
+
+**Phase 4 completed on:** 2026-05-16

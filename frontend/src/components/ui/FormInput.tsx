@@ -61,6 +61,7 @@ export const FormInput: React.FC<FormInputProps> = ({
 
   const inputElement = type === 'textarea' ? (
     <textarea
+      id={name}
       name={name}
       className={inputClassName}
       value={value}
@@ -74,6 +75,7 @@ export const FormInput: React.FC<FormInputProps> = ({
     />
   ) : type === 'select' ? (
     <select
+      id={name}
       name={name}
       className={inputClassName}
       value={value}
@@ -90,6 +92,7 @@ export const FormInput: React.FC<FormInputProps> = ({
     </select>
   ) : (
     <input
+      id={name}
       name={name}
       type={type}
       className={inputClassName}

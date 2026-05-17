@@ -17,7 +17,7 @@ class InvoiceViewSet(
 ):
     serializer_class = InvoiceSerializer
     permission_classes = [permissions.IsAuthenticated]
-    lookup_field = 'uuid'
+    lookup_field = 'id'
 
     def get_permissions(self):
         if self.action in {"create", "update", "partial_update"}:
@@ -42,7 +42,7 @@ class PaymentViewSet(
     viewsets.GenericViewSet,
 ):
     permission_classes = [permissions.IsAuthenticated]
-    lookup_field = 'uuid'
+    lookup_field = 'id'
 
     def get_permissions(self):
         return [permissions.IsAuthenticated(), HasHealthPortalAccess()]

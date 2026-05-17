@@ -113,7 +113,7 @@ export const EmployeeHealthHistory: React.FC = () => {
                 </thead>
                 <tbody>
                   {data.records.map((record) => (
-                    <tr key={record.visit_uuid}>
+                    <tr key={record.visit_id}>
                       <td>{record.employee_code}</td>
                       <td>{record.employee_name}</td>
                       <td>{record.visit_date}</td>

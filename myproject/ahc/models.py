@@ -82,7 +82,7 @@ class Referral(BaseModel):
     closure_notes = models.TextField(blank=True)
 
     def __str__(self):
-        return f"Referral {self.uuid} - {self.employee.employee_code}"
+        return f"Referral #{self.id} - {self.employee.employee_code}"
 
 
 class MedicalReport(BaseModel):

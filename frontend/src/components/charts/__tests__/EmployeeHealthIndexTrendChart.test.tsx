@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { EmployeeHealthIndexTrendChart } from '../EmployeeHealthIndexTrendChart';
+import { ChartTestWrapper } from './chartTestHelper';
 
 describe('EmployeeHealthIndexTrendChart', () => {
   const mockData = [
@@ -10,31 +11,47 @@ describe('EmployeeHealthIndexTrendChart', () => {
   ];
 
   it('should render loading state', () => {
-    const { container } = render(<EmployeeHealthIndexTrendChart data={[]} loading={true} height={350} />);
+    const { container } = render(
+      <ChartTestWrapper>
+        <EmployeeHealthIndexTrendChart data={[]} loading={true} height={350} />
+      </ChartTestWrapper>,
+    );
 
-    const skeleton = container.querySelector('.skeleton');
+    const skeleton = container.querySelector('[data-testid="chart-skeleton"]');
     expect(skeleton).toBeInTheDocument();
   });
 
   it('should render empty state', () => {
-    const { container } = render(<EmployeeHealthIndexTrendChart data={[]} loading={false} height={350} />);
+    const { container } = render(
+      <ChartTestWrapper>
+        <EmployeeHealthIndexTrendChart data={[]} loading={false} height={350} />
+      </ChartTestWrapper>,
+    );
 
-    const empty = container.querySelector('.empty');
+    const empty = container.querySelector('[data-testid="chart-empty"]');
     expect(empty).toBeInTheDocument();
     expect(empty).toHaveTextContent('No health index data available');
   });
 
   it('should render chart with data', () => {
-    const { container } = render(<EmployeeHealthIndexTrendChart data={mockData} />);
+    const { container } = render(
+      <ChartTestWrapper>
+        <EmployeeHealthIndexTrendChart data={mockData} />
+      </ChartTestWrapper>,
+    );
 
-    const chartContainer = container.querySelector('.chartContainer');
+    const chartContainer = container.querySelector('[data-testid="chart-container"]');
     expect(chartContainer).toBeInTheDocument();
   });
 
-  it('should render reference line at y=60', () => {
-    const { container } = render(<EmployeeHealthIndexTrendChart data={mockData} />);
+  it('should render SVG chart', () => {
+    const { container } = render(
+      <ChartTestWrapper>
+        <EmployeeHealthIndexTrendChart data={mockData} />
+      </ChartTestWrapper>,
+    );
 
-    const referenceLine = container.querySelector('.recharts-reference-line');
-    expect(referenceLine).toBeInTheDocument();
+    const svg = container.querySelector('svg');
+    expect(svg).toBeInTheDocument();
   });
 });

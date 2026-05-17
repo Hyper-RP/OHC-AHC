@@ -7,14 +7,13 @@ class HospitalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Hospital
         fields = "__all__"
-        read_only_fields = ("id", "uuid", "created_at", "updated_at")
-
+        read_only_fields = ("id", "created_at", "updated_at")
 
 class ReferralSerializer(serializers.ModelSerializer):
     class Meta:
         model = Referral
         fields = "__all__"
-        read_only_fields = ("id", "uuid", "created_at", "updated_at")
+        read_only_fields = ("id", "created_at", "updated_at")
 
     def validate(self, attrs):
         request = self.context["request"]
@@ -26,12 +25,11 @@ class ReferralSerializer(serializers.ModelSerializer):
             attrs["employee"] = attrs["visit"].employee
         return attrs
 
-
 class MedicalReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = MedicalReport
         fields = "__all__"
-        read_only_fields = ("id", "uuid", "created_at", "updated_at")
+        read_only_fields = ("id", "created_at", "updated_at")
 
     def validate(self, attrs):
         if not attrs.get("employee") and attrs.get("referral"):

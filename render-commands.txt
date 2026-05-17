@@ -1,0 +1,6 @@
+# Build Command for Render (Combined)
+# Root directory: .
+cd frontend && npm ci && npm run build && cd ../myproject && pip install -r requirements.txt && python manage.py collectstatic --noinput
+
+# Start Command
+cd myproject && gunicorn myproject.wsgi:application --bind 0.0.0.0:$PORT

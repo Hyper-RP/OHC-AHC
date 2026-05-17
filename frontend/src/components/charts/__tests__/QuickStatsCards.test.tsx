@@ -29,7 +29,8 @@ describe('QuickStatsCards', () => {
     render(<QuickStatsCards data={mockData} />);
 
     const trendValue = screen.getByText('12%');
-    expect(trendValue).toHaveClass('up');
+    expect(trendValue).toBeInTheDocument();
+    expect(screen.getByText('📈')).toBeInTheDocument();
   });
 
   it('should display correct trend icon for down direction', () => {
@@ -37,7 +38,8 @@ describe('QuickStatsCards', () => {
     render(<QuickStatsCards data={data} />);
 
     const trendValue = screen.getByText('8%');
-    expect(trendValue).toHaveClass('down');
+    expect(trendValue).toBeInTheDocument();
+    expect(screen.getByText('📉')).toBeInTheDocument();
   });
 
   it('should display correct trend icon for stable direction', () => {
@@ -45,6 +47,7 @@ describe('QuickStatsCards', () => {
     render(<QuickStatsCards data={data} />);
 
     const trendValue = screen.getByText('0%');
-    expect(trendValue).toHaveClass('stable');
+    expect(trendValue).toBeInTheDocument();
+    expect(screen.getByText('➡️')).toBeInTheDocument();
   });
 });
