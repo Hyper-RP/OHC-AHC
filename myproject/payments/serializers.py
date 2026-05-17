@@ -7,15 +7,13 @@ class InvoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invoice
         fields = "__all__"
-        read_only_fields = ("id", "uuid", "created_at", "updated_at")
-
+        read_only_fields = ("id", "created_at", "updated_at")
 
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = "__all__"
-        read_only_fields = ("id", "uuid", "created_at", "updated_at")
-
+        read_only_fields = ("id", "created_at", "updated_at")
 
 class PaymentInitiationSerializer(serializers.ModelSerializer):
     class Meta:

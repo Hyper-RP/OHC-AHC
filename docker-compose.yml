@@ -1,0 +1,53 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: ohc-db
+    environment:
+      POSTGRES_DB: ohc_db
+      POSTGRES_USER: ohc_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ohc_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ohc-app
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_SETTINGS_MODULE: myproject.settings
+      DATABASE_URL: postgres://ohc_user:${DB_PASSWORD:-changeme}@db:5432/ohc_db
+      SECRET_KEY: ${SECRET_KEY:-django-insecure-change-in-production}
+      DEBUG: ${DEBUG:-False}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+    volumes:
+      - ./myproject:/app/myproject
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    command: >
+      sh -c "
+        python myproject/manage.py migrate --noinput &&
+        python myproject/manage.py collectstatic --noinput --clear &&
+        gunicorn --bind 0.0.0.0:8000 --workers 4 --timeout 120 myproject.wsgi:application
+      "
+
+volumes:
+  postgres_data:

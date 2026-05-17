@@ -10,14 +10,13 @@ class OHCVisitSerializer(serializers.ModelSerializer):
     class Meta:
         model = OHCVisit
         fields = "__all__"
-        read_only_fields = ("id", "uuid", "created_at", "updated_at")
-
+        read_only_fields = ("id", "created_at", "updated_at")
 
 class DiagnosisSerializer(serializers.ModelSerializer):
     class Meta:
         model = Diagnosis
         fields = "__all__"
-        read_only_fields = ("id", "uuid", "created_at", "updated_at")
+        read_only_fields = ("id", "created_at", "updated_at")
 
     def validate(self, attrs):
         request = self.context["request"]
@@ -25,26 +24,22 @@ class DiagnosisSerializer(serializers.ModelSerializer):
             attrs["diagnosed_by"] = DoctorProfile.objects.get(user=request.user)
         return attrs
 
-
 class PrescriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prescription
         fields = "__all__"
-        read_only_fields = ("id", "uuid", "created_at", "updated_at")
-
+        read_only_fields = ("id", "created_at", "updated_at")
 
 class PrescriptionEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = Prescription
         exclude = ("visit", "diagnosis", "prescribed_by")
 
-
 class MedicalTestSerializer(serializers.ModelSerializer):
     class Meta:
         model = MedicalTest
         fields = "__all__"
-        read_only_fields = ("id", "uuid", "created_at", "updated_at")
-
+        read_only_fields = ("id", "created_at", "updated_at")
 
 class DiagnosisWithPrescriptionsSerializer(serializers.Serializer):
     diagnosis = DiagnosisSerializer()
@@ -82,7 +77,6 @@ class DiagnosisWithPrescriptionsSerializer(serializers.Serializer):
             "referral": getattr(instance, "_generated_referral", None)
             and {
                 "id": instance._generated_referral.id,
-                "uuid": str(instance._generated_referral.uuid),
                 "referral_status": instance._generated_referral.referral_status,
                 "priority": instance._generated_referral.priority,
             },
@@ -90,7 +84,6 @@ class DiagnosisWithPrescriptionsSerializer(serializers.Serializer):
             "follow_up_date": instance.visit.follow_up_date,
             "next_action": instance.visit.next_action,
         }
-
 
 class OHCVisitCreateSerializer(OHCVisitSerializer):
     employee = serializers.CharField(max_length=50)
@@ -107,7 +100,7 @@ class OHCVisitCreateSerializer(OHCVisitSerializer):
         emp_code = attrs.pop("employee", None)
         emp_name = attrs.pop("employee_name", "")
         emp_dept = attrs.pop("employee_department", "Unassigned")
-        
+
         # If department was left empty, fallback to Unassigned
         if not emp_dept:
             emp_dept = "Unassigned"
@@ -136,9 +129,8 @@ class OHCVisitCreateSerializer(OHCVisitSerializer):
 
         if request.user.role in {request.user.Role.DOCTOR, request.user.Role.NURSE} and not attrs.get("consulted_doctor"):
             attrs["consulted_doctor"] = DoctorProfile.objects.get(user=request.user)
-            
-        return super().validate(attrs)
 
+        return super().validate(attrs)
 
 class FollowUpScheduleSerializer(serializers.Serializer):
     follow_up_date = serializers.DateField()
@@ -152,10 +144,9 @@ class FollowUpScheduleSerializer(serializers.Serializer):
         visit.save(update_fields=["follow_up_date", "next_action", "visit_type", "updated_at"])
         return visit
 
-
 class CompleteOHCIntakeSerializer(serializers.Serializer):
     """Combined serializer for complete OHC intake with visit and diagnosis in one submission."""
-    
+
     # Visit fields
     employee = serializers.IntegerField()
     consulted_doctor = serializers.IntegerField(required=False, allow_null=True)
@@ -166,7 +157,7 @@ class CompleteOHCIntakeSerializer(serializers.Serializer):
     symptoms = serializers.CharField()
     vitals = serializers.JSONField(required=False, default=dict)
     preliminary_notes = serializers.CharField(required=False, allow_blank=True)
-    
+
     # Diagnosis fields
     diagnosis_name = serializers.CharField(max_length=255)
     diagnosis_code = serializers.CharField(max_length=50, required=False, allow_blank=True)
@@ -177,24 +168,24 @@ class CompleteOHCIntakeSerializer(serializers.Serializer):
     follow_up_date = serializers.DateField(required=False, allow_null=True)
     advised_rest_days = serializers.IntegerField(default=0)
     work_restrictions = serializers.CharField(required=False, allow_blank=True)
-    
+
     # Prescriptions
     prescriptions = PrescriptionEntrySerializer(many=True, required=False)
 
     @transaction.atomic
     def create(self, validated_data):
         request = self.context["request"]
-        
+
         # Get employee profile
         employee_id = validated_data.get("employee")
         employee_profile = EmployeeProfile.objects.get(id=employee_id)
-        
+
         # Get doctor profile (from logged-in user if not provided)
         if validated_data.get("consulted_doctor"):
             doctor_profile = DoctorProfile.objects.get(id=validated_data["consulted_doctor"])
         else:
             doctor_profile = DoctorProfile.objects.get(user=request.user)
-        
+
         # Create OHC Visit
         visit = OHCVisit.objects.create(
             employee=employee_profile,
@@ -208,7 +199,7 @@ class CompleteOHCIntakeSerializer(serializers.Serializer):
             preliminary_notes=validated_data.get("preliminary_notes", ""),
             visit_status=OHCVisit.VisitStatus.IN_PROGRESS,
         )
-        
+
         # Create Diagnosis
         diagnosis = Diagnosis.objects.create(
             visit=visit,
@@ -224,7 +215,7 @@ class CompleteOHCIntakeSerializer(serializers.Serializer):
             work_restrictions=validated_data.get("work_restrictions", ""),
             is_primary=True,
         )
-        
+
         # Create Prescriptions
         prescriptions_data = validated_data.get("prescriptions", [])
         for prescription_data in prescriptions_data:
@@ -241,14 +232,14 @@ class CompleteOHCIntakeSerializer(serializers.Serializer):
                 start_date=prescription_data.get("start_date"),
                 status=Prescription.PrescriptionStatus.ACTIVE,
             )
-        
+
         # Process diagnosis outcome (handles fitness decision, referrals, notifications)
         referral = process_diagnosis_outcome(diagnosis)
-        
+
         # Store referral for response
         diagnosis._visit_id = visit.id
         diagnosis._generated_referral = referral
-        
+
         return diagnosis
 
     def to_representation(self, instance):
@@ -264,4 +255,3 @@ class CompleteOHCIntakeSerializer(serializers.Serializer):
             "referral_status": getattr(instance, "_generated_referral", None) and instance._generated_referral.referral_status,
             "message": "OHC intake and diagnosis completed successfully",
         }
-

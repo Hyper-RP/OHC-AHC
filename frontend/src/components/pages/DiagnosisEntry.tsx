@@ -108,8 +108,8 @@ export const DiagnosisEntry: React.FC = () => {
       );
 
       await createDiagnosis({
-        visit: visitId,
-        diagnosed_by: '', // Will be filled by backend
+        visit: parseInt(visitId, 10),
+        diagnosed_by: 0, // Will be filled by backend
         diagnosis,
         prescriptions: validPrescriptions,
       });

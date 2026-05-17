@@ -24,14 +24,14 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({
     const circumference = 2 * Math.PI * (size / 2 - 10);
 
     circle.style.strokeDasharray = `${circumference} ${circumference}`;
-    circle.style.strokeDashoffset = circumference;
+    circle.style.strokeDashoffset = circumference.toString();
 
     const offset = circumference - (score / 100) * circumference;
     const duration = 1000;
 
     circle.style.transition = `stroke-dashoffset ${duration}ms ease-out`;
     setTimeout(() => {
-      circle.style.strokeDashoffset = `${offset}`;
+      circle.style.strokeDashoffset = `${offset.toString()}`;
     }, 100);
   }, [score, size, animate]);
 

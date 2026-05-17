@@ -75,7 +75,7 @@ export const EmployeeHealthHistoryDetail: React.FC = () => {
               </div>
               <div className={styles.visitsList}>
                 {data.visits.map((visit) => (
-                  <div key={visit.uuid} className={styles.visitItem}>
+                  <div key={visit.id} className={styles.visitItem}>
                     <p><strong>Date:</strong> {visit.visit_date}</p>
                     <p><strong>Type:</strong> {visit.visit_type}</p>
                     <p><strong>Triage Level:</strong> {visit.triage_level}</p>
@@ -108,7 +108,7 @@ export const EmployeeHealthHistoryDetail: React.FC = () => {
                         <p><strong>Diagnoses:</strong></p>
                         <div className={styles.detailList}>
                           {visit.diagnoses.map((diagnosis) => (
-                            <p key={`${visit.uuid}-${diagnosis.diagnosis_name}-${diagnosis.diagnosed_at}`}>
+                            <p key={`${visit.id}-${diagnosis.diagnosis_name}-${diagnosis.diagnosed_at}`}>
                               <strong>{diagnosis.diagnosis_name}</strong> | {diagnosis.severity} | {diagnosis.fitness_decision}
                             </p>
                           ))}
@@ -120,7 +120,7 @@ export const EmployeeHealthHistoryDetail: React.FC = () => {
                         <p><strong>Prescriptions:</strong></p>
                         <div className={styles.detailList}>
                           {visit.prescriptions.map((prescription) => (
-                            <p key={`${visit.uuid}-${prescription.medicine_name}-${prescription.start_date}`}>
+                            <p key={`${visit.id}-${prescription.medicine_name}-${prescription.start_date}`}>
                               <strong>{prescription.medicine_name}</strong> | {prescription.dosage} | Start {prescription.start_date}
                             </p>
                           ))}

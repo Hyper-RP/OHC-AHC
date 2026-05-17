@@ -25,7 +25,7 @@ export const FitnessStatusBadge: React.FC<FitnessStatusBadgeProps> = ({
   return (
     <div
       className={`${styles.badge} ${sizeClass}`}
-      style={{ '--badge-color': config.color }}
+      style={{ ['--badge-color' as any]: config.color }}
       role="status"
       aria-label={`Fitness status: ${config.label}`}
     >

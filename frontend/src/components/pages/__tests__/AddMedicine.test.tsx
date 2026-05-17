@@ -13,7 +13,7 @@ describe('AddMedicine', () => {
       routerProps: { initialEntries: ['/medicine-management/add'] },
     });
 
-    expect(screen.getByText('Add Medicine')).toBeInTheDocument();
+    expect(screen.getAllByText('Add Medicine')).toHaveLength(2);
     expect(screen.getByLabelText('Medicine ID')).toBeInTheDocument();
     expect(screen.getByLabelText('Medicine Name')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add Medicine' })).toBeInTheDocument();

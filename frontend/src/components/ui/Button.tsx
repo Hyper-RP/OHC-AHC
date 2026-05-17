@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './Button.module.css';
 
 interface ButtonProps {
-  variant?: 'brand' | 'outline-brand' | 'outline-light' | 'outline-secondary' | 'outline-danger';
+  variant?: 'brand' | 'outline-brand' | 'outline-light' | 'outline-secondary' | 'outline-danger' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   type?: 'button' | 'submit' | 'reset';
   disabled?: boolean;

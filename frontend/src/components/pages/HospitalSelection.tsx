@@ -64,7 +64,7 @@ export const HospitalSelection: React.FC = () => {
 
         <div className={styles.hospitalGrid}>
           {filteredHospitals.map((hospital) => (
-            <Card key={hospital.uuid} className={styles.hospitalCard}>
+            <Card key={hospital.id} className={styles.hospitalCard}>
               <div className={styles.hospitalHeader}>
                 <h3>{hospital.name}</h3>
                 <span className={`${styles.hospitalStatus} ${styles[hospital.hospital_status.toLowerCase()]}`}>

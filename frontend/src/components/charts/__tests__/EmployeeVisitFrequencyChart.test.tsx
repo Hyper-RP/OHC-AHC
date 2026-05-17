@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { EmployeeVisitFrequencyChart } from '../EmployeeVisitFrequencyChart';
+import { ChartTestWrapper } from './chartTestHelper';
 
 describe('EmployeeVisitFrequencyChart', () => {
   const mockData = [
@@ -10,35 +11,49 @@ describe('EmployeeVisitFrequencyChart', () => {
   ];
 
   it('should render loading state', () => {
-    const { container } = render(<EmployeeVisitFrequencyChart data={[]} loading={true} height={300} />);
+    const { container } = render(
+      <ChartTestWrapper>
+        <EmployeeVisitFrequencyChart data={[]} loading={true} height={300} />
+      </ChartTestWrapper>,
+    );
 
-    const skeleton = container.querySelector('.skeleton');
+    const skeleton = container.querySelector('[data-testid="chart-skeleton"]');
     expect(skeleton).toBeInTheDocument();
     expect(skeleton).toHaveStyle({ height: '300px' });
   });
 
   it('should render empty state', () => {
-    const { container } = render(<EmployeeVisitFrequencyChart data={[]} loading={false} height={300} />);
+    const { container } = render(
+      <ChartTestWrapper>
+        <EmployeeVisitFrequencyChart data={[]} loading={false} height={300} />
+      </ChartTestWrapper>,
+    );
 
-    const empty = container.querySelector('.empty');
+    const empty = container.querySelector('[data-testid="chart-empty"]');
     expect(empty).toBeInTheDocument();
     expect(empty).toHaveTextContent('No visit data available');
   });
 
   it('should render chart with data', () => {
     const { container } = render(
-      <EmployeeVisitFrequencyChart data={mockData} loading={false} height={300} />
+      <ChartTestWrapper>
+        <EmployeeVisitFrequencyChart data={mockData} loading={false} height={300} />
+      </ChartTestWrapper>,
     );
 
-    const chartContainer = container.querySelector('.chartContainer');
+    const chartContainer = container.querySelector('[data-testid="chart-container"]');
     expect(chartContainer).toBeInTheDocument();
     expect(chartContainer).toHaveStyle({ height: '300px' });
   });
 
-  it('should render responsive container', () => {
-    const { container } = render(<EmployeeVisitFrequencyChart data={mockData} />);
+  it('should render SVG chart', () => {
+    const { container } = render(
+      <ChartTestWrapper>
+        <EmployeeVisitFrequencyChart data={mockData} />
+      </ChartTestWrapper>,
+    );
 
-    const responsiveContainer = container.querySelector('.recharts-responsive-container');
-    expect(responsiveContainer).toBeInTheDocument();
+    const svg = container.querySelector('svg');
+    expect(svg).toBeInTheDocument();
   });
 });
