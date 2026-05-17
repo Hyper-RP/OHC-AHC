@@ -29,6 +29,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
     '10.150.224.239',
+    'ohc-ahc.onrender.com',
 ]
 
 
