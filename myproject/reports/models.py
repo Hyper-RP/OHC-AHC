@@ -34,10 +34,15 @@ class Notification(BaseModel):
     sent_at = models.DateTimeField(null=True, blank=True)
     read_at = models.DateTimeField(null=True, blank=True)
     related_model = models.CharField(max_length=100, blank=True)
-    related_object_uuid = models.CharField(max_length=64, blank=True)
+    related_object_id = models.PositiveIntegerField(null=True, blank=True)
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['related_object_id', 'related_model'], name='notif_related_idx'),
+        ]
 
 
 class AuditLog(BaseModel):
@@ -51,7 +56,7 @@ class AuditLog(BaseModel):
     module = models.CharField(max_length=100)
     action = models.CharField(max_length=100)
     target_model = models.CharField(max_length=100)
-    target_object_uuid = models.CharField(max_length=64)
+    target_object_id = models.PositiveIntegerField(null=True)
     object_snapshot = models.JSONField(default=dict, blank=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True)
@@ -59,5 +64,10 @@ class AuditLog(BaseModel):
 
     def __str__(self):
         return f"{self.module} - {self.action}"
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['target_object_id', 'target_model'], name='audit_target_idx'),
+        ]
 
 # Create your models here.
