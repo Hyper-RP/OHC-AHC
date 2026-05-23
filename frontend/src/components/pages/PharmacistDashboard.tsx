@@ -19,6 +19,10 @@ interface PrescriptionItem {
       employee_code: string;
     };
     visit_date: string;
+    visit_time?: string;
+    vitals?: Record<string, any>;
+    chief_complaint?: string;
+    symptoms?: string;
   };
   medicine_name: string;
   dosage: string;
@@ -236,37 +240,41 @@ export const PharmacistDashboard: React.FC = () => {
             ) : (
               <div className={styles.prescriptionsList}>
                 {prescriptions.map((prescription) => (
-                  <Card key={prescription.id} className={styles.prescriptionCard}>
-                    <div className={styles.prescriptionHeader}>
-                      <div>
+                  <div
+                    key={prescription.id}
+                    className={`${styles.prescriptionListItem} ${prescription.is_dispensed ? styles.dispensedItem : ''}`}
+                    onClick={() => prescription.medicine && !prescription.is_dispensed && handleOpenDispenseModal(prescription, prescription.medicine)}
+                  >
+                    <div className={styles.listItemMain}>
+                      <div className={styles.listItemPatient}>
                         <span className={styles.patientName}>
                           {prescription.visit.employee.user.first_name} {prescription.visit.employee.user.last_name}
                         </span>
                         <span className={styles.employeeCode}>
                           {prescription.visit.employee.employee_code}
                         </span>
-                        <span className={styles.visitDate}>
-                          {new Date(prescription.visit.visit_date).toLocaleDateString()}
-                        </span>
                       </div>
-                      <div className={styles.medicineInfo}>
-                        <span>Medicine: {prescription.medicine_name}</span>
-                        <span>Dosage: {prescription.dosage} | Freq: {prescription.frequency} | Duration: {prescription.duration_days} days</span>
-                        {prescription.instructions && <span>Instructions: {prescription.instructions}</span>}
+                      <div className={styles.listItemDate}>
+                        <span>{new Date(prescription.visit.visit_date).toLocaleDateString()}</span>
+                        {prescription.visit.visit_time && (
+                          <span> {new Date(`2000-01-01T${prescription.visit.visit_time}`).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        )}
                       </div>
                     </div>
-
-                    {!prescription.is_dispensed && (
-                      <Button
-                        type="button"
-                        variant="outline-secondary"
-                        size="sm"
-                        onClick={() => prescription.medicine && handleOpenDispenseModal(prescription, prescription.medicine)}
-                      >
-                        Dispense
-                      </Button>
-                    )}
-                  </Card>
+                    <div className={styles.listItemMedicine}>
+                      <span className={styles.medicineName}>{prescription.medicine_name}</span>
+                      <span className={styles.medicineDetails}>
+                        {prescription.dosage} | {prescription.frequency} | {prescription.duration_days}d
+                      </span>
+                    </div>
+                    <div className={styles.listItemStatus}>
+                      {prescription.is_dispensed ? (
+                        <span className={styles.statusBadgeDispensed}>Dispensed</span>
+                      ) : (
+                        <span className={styles.statusBadgePending}>Pending</span>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
@@ -376,17 +384,18 @@ export const PharmacistDashboard: React.FC = () => {
       {/* Dispense Modal */}
       {showDispenseModal && selectedMedicine && selectedPrescription && (
         <div className={styles.modalOverlay} onClick={handleCloseDispenseModal}>
-          <Card className={styles.modalCard} onClick={() => {}}>
-            <div className={styles.modalHeader}>
-              <h3>Dispense Medicine</h3>
-              <button
-                type="button"
-                className={styles.closeButton}
-                onClick={handleCloseDispenseModal}
-              >
-                ×
-              </button>
-            </div>
+          <div onClick={(e) => e.stopPropagation()}>
+            <Card className={styles.modalCard}>
+              <div className={styles.modalHeader}>
+                <h3>Dispense Medicine</h3>
+                <button
+                  type="button"
+                  className={styles.closeButton}
+                  onClick={handleCloseDispenseModal}
+                >
+                  ×
+                </button>
+              </div>
 
             <div className={styles.modalContent}>
               <div className={styles.modalSection}>
@@ -401,7 +410,33 @@ export const PharmacistDashboard: React.FC = () => {
                   <span>Employee Code:</span>
                   <span>{selectedPrescription.visit.employee.employee_code}</span>
                 </div>
+                {selectedPrescription.visit.chief_complaint && (
+                  <div className={styles.modalDetailRow}>
+                    <span>Chief Complaint:</span>
+                    <span>{selectedPrescription.visit.chief_complaint}</span>
+                  </div>
+                )}
+                {selectedPrescription.visit.symptoms && (
+                  <div className={styles.modalDetailRow}>
+                    <span>Symptoms:</span>
+                    <span>{selectedPrescription.visit.symptoms}</span>
+                  </div>
+                )}
               </div>
+
+              {selectedPrescription.visit.vitals && Object.keys(selectedPrescription.visit.vitals).length > 0 && (
+                <div className={styles.modalSection}>
+                  <h4>Vital Signs</h4>
+                  <div className={styles.vitalsGrid}>
+                    {Object.entries(selectedPrescription.visit.vitals).map(([key, value]) => (
+                      <div key={key} className={styles.vitalItem}>
+                        <span className={styles.vitalLabel}>{key}:</span>
+                        <span className={styles.vitalValue}>{String(value || '-')}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className={styles.modalSection}>
                 <h4>Medicine Details</h4>
@@ -491,6 +526,7 @@ export const PharmacistDashboard: React.FC = () => {
               </Button>
             </div>
           </Card>
+        </div>
         </div>
       )}
     </div>

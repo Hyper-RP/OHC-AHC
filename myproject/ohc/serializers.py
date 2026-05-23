@@ -50,7 +50,7 @@ class PrescriptionSerializer(serializers.ModelSerializer):
 class PrescriptionEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = Prescription
-        exclude = ("visit", "diagnosis", "prescribed_by")
+        exclude = ("visit", "diagnosis", "prescribed_by", "status")
 
 class MedicalTestSerializer(serializers.ModelSerializer):
     class Meta:
@@ -59,30 +59,47 @@ class MedicalTestSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "created_at", "updated_at")
 
 class DiagnosisWithPrescriptionsSerializer(serializers.Serializer):
-    diagnosis = DiagnosisSerializer()
+    visit = serializers.IntegerField()
+    diagnosis_code = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    diagnosis_name = serializers.CharField(max_length=255)
+    diagnosis_notes = serializers.CharField(required=False, allow_blank=True)
+    severity = serializers.CharField(max_length=15)
+    condition_status = serializers.CharField(max_length=15, required=False, default="ACTIVE")
+    is_primary = serializers.BooleanField(default=True)
+    is_referral_required = serializers.BooleanField(default=False)
+    fitness_decision = serializers.CharField(max_length=30)
+    work_restrictions = serializers.CharField(required=False, allow_blank=True)
+    advised_rest_days = serializers.IntegerField(default=0)
+    follow_up_date = serializers.DateField(required=False, allow_null=True)
     prescriptions = PrescriptionEntrySerializer(many=True, required=False)
+
+    def validate_visit(self, value):
+        try:
+            return OHCVisit.objects.get(id=value)
+        except OHCVisit.DoesNotExist:
+            raise serializers.ValidationError("Visit not found")
 
     @transaction.atomic
     def create(self, validated_data):
         request = self.context["request"]
-        diagnosis_data = validated_data["diagnosis"]
-        prescriptions_data = validated_data.get("prescriptions", [])
+        prescriptions_data = validated_data.pop("prescriptions", [])
 
         diagnosed_by = None
         if request.user.role in {request.user.Role.DOCTOR, request.user.Role.NURSE}:
             diagnosed_by = DoctorProfile.objects.get(user=request.user)
 
-        diagnosis = Diagnosis.objects.create(**diagnosis_data, diagnosed_by=diagnosed_by)
+        diagnosis = Diagnosis.objects.create(diagnosed_by=diagnosed_by, **validated_data)
 
         for prescription_data in prescriptions_data:
             Prescription.objects.create(
                 diagnosis=diagnosis,
                 visit=diagnosis.visit,
                 prescribed_by=diagnosis.diagnosed_by,
+                status=Prescription.PrescriptionStatus.ACTIVE,
                 **{
                     key: value
                     for key, value in prescription_data.items()
-                    if key not in {"visit", "diagnosis", "prescribed_by"}
+                    if key not in {"visit", "diagnosis", "prescribed_by", "status"}
                 },
             )
         referral = process_diagnosis_outcome(diagnosis)
@@ -363,6 +380,10 @@ class PharmacistPrescriptionSerializer(serializers.ModelSerializer):
                     },
                 },
                 "visit_date": instance.visit.visit_date.isoformat() if instance.visit.visit_date else None,
+                "visit_time": instance.visit.visit_time.isoformat() if instance.visit.visit_time else None,
+                "vitals": instance.visit.vitals,
+                "chief_complaint": instance.visit.chief_complaint,
+                "symptoms": instance.visit.symptoms,
             }
             data["visit"] = visit_data
 
