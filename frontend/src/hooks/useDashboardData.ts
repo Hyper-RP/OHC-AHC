@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import api from '../services/api';
 
 interface UseDashboardDataOptions {
@@ -13,24 +13,10 @@ interface CacheEntry {
   timestamp: number;
 }
 
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const cache = new Map<string, CacheEntry>();
 
 function getCacheKey(endpoint: string, params: Record<string, unknown>): string {
   return `${endpoint}?${JSON.stringify(params)}`;
-}
-
-function getCachedData(key: string): unknown | null {
-  const entry = cache.get(key);
-  if (!entry) return null;
-
-  const isExpired = Date.now() - entry.timestamp > CACHE_DURATION;
-  if (isExpired) {
-    cache.delete(key);
-    return null;
-  }
-
-  return entry.data;
 }
 
 function setCachedData(key: string, data: unknown): void {
@@ -54,12 +40,14 @@ export function useDashboardData<T = unknown>(
   const [error, setError] = useState<Error | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const isFetchingRef = useRef(false);
 
-  const cacheKey = getCacheKey(endpoint, params);
+  const cacheKey = useMemo(() => getCacheKey(endpoint, params), [endpoint, params]);
 
   const fetchData = useCallback(async () => {
-    if (!enabled) return;
+    if (!enabled || isFetchingRef.current) return;
 
+    isFetchingRef.current = true;
     abortControllerRef.current?.abort();
     abortControllerRef.current = new AbortController();
 
@@ -67,13 +55,6 @@ export function useDashboardData<T = unknown>(
     setError(null);
 
     try {
-      const cached = getCachedData(cacheKey);
-      if (cached && !error) {
-        setData(cached as T);
-        setIsLoading(false);
-        return;
-      }
-
       const response = await api.get<T>(endpoint, {
         params,
         signal: abortControllerRef.current.signal,
@@ -91,8 +72,9 @@ export function useDashboardData<T = unknown>(
       }
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
-  }, [endpoint, enabled, cacheKey, onSuccess, onError, error]);
+  }, [endpoint, enabled, cacheKey, onSuccess, onError]);
 
   useEffect(() => {
     fetchData();
@@ -111,6 +93,7 @@ export function useDashboardData<T = unknown>(
 
   const refetch = useCallback(() => {
     cache.delete(cacheKey);
+    isFetchingRef.current = false;
     fetchData();
   }, [cacheKey, fetchData]);
 

@@ -76,3 +76,18 @@ class CurrentUserSerializer(UserSerializer):
 
     def get_full_name(self, obj):
         return obj.get_full_name() or obj.username
+
+
+class DoctorListSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+    specializations = serializers.CharField(source='specialization', read_only=True)
+
+    class Meta:
+        model = DoctorProfile
+        fields = ('id', 'user', 'registration_number', 'specializations')
+
+    def get_user(self, obj):
+        return {
+            'first_name': obj.user.first_name,
+            'last_name': obj.user.last_name,
+        }
