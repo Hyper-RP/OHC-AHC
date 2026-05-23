@@ -4,17 +4,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 import { Header } from '../layout';
 import { Card, Alert, Button, FormInput } from '../ui';
-import { SeverityBadge, StatusBadge, LastUpdated } from '../charts';
+import { StatusBadge, LastUpdated } from '../charts';
 import { RefreshControl } from '../charts';
 import { createDiagnosis } from '../../services/ohc';
-import { handleApiError } from '../../services/api';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import { Role, VisitStatus } from '../../types';
-import {
-  validateDiagnosisForm,
-  validatePrescriptions,
-  formatSubmitError,
-} from '../../utils/errorHandling';
+import { validatePrescriptions, formatSubmitError } from '../../utils/errorHandling';
 import styles from './DoctorDashboard.module.css';
 
 interface PrescriptionInput {
@@ -56,7 +51,7 @@ export const DoctorDashboard: React.FC = () => {
   // Show new visits count after refresh
   useEffect(() => {
     if (visits.length > 0) {
-      const currentIds = new Set(visits.map((v: any) => v.id));
+      const currentIds = new Set<number>(visits.map((v: any) => v.id as number));
       const previousIds = previousVisitIdsRef.current;
 
       // Only show notification on refresh (when we had previous data)
@@ -102,7 +97,7 @@ export const DoctorDashboard: React.FC = () => {
   }, [user, navigate]);
 
   const handleViewVisit = (visitId: number) => {
-    setSelectedVisit(visits.find((v) => v.id === visitId) || null);
+    setSelectedVisit(visits.find((v: any) => v.id === visitId) || null);
   };
 
   const handleCloseDetail = () => {
@@ -192,23 +187,21 @@ export const DoctorDashboard: React.FC = () => {
     setSubmitting(true);
     try {
       const diagnosisData = {
-        diagnosis: {
-          visit: selectedVisit.id,
-          diagnosis_code: '',
-          diagnosis_name: diagnosisName,
-          diagnosis_notes: diagnosisNotes || '',
-          severity: 'MILD',
-          is_primary: true,
-          is_referral_required: false,
-          fitness_decision: 'FIT',
-          work_restrictions: '',
-          advised_rest_days: 0,
-          follow_up_date: followUpDate || null,
-        },
+        visit: selectedVisit.id,
+        diagnosis_code: '',
+        diagnosis_name: diagnosisName,
+        diagnosis_notes: diagnosisNotes || '',
+        severity: 'MILD' as const,
+        is_primary: true,
+        is_referral_required: false,
+        fitness_decision: 'FIT' as const,
+        work_restrictions: '',
+        advised_rest_days: 0,
+        follow_up_date: followUpDate || undefined,
         prescriptions: validPrescriptions.map((p) => ({
           ...p,
           start_date: new Date().toISOString().split('T')[0],
-          status: 'ACTIVE',
+          status: 'ACTIVE' as const,
         })),
       };
 
@@ -279,7 +272,7 @@ export const DoctorDashboard: React.FC = () => {
           </div>
         ) : (
           <div className={styles.visitsGrid}>
-            {visits.map((visit) => (
+            {visits.map((visit: any) => (
               <Card key={visit.id} className={styles.visitCard} onClick={() => handleViewVisit(visit.id)}>
                 <div className={styles.visitHeader}>
                   <div className={styles.visitInfo}>
@@ -382,12 +375,13 @@ export const DoctorDashboard: React.FC = () => {
 
             <div className={styles.vitals}>
               <h4>Vital Signs</h4>
-              {Object.entries(selectedVisit.vitals || {}).map(([key, value]) => (
+              {selectedVisit.vitals && Object.entries(selectedVisit.vitals).map(([key, value]) => (
                 <div key={key} className={styles.vitalItem}>
                   <span className={styles.vitalLabel}>{key}:</span>
-                  <span className={styles.vitalValue}>{value || '-'}</span>
+                  <span className={styles.vitalValue}>{String(value || '-')}</span>
                 </div>
               ))}
+              {!selectedVisit.vitals && <p>No vitals recorded</p>}
             </div>
 
             {selectedVisit.visit_status === VisitStatus.OPEN && (

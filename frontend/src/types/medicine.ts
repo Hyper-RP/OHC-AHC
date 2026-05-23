@@ -1,5 +1,3 @@
-import type { User } from './index';
-
 export interface MedicineStock {
   id: number;
   medicine_id: string;

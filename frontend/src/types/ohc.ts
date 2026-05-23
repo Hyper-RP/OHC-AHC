@@ -1,4 +1,4 @@
-import type { EmployeeProfile, DoctorProfile, VisitType, VisitStatus, TriageLevel, Vitals, Role, PrescriptionStatus, Severity, FitnessDecision } from './index';
+import type { VisitType, VisitStatus, TriageLevel, Vitals, Severity, FitnessDecision } from './index';
 
 export interface OHCVisit {
   id: number;
@@ -39,19 +39,6 @@ export interface DoctorInfo {
     last_name: string;
   };
   is_available: boolean;
-}
-
-export type VisitType = 'WALK_IN' | 'PERIODIC' | 'PRE_EMPLOYMENT' | 'FOLLOW_UP' | 'EMERGENCY';
-export type VisitStatus = 'OPEN' | 'IN_PROGRESS' | 'REFERRED' | 'CLOSED' | 'CANCELLED' | 'COMPLETED';
-export type TriageLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-
-export interface Vitals {
-  temperature?: string;
-  blood_pressure?: string;
-  pulse?: string;
-  spo2?: string;
-  weight?: string;
-  height?: string;
 }
 
 export interface NurseFormData {

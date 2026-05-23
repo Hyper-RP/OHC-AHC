@@ -20,11 +20,11 @@ export const NAV_ITEMS: NavItem[] = [
     icon: '🏥',
     roles: [Role.ADMIN, Role.NURSE, Role.DOCTOR, Role.PHARMACIST, Role.EHS, Role.MANAGEMENT],
     children: [
-      { label: 'Nurse Module', url: '/nurse/visit-form', urlName: 'nurse', roles: [Role.NURSE, Role.ADMIN] },
-      { label: 'Doctor Module', url: '/doctor/dashboard', urlName: 'doctor', roles: [Role.DOCTOR, Role.ADMIN] },
-      { label: 'Pharmacist Module', url: '/pharmacist/dashboard', urlName: 'pharmacist', roles: [Role.PHARMACIST, Role.ADMIN] },
-      { label: 'EHS Dashboard', url: '/ehs/dashboard', urlName: 'ehs', roles: [Role.EHS, Role.ADMIN, Role.MANAGEMENT] },
-      { label: 'Management Dashboard', url: '/management/dashboard', urlName: 'management', roles: [Role.MANAGEMENT, Role.ADMIN] },
+      { label: 'Nurse Module', url: '/nurse/visit-form', urlName: 'nurse', icon: '👩', roles: [Role.NURSE, Role.ADMIN] },
+      { label: 'Doctor Module', url: '/doctor/dashboard', urlName: 'doctor', icon: '👨', roles: [Role.DOCTOR, Role.ADMIN] },
+      { label: 'Pharmacist Module', url: '/pharmacist/dashboard', urlName: 'pharmacist', icon: '💊', roles: [Role.PHARMACIST, Role.ADMIN] },
+      { label: 'EHS Dashboard', url: '/ehs/dashboard', urlName: 'ehs', icon: '📈', roles: [Role.EHS, Role.ADMIN, Role.MANAGEMENT] },
+      { label: 'Management Dashboard', url: '/management/dashboard', urlName: 'management', icon: '📊', roles: [Role.MANAGEMENT, Role.ADMIN] },
     ],
   },
   // {

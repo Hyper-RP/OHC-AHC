@@ -90,6 +90,14 @@ export const DoctorType = {
 } as const;
 export type DoctorType = (typeof DoctorType)[keyof typeof DoctorType];
 
+export const FitnessStatus = {
+  FIT: "FIT",
+  FIT_WITH_RESTRICTION: "FIT_WITH_RESTRICTION",
+  TEMPORARY_UNFIT: "TEMPORARY_UNFIT",
+  UNFIT: "UNFIT",
+} as const;
+export type FitnessStatus = (typeof FitnessStatus)[keyof typeof FitnessStatus];
+
 // OHC Types
 export const VisitType = {
   WALK_IN: "WALK_IN",
@@ -321,6 +329,20 @@ export interface EmployeeHealthHistory {
   };
   visits: Array<{
     id: number;
+    visit_date?: string;
+    visit_type?: string;
+    triage_level?: string;
+    visit_status?: string;
+    doctor_name?: string;
+    chief_complaint?: string;
+    symptoms?: string;
+    vitals?: Record<string, unknown>;
+    preliminary_notes?: string;
+    requires_referral?: boolean;
+    follow_up_date?: string;
+    next_action?: string;
+    diagnoses?: unknown[];
+    prescriptions?: unknown[];
   }>;
 }
 

@@ -1,5 +1,3 @@
-import type { OHCVisit } from './ohc';
-
 export interface DashboardAnalytics {
   summary: {
     total_visits: number;
