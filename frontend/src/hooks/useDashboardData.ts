@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import api from '../services/api';
 
 interface UseDashboardDataOptions {
@@ -54,12 +54,14 @@ export function useDashboardData<T = unknown>(
   const [error, setError] = useState<Error | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const isFetchingRef = useRef(false);
 
-  const cacheKey = getCacheKey(endpoint, params);
+  const cacheKey = useMemo(() => getCacheKey(endpoint, params), [endpoint, params]);
 
   const fetchData = useCallback(async () => {
-    if (!enabled) return;
+    if (!enabled || isFetchingRef.current) return;
 
+    isFetchingRef.current = true;
     abortControllerRef.current?.abort();
     abortControllerRef.current = new AbortController();
 
@@ -67,13 +69,6 @@ export function useDashboardData<T = unknown>(
     setError(null);
 
     try {
-      const cached = getCachedData(cacheKey);
-      if (cached && !error) {
-        setData(cached as T);
-        setIsLoading(false);
-        return;
-      }
-
       const response = await api.get<T>(endpoint, {
         params,
         signal: abortControllerRef.current.signal,
@@ -91,8 +86,9 @@ export function useDashboardData<T = unknown>(
       }
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
-  }, [endpoint, enabled, cacheKey, onSuccess, onError, error]);
+  }, [endpoint, enabled, cacheKey, onSuccess, onError]);
 
   useEffect(() => {
     fetchData();
@@ -111,6 +107,7 @@ export function useDashboardData<T = unknown>(
 
   const refetch = useCallback(() => {
     cache.delete(cacheKey);
+    isFetchingRef.current = false;
     fetchData();
   }, [cacheKey, fetchData]);
 

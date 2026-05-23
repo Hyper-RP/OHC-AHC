@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getNavItemsForRole } from '../../utils/navigation';
+import { NavDropdown } from '../navigation';
 import styles from './Sidebar.module.css';
 import logo from '../../assets/mediGplus.png';
 
@@ -20,8 +21,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
     return null;
   }
 
-  const navItems = getNavItemsForRole(user.role);
   const userDisplayName = `${user.first_name} ${user.last_name}`;
+  const navItems = getNavItemsForRole(user.role);
 
   return (
     <aside className={`${styles.sidebar} ${className}`}>
@@ -36,17 +37,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
 
         <nav className={styles.portalNav}>
           {navItems.map((item) => (
-            <NavLink
-              key={item.urlName}
-              to={item.url}
-              className={({ isActive }) =>
-                `${styles.navLinkCard} ${isActive ? styles.active : ''}`
-              }
-              end
-            >
-              <span className={styles.navIcon}>{item.icon}</span>
-              <span>{item.label}</span>
-            </NavLink>
+            item.children ? (
+              <NavDropdown
+                key={item.urlName}
+                label={item.label}
+                icon={item.icon}
+                url={item.url}
+              >
+                {item.children}
+              </NavDropdown>
+            ) : (
+              <NavLink
+                key={item.urlName}
+                to={item.url}
+                className={({ isActive }) =>
+                  `${styles.navLinkCard} ${isActive ? styles.active : ''}`
+                }
+                end
+              >
+                <span className={styles.navIcon}>{item.icon}</span>
+                <span>{item.label}</span>
+              </NavLink>
+            )
           ))}
         </nav>
       </div>

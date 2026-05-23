@@ -21,6 +21,11 @@ import {
   CompleteIntake,
   MedicineManagement,
   AddMedicine,
+  NurseVisitForm,
+  DoctorDashboard,
+  PharmacistDashboard,
+  EHSDashboard,
+  ManagementDashboard,
 } from './components/pages';
 
 /**
@@ -62,6 +67,12 @@ function App() {
               <Route path="reports/employee-history/:employeeId" element={<EmployeeHealthHistoryDetail />} />
               <Route path="reports/disease-trends" element={<DiseaseTrends />} />
               <Route path="reports/department-stats" element={<DepartmentStats />} />
+              {/* Role-specific dashboards */}
+              <Route path="nurse/visit-form" element={<NurseVisitForm />} />
+              <Route path="doctor/dashboard" element={<DoctorDashboard />} />
+              <Route path="pharmacist/dashboard" element={<PharmacistDashboard />} />
+              <Route path="ehs/dashboard" element={<EHSDashboard />} />
+              <Route path="management/dashboard" element={<ManagementDashboard />} />
             </Route>
 
             {/* Fallback */}

@@ -75,25 +75,88 @@ api.interceptors.response.use(
 );
 
 // Helper function to handle API errors
-export const handleApiError = (error: unknown): string => {
+export const handleApiError = (error: unknown, defaultMessage = 'An unexpected error occurred'): string => {
   if (axios.isAxiosError(error)) {
-    if (error.response?.data) {
-      // Handle validation errors
-      const data = error.response.data as Record<string, unknown>;
+    const { response, request, message } = error;
+
+    // Network error (no response received)
+    if (!response && request) {
+      return 'Network error. Please check your connection and try again.';
+    }
+
+    // Server responded with error
+    if (response?.data) {
+      const data = response.data as Record<string, unknown>;
+
+      // Handle DRF validation errors (non-field errors)
+      if (data.non_field_errors && Array.isArray(data.non_field_errors)) {
+        return data.non_field_errors[0] as string;
+      }
+
+      // Handle detail messages
       if (data.detail) {
+        // Handle array of errors (DRF validation)
+        if (Array.isArray(data.detail)) {
+          return data.detail.join(', ');
+        }
         return String(data.detail);
       }
+
       // Handle field-specific errors
-      const firstField = Object.keys(data)[0];
-      if (firstField && Array.isArray(data[firstField])) {
-        return String(data[firstField][0]);
+      const errorFields = Object.keys(data).filter(key =>
+        key !== 'detail' &&
+        key !== 'non_field_errors' &&
+        !key.startsWith('_')
+      );
+
+      if (errorFields.length > 0) {
+        const firstField = errorFields[0];
+        const fieldErrors = data[firstField];
+
+        if (Array.isArray(fieldErrors)) {
+          return `${formatFieldName(firstField)}: ${fieldErrors[0]}`;
+        }
+        if (typeof fieldErrors === 'string') {
+          return `${formatFieldName(firstField)}: ${fieldErrors}`;
+        }
       }
     }
-    if (error.message) {
-      return error.message;
+
+    // HTTP status-specific messages
+    if (response?.status) {
+      const statusMessages: Record<number, string> = {
+        400: 'Invalid request. Please check your input.',
+        401: 'Your session has expired. Please log in again.',
+        403: 'You do not have permission to perform this action.',
+        404: 'The requested resource was not found.',
+        429: 'Too many requests. Please try again later.',
+        500: 'Server error. Please try again later.',
+        502: 'Service unavailable. Please try again later.',
+        503: 'Service temporarily unavailable. Please try again later.',
+      };
+      return statusMessages[response.status] || defaultMessage;
+    }
+
+    // Generic axios error message
+    if (message) {
+      return message;
     }
   }
-  return 'An unexpected error occurred';
+
+  // Non-Axios errors
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return defaultMessage;
 };
+
+// Helper to format field names for error messages
+function formatFieldName(field: string): string {
+  return field
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
 
 export default api;
