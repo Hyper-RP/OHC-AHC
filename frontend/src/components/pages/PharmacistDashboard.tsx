@@ -393,17 +393,18 @@ export const PharmacistDashboard: React.FC = () => {
       {/* Dispense Modal */}
       {showDispenseModal && selectedMedicine && selectedPrescription && (
         <div className={styles.modalOverlay} onClick={handleCloseDispenseModal}>
-          <Card className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3>Dispense Medicine</h3>
-              <button
-                type="button"
-                className={styles.closeButton}
-                onClick={handleCloseDispenseModal}
-              >
-                ×
-              </button>
-            </div>
+          <div onClick={(e) => e.stopPropagation()}>
+            <Card className={styles.modalCard}>
+              <div className={styles.modalHeader}>
+                <h3>Dispense Medicine</h3>
+                <button
+                  type="button"
+                  className={styles.closeButton}
+                  onClick={handleCloseDispenseModal}
+                >
+                  ×
+                </button>
+              </div>
 
             <div className={styles.modalContent}>
               <div className={styles.modalSection}>
@@ -534,6 +535,7 @@ export const PharmacistDashboard: React.FC = () => {
               </Button>
             </div>
           </Card>
+        </div>
         </div>
       )}
     </div>
