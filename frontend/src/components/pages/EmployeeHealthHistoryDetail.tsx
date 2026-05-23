@@ -83,12 +83,12 @@ export const EmployeeHealthHistoryDetail: React.FC = () => {
                     <p><strong>Doctor:</strong> {visit.doctor_name}</p>
                     <p><strong>Complaint:</strong> {visit.chief_complaint}</p>
                     <p><strong>Symptoms:</strong> {visit.symptoms}</p>
-                    {Object.keys(visit.vitals).length > 0 && (
+                    {visit.vitals && Object.keys(visit.vitals).length > 0 && (
                       <div className={styles.detailBlock}>
                         <p><strong>Vitals:</strong></p>
                         <div className={styles.detailList}>
                           {Object.entries(visit.vitals).map(([key, value]) => (
-                            <p key={key}><strong>{key}:</strong> {value}</p>
+                            <p key={key}><strong>{key}:</strong> {String(value)}</p>
                           ))}
                         </div>
                       </div>
@@ -103,11 +103,11 @@ export const EmployeeHealthHistoryDetail: React.FC = () => {
                     {visit.next_action && (
                       <p><strong>Next Action:</strong> {visit.next_action}</p>
                     )}
-                    {visit.diagnoses.length > 0 && (
+                    {visit.diagnoses && visit.diagnoses.length > 0 && (
                       <div className={styles.detailBlock}>
                         <p><strong>Diagnoses:</strong></p>
                         <div className={styles.detailList}>
-                          {visit.diagnoses.map((diagnosis) => (
+                          {visit.diagnoses.map((diagnosis: any) => (
                             <p key={`${visit.id}-${diagnosis.diagnosis_name}-${diagnosis.diagnosed_at}`}>
                               <strong>{diagnosis.diagnosis_name}</strong> | {diagnosis.severity} | {diagnosis.fitness_decision}
                             </p>
@@ -115,11 +115,11 @@ export const EmployeeHealthHistoryDetail: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    {visit.prescriptions.length > 0 && (
+                    {visit.prescriptions && visit.prescriptions.length > 0 && (
                       <div className={styles.detailBlock}>
                         <p><strong>Prescriptions:</strong></p>
                         <div className={styles.detailList}>
-                          {visit.prescriptions.map((prescription) => (
+                          {visit.prescriptions.map((prescription: any) => (
                             <p key={`${visit.id}-${prescription.medicine_name}-${prescription.start_date}`}>
                               <strong>{prescription.medicine_name}</strong> | {prescription.dosage} | Start {prescription.start_date}
                             </p>

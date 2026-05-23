@@ -13,24 +13,10 @@ interface CacheEntry {
   timestamp: number;
 }
 
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const cache = new Map<string, CacheEntry>();
 
 function getCacheKey(endpoint: string, params: Record<string, unknown>): string {
   return `${endpoint}?${JSON.stringify(params)}`;
-}
-
-function getCachedData(key: string): unknown | null {
-  const entry = cache.get(key);
-  if (!entry) return null;
-
-  const isExpired = Date.now() - entry.timestamp > CACHE_DURATION;
-  if (isExpired) {
-    cache.delete(key);
-    return null;
-  }
-
-  return entry.data;
 }
 
 function setCachedData(key: string, data: unknown): void {

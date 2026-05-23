@@ -53,8 +53,8 @@ interface LowStockMedicine {
 }
 
 interface MedicineHistory {
-  medicine: MedicineStock;
-  history: Dispense[];
+  medicine: LowStockMedicine;
+  history: LowStockMedicine[];
 }
 
 /**
@@ -147,7 +147,6 @@ export const medicineService = {
     stock_summary: {
       total_items: number;
       low_stock_items: number;
-      expiring_items: number;
       expiring_items: number;
       total_stock_value: number;
     };

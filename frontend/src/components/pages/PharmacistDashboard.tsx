@@ -54,7 +54,6 @@ export const PharmacistDashboard: React.FC = () => {
   const [prescriptions, setPrescriptions] = useState<PrescriptionItem[]>([]);
   const [medicines, setMedicines] = useState<any[]>([]);
   const [lowStockMedicines, setLowStockMedicines] = useState<any[]>([]);
-  const [expiringMedicines, setExpiringMedicines] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'prescriptions' | 'inventory'>('prescriptions');
   const [search, setSearch] = useState('');
 
@@ -102,7 +101,6 @@ export const PharmacistDashboard: React.FC = () => {
       const data = await listMedicines();
       setMedicines(data.results || []);
       setLowStockMedicines(data.results?.filter((m: any) => m.is_low_stock) || []);
-      setExpiringMedicines(data.results?.filter((m: any) => m.is_expiring_soon) || []);
     } catch (err) {
       const errorMessage = handleApiError(err, 'Failed to fetch medicines');
       setError(errorMessage);
@@ -193,7 +191,6 @@ export const PharmacistDashboard: React.FC = () => {
 
   const totalStock = medicines.reduce((sum, m) => sum + m.stock_quantity, 0);
   const totalUsed = medicines.reduce((sum, m) => sum + m.used_quantity, 0);
-  const totalValue = medicines.reduce((sum, m) => sum + (m.stock_quantity * 50), 0);
 
   if (loading) {
     return (
@@ -379,7 +376,7 @@ export const PharmacistDashboard: React.FC = () => {
       {/* Dispense Modal */}
       {showDispenseModal && selectedMedicine && selectedPrescription && (
         <div className={styles.modalOverlay} onClick={handleCloseDispenseModal}>
-          <Card className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+          <Card className={styles.modalCard} onClick={() => {}}>
             <div className={styles.modalHeader}>
               <h3>Dispense Medicine</h3>
               <button
