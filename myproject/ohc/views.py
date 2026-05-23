@@ -75,11 +75,11 @@ class DiagnosisPrescriptionAPIView(GenericAPIView):
     permission_classes = [permissions.IsAuthenticated, HasHealthPortalAccess, IsClinicalStaff]
 
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         diagnosis = serializer.save()
         return Response(
-            self.get_serializer(diagnosis).data,
+            self.get_serializer(diagnosis, context={"request": request}).data,
             status=status.HTTP_201_CREATED,
         )
 
@@ -131,7 +131,7 @@ class CompleteOHCIntakeAPIView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         diagnosis = serializer.save()
         return Response(
-            self.get_serializer(diagnosis).data,
+            self.get_serializer(diagnosis, context={"request": request}).data,
             status=status.HTTP_201_CREATED,
         )
 
