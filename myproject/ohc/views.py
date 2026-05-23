@@ -27,8 +27,10 @@ class OHCVisitViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
 
     def get_permissions(self):
-        if self.action in {"create", "update", "partial_update", "destroy"}:
+        if self.action in {"create", "update", "destroy"}:
             return [permissions.IsAuthenticated(), HasHealthPortalAccess(), IsClinicalOrComplianceStaff()]
+        if self.action == "partial_update":
+            return [permissions.IsAuthenticated(), HasHealthPortalAccess()]
         return [permissions.IsAuthenticated(), HasHealthPortalAccess()]
 
     def get_queryset(self):
@@ -62,7 +64,7 @@ class OHCVisitViewSet(viewsets.ModelViewSet):
         return OHCVisitSerializer
 
     @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated, HasHealthPortalAccess, IsClinicalOrComplianceStaff])
-    def schedule_follow_up(self, request, pk=None):
+    def schedule_follow_up(self, request, id=None):
         visit = self.get_object()
         serializer = FollowUpScheduleSerializer(data=request.data, context={"visit": visit, "request": request})
         serializer.is_valid(raise_exception=True)
@@ -153,7 +155,7 @@ class MedicineStockViewSet(viewsets.ModelViewSet):
         return queryset
 
     @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated, HasHealthPortalAccess, IsPharmacist])
-    def dispense(self, request, pk=None):
+    def dispense(self, request, id=None):
         """Dispense medicine and update stock."""
         from django.db import transaction
 
@@ -176,6 +178,9 @@ class MedicineStockViewSet(viewsets.ModelViewSet):
             from django.db.models import F
             from django.utils import timezone
 
+            quantity_before = medicine.stock_quantity
+            quantity_remaining = quantity_before - quantity
+
             medicine.stock_quantity = F("stock_quantity") - quantity
             medicine.used_quantity = F("used_quantity") + quantity
             medicine.last_dispensed_at = timezone.now()
@@ -187,7 +192,7 @@ class MedicineStockViewSet(viewsets.ModelViewSet):
                 prescription_id=prescription_id,
                 dispensed_by=request.user,
                 quantity_dispensed=quantity,
-                quantity_remaining=medicine.stock_quantity,
+                quantity_remaining=quantity_remaining,
                 issue_date=issue_date,
                 remarks=remarks,
                 status=MedicineDispense.DispenseStatus.DISPENSED,
@@ -196,9 +201,9 @@ class MedicineStockViewSet(viewsets.ModelViewSet):
         return Response({
             "medicine_id": medicine.id,
             "medicine_name": medicine.name,
-            "quantity_before": medicine.stock_quantity + quantity,
+            "quantity_before": quantity_before,
             "quantity_dispensed": quantity,
-            "quantity_remaining": medicine.stock_quantity,
+            "quantity_remaining": quantity_remaining,
             "issue_date": issue_date,
             "remarks": remarks,
             "message": "Medicine dispensed successfully"
