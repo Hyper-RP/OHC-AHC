@@ -1,7 +1,7 @@
 # Generated for Single Employee ID Migration
 # Converts target_object_uuid and related_object_uuid to use integer IDs
 
-from django.db import migrations
+from django.db import migrations, models
 
 
 def migrate_uuid_to_id(apps, schema_editor):

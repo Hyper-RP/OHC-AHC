@@ -14,5 +14,5 @@ class NotificationAdmin(admin.ModelAdmin):
 class AuditLogAdmin(admin.ModelAdmin):
     list_display = ("module", "action", "target_model", "actor", "created_at")
     list_filter = ("module", "action", "target_model")
-    search_fields = ("module", "action", "target_model", "target_object_uuid", "actor__username")
+    search_fields = ("module", "action", "target_model", "target_object_id", "actor__username")
     readonly_fields = ("created_at", "updated_at")

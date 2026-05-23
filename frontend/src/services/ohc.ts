@@ -60,11 +60,19 @@ export const createVisit = async (data: OHCVisitFormData): Promise<OHCVisit> => 
 /**
  * Create diagnosis with associated prescriptions
  * @param data - Diagnosis form data with prescriptions
- * @returns Promise resolving to created diagnosis and prescriptions
+ * @returns Promise resolving to created diagnosis, prescriptions, and updated visit status
  */
 export const createDiagnosis = async (data: DiagnosisFormData): Promise<{
   diagnosis: Diagnosis;
   prescriptions: Prescription[];
+  referral?: {
+    id: number;
+    referral_status: string;
+    priority: string;
+  };
+  visit_status: string;
+  follow_up_date?: string;
+  next_action?: string;
 }> => {
   try {
     const response = await api.post('/ohc/diagnosis-prescriptions/', data);
@@ -96,6 +104,34 @@ export const getVisitDiagnoses = async (visitUuid: string): Promise<Diagnosis[]>
 export const getVisitPrescriptions = async (visitUuid: string): Promise<Prescription[]> => {
   try {
     const response = await api.get<Prescription[]>(`/ohc/visits/${visitUuid}/prescriptions/`);
+    return response.data;
+  } catch (error) {
+    throw new Error(handleApiError(error), { cause: error });
+  }
+};
+
+/**
+ * Get pending prescriptions for pharmacist
+ * @returns Promise resolving to array of prescriptions with visit and medicine details
+ */
+export const getPharmacistPrescriptions = async (): Promise<any[]> => {
+  try {
+    const response = await api.get('/ohc/prescriptions/');
+    return response.data;
+  } catch (error) {
+    throw new Error(handleApiError(error), { cause: error });
+  }
+};
+
+/**
+ * Update visit status
+ * @param visitId - Visit ID
+ * @param status - New visit status
+ * @returns Promise resolving to updated visit
+ */
+export const updateVisitStatus = async (visitId: number, status: string): Promise<OHCVisit> => {
+  try {
+    const response = await api.patch<OHCVisit>(`/ohc/visits/${visitId}/`, { visit_status: status });
     return response.data;
   } catch (error) {
     throw new Error(handleApiError(error), { cause: error });

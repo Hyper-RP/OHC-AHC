@@ -15,10 +15,47 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     label: 'OHC Visit Form',
-    url: '/ohc/visit-form',
+    url: '/ohc',
     urlName: 'ohc_visit_form',
     icon: '🏥',
-    roles: [Role.ADMIN, Role.NURSE, Role.DOCTOR],
+    roles: [Role.ADMIN, Role.NURSE, Role.DOCTOR, Role.PHARMACIST, Role.EHS, Role.MANAGEMENT],
+    children: [
+      {
+        label: 'Nurse Module',
+        url: '/nurse/visit-form',
+        urlName: 'nurse',
+        icon: '👩',
+        roles: [Role.NURSE, Role.ADMIN],
+      },
+      {
+        label: 'Doctor Module',
+        url: '/doctor/dashboard',
+        urlName: 'doctor',
+        icon: '👨',
+        roles: [Role.DOCTOR, Role.ADMIN],
+      },
+      {
+        label: 'Pharmacist Module',
+        url: '/pharmacist/dashboard',
+        urlName: 'pharmacist',
+        icon: '💊',
+        roles: [Role.PHARMACIST, Role.ADMIN],
+      },
+      {
+        label: 'EHS Dashboard',
+        url: '/ehs/dashboard',
+        urlName: 'ehs',
+        icon: '📈',
+        roles: [Role.EHS, Role.ADMIN, Role.MANAGEMENT],
+      },
+      {
+        label: 'Management Dashboard',
+        url: '/management/dashboard',
+        urlName: 'management',
+        icon: '📊',
+        roles: [Role.MANAGEMENT, Role.ADMIN],
+      },
+    ],
   },
   {
     label: 'Diagnosis Entry',
@@ -109,5 +146,13 @@ export const getNavItemsForRole = (userRole: Role): NavItem[] => {
  */
 export const hasAccessToRoute = (url: string, userRole: Role): boolean => {
   const navItem = NAV_ITEMS.find((item) => item.url === url);
-  return navItem ? navItem.roles.includes(userRole) : false;
+  if (!navItem) return false;
+
+  // Check if item has children
+  if (navItem.children) {
+    const hasAccessibleChild = navItem.children.some((child) => child.roles.includes(userRole));
+    return hasAccessibleChild;
+  }
+
+  return navItem.roles.includes(userRole);
 };

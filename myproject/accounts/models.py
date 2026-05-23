@@ -14,6 +14,8 @@ class User(AbstractUser):
         KAM = "KAM", "KAM"
         DOCTOR = "DOCTOR", "On Site Doctor"
         EMPLOYEE = "EMPLOYEE", "Employee"
+        PHARMACIST = "PHARMACIST", "Pharmacist"
+        MANAGEMENT = "MANAGEMENT", "Management"
 
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=Role.choices)
@@ -63,12 +65,20 @@ class User(AbstractUser):
         return self.role == self.Role.EMPLOYEE
 
     @property
+    def is_pharmacist_user(self):
+        return self.role == self.Role.PHARMACIST
+
+    @property
+    def is_management_user(self):
+        return self.role == self.Role.MANAGEMENT
+
+    @property
     def is_clinical_user(self):
         return self.role in {self.Role.NURSE, self.Role.DOCTOR}
 
     @property
     def is_compliance_user(self):
-        return self.role in {self.Role.EHS, self.Role.HR, self.Role.KAM}
+        return self.role in {self.Role.EHS, self.Role.HR, self.Role.KAM, self.Role.MANAGEMENT}
 
 
 class EmployeeProfile(BaseModel):

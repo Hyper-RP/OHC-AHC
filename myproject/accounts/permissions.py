@@ -9,6 +9,7 @@ CLINICAL_ROLES = {User.Role.NURSE, User.Role.DOCTOR}
 COMPLIANCE_ROLES = {User.Role.EHS, User.Role.HR, User.Role.KAM}
 OVERSIGHT_ROLES = {User.Role.EHS, User.Role.HR, User.Role.KAM, User.Role.ADMIN}
 FULL_STAFF_ROLES = CLINICAL_ROLES | COMPLIANCE_ROLES | {User.Role.ADMIN}
+PHARMACY_ROLES = {User.Role.PHARMACIST} | {User.Role.ADMIN}
 
 
 def _has_any_role(user, allowed_roles):
@@ -48,6 +49,21 @@ class IsClinicalOrComplianceStaff(BasePermission):
 class IsOversightStaff(BasePermission):
     def has_permission(self, request, view):
         return _has_any_role(request.user, OVERSIGHT_ROLES)
+
+
+class IsPharmacist(BasePermission):
+    def has_permission(self, request, view):
+        return _has_any_role(request.user, PHARMACY_ROLES)
+
+
+class IsManagement(BasePermission):
+    def has_permission(self, request, view):
+        return _has_any_role(request.user, {User.Role.MANAGEMENT, User.Role.ADMIN})
+
+
+class IsEHSOrManagement(BasePermission):
+    def has_permission(self, request, view):
+        return _has_any_role(request.user, {User.Role.EHS, User.Role.HR, User.Role.KAM, User.Role.MANAGEMENT, User.Role.ADMIN})
 
 
 class IsEmployeeSelfOrStaff(BasePermission):

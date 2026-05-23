@@ -15,6 +15,7 @@ urlpatterns = [
     path('api/ohc/', include('ohc.urls')),
     path('api/ahc/', include('ahc.urls')),
     path('api/payments/', include('payments.urls')),
+    path('api/reports/', include('reports.urls')),
 ]
 
 if settings.DEBUG:
