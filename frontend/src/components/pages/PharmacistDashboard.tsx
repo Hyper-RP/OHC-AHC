@@ -240,50 +240,41 @@ export const PharmacistDashboard: React.FC = () => {
             ) : (
               <div className={styles.prescriptionsList}>
                 {prescriptions.map((prescription) => (
-                  <Card key={prescription.id} className={styles.prescriptionCard}>
-                    <div className={styles.prescriptionHeader}>
-                      <div>
+                  <div
+                    key={prescription.id}
+                    className={`${styles.prescriptionListItem} ${prescription.is_dispensed ? styles.dispensedItem : ''}`}
+                    onClick={() => prescription.medicine && !prescription.is_dispensed && handleOpenDispenseModal(prescription, prescription.medicine)}
+                  >
+                    <div className={styles.listItemMain}>
+                      <div className={styles.listItemPatient}>
                         <span className={styles.patientName}>
                           {prescription.visit.employee.user.first_name} {prescription.visit.employee.user.last_name}
                         </span>
                         <span className={styles.employeeCode}>
                           {prescription.visit.employee.employee_code}
                         </span>
-                        <span className={styles.visitDate}>
-                          {new Date(prescription.visit.visit_date).toLocaleDateString()}
-                        </span>
                       </div>
-                      <div className={styles.medicineInfo}>
-                        <span>Medicine: {prescription.medicine_name}</span>
-                        <span>Dosage: {prescription.dosage} | Freq: {prescription.frequency} | Duration: {prescription.duration_days} days</span>
-                        {prescription.instructions && <span>Instructions: {prescription.instructions}</span>}
+                      <div className={styles.listItemDate}>
+                        <span>{new Date(prescription.visit.visit_date).toLocaleDateString()}</span>
+                        {prescription.visit.visit_time && (
+                          <span> {new Date(`2000-01-01T${prescription.visit.visit_time}`).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        )}
                       </div>
                     </div>
-
-                    {prescription.visit.vitals && Object.keys(prescription.visit.vitals).length > 0 && (
-                      <div className={styles.prescriptionVitals}>
-                        <strong>Vitals:</strong> {Object.entries(prescription.visit.vitals).map(([key, value]) => (
-                          <span key={key} className={styles.vitalTag}>{key}: {value}</span>
-                        ))}
-                      </div>
-                    )}
-                    {prescription.visit.chief_complaint && (
-                      <div className={styles.prescriptionVitals}>
-                        <strong>Complaint:</strong> {prescription.visit.chief_complaint}
-                      </div>
-                    )}
-
-                    {!prescription.is_dispensed && (
-                      <Button
-                        type="button"
-                        variant="outline-secondary"
-                        size="sm"
-                        onClick={() => prescription.medicine && handleOpenDispenseModal(prescription, prescription.medicine)}
-                      >
-                        Dispense
-                      </Button>
-                    )}
-                  </Card>
+                    <div className={styles.listItemMedicine}>
+                      <span className={styles.medicineName}>{prescription.medicine_name}</span>
+                      <span className={styles.medicineDetails}>
+                        {prescription.dosage} | {prescription.frequency} | {prescription.duration_days}d
+                      </span>
+                    </div>
+                    <div className={styles.listItemStatus}>
+                      {prescription.is_dispensed ? (
+                        <span className={styles.statusBadgeDispensed}>Dispensed</span>
+                      ) : (
+                        <span className={styles.statusBadgePending}>Pending</span>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
             )}

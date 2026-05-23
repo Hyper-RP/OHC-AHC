@@ -74,7 +74,7 @@
 .prescriptionsList {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
 }
 
 .prescriptionCard {
@@ -83,6 +83,99 @@
   gap: 16px;
   padding: 16px;
 }
+
+/* List Item Styles */
+.prescriptionListItem {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr;
+  gap: 16px;
+  padding: 16px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+@media (max-width: 768px) {
+  .prescriptionListItem {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+.prescriptionListItem:hover:not(.dispensedItem) {
+  background: #f9fafb;
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.dispensedItem {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.listItemMain {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.listItemPatient {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.listItemDate {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.listItemMedicine {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.medicineName {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 15px;
+}
+
+.medicineDetails {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.listItemStatus {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.statusBadgePending {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.statusBadgeDispensed {
+  background: #d1fae5;
+  color: #065f46;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Old card styles kept for reference */
 
 .prescriptionHeader {
   display: flex;
