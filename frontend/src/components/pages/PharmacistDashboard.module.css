@@ -424,3 +424,53 @@
   padding-top: 16px;
   border-top: 1px solid #e5e7eb;
 }
+
+/* Vitals Display */
+.prescriptionVitals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  background: #f9fafb;
+  border-radius: 4px;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.prescriptionVitals strong {
+  color: #374151;
+}
+
+.vitalTag {
+  color: #3b82f6;
+  background: #dbeafe;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.vitalsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.vitalItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.vitalLabel {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.vitalValue {
+  color: #1f2937;
+  font-weight: 600;
+}

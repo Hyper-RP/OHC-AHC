@@ -19,6 +19,10 @@ interface PrescriptionItem {
       employee_code: string;
     };
     visit_date: string;
+    visit_time?: string;
+    vitals?: Record<string, any>;
+    chief_complaint?: string;
+    symptoms?: string;
   };
   medicine_name: string;
   dosage: string;
@@ -256,6 +260,19 @@ export const PharmacistDashboard: React.FC = () => {
                       </div>
                     </div>
 
+                    {prescription.visit.vitals && Object.keys(prescription.visit.vitals).length > 0 && (
+                      <div className={styles.prescriptionVitals}>
+                        <strong>Vitals:</strong> {Object.entries(prescription.visit.vitals).map(([key, value]) => (
+                          <span key={key} className={styles.vitalTag}>{key}: {value}</span>
+                        ))}
+                      </div>
+                    )}
+                    {prescription.visit.chief_complaint && (
+                      <div className={styles.prescriptionVitals}>
+                        <strong>Complaint:</strong> {prescription.visit.chief_complaint}
+                      </div>
+                    )}
+
                     {!prescription.is_dispensed && (
                       <Button
                         type="button"
@@ -376,7 +393,7 @@ export const PharmacistDashboard: React.FC = () => {
       {/* Dispense Modal */}
       {showDispenseModal && selectedMedicine && selectedPrescription && (
         <div className={styles.modalOverlay} onClick={handleCloseDispenseModal}>
-          <Card className={styles.modalCard} onClick={() => {}}>
+          <Card className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3>Dispense Medicine</h3>
               <button
@@ -401,7 +418,33 @@ export const PharmacistDashboard: React.FC = () => {
                   <span>Employee Code:</span>
                   <span>{selectedPrescription.visit.employee.employee_code}</span>
                 </div>
+                {selectedPrescription.visit.chief_complaint && (
+                  <div className={styles.modalDetailRow}>
+                    <span>Chief Complaint:</span>
+                    <span>{selectedPrescription.visit.chief_complaint}</span>
+                  </div>
+                )}
+                {selectedPrescription.visit.symptoms && (
+                  <div className={styles.modalDetailRow}>
+                    <span>Symptoms:</span>
+                    <span>{selectedPrescription.visit.symptoms}</span>
+                  </div>
+                )}
               </div>
+
+              {selectedPrescription.visit.vitals && Object.keys(selectedPrescription.visit.vitals).length > 0 && (
+                <div className={styles.modalSection}>
+                  <h4>Vital Signs</h4>
+                  <div className={styles.vitalsGrid}>
+                    {Object.entries(selectedPrescription.visit.vitals).map(([key, value]) => (
+                      <div key={key} className={styles.vitalItem}>
+                        <span className={styles.vitalLabel}>{key}:</span>
+                        <span className={styles.vitalValue}>{String(value || '-')}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className={styles.modalSection}>
                 <h4>Medicine Details</h4>
