@@ -39,13 +39,7 @@ class DiagnosisSerializer(serializers.ModelSerializer):
     class Meta:
         model = Diagnosis
         fields = "__all__"
-        read_only_fields = ("id", "created_at", "updated_at")
-
-    def validate(self, attrs):
-        request = self.context["request"]
-        if request.user.role in {request.user.Role.DOCTOR, request.user.Role.NURSE} and not attrs.get("diagnosed_by"):
-            attrs["diagnosed_by"] = DoctorProfile.objects.get(user=request.user)
-        return attrs
+        read_only_fields = ("id", "created_at", "updated_at", "diagnosed_by")
 
 class PrescriptionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -70,9 +64,15 @@ class DiagnosisWithPrescriptionsSerializer(serializers.Serializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        request = self.context["request"]
         diagnosis_data = validated_data["diagnosis"]
         prescriptions_data = validated_data.get("prescriptions", [])
-        diagnosis = Diagnosis.objects.create(**diagnosis_data)
+
+        diagnosed_by = None
+        if request.user.role in {request.user.Role.DOCTOR, request.user.Role.NURSE}:
+            diagnosed_by = DoctorProfile.objects.get(user=request.user)
+
+        diagnosis = Diagnosis.objects.create(**diagnosis_data, diagnosed_by=diagnosed_by)
 
         for prescription_data in prescriptions_data:
             Prescription.objects.create(
