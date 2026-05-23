@@ -72,12 +72,12 @@ export const listMedicines = async (
   if (params?.page) queryParams.page = params.page;
   if (params?.page_size) queryParams.page_size = params.page_size;
 
-  const response = await api.get('/medicines/', { params: queryParams });
+  const response = await api.get('/ohc/medicines/', { params: queryParams });
   return response.data;
 };
 
 export const dispenseMedicine = async (medicineId: number, data: DispenseMedicineData): Promise<DispenseResponse> => {
-  const response = await api.post(`/medicines/${medicineId}/dispense/`, data);
+  const response = await api.post(`/ohc/medicines/${medicineId}/dispense/`, data);
   return response.data;
 };
 
@@ -91,7 +91,7 @@ export const medicineService = {
    * Get medicine by ID
    */
   getMedicine: async (id: number): Promise<LowStockMedicine> => {
-    const response = await api.get(`/medicines/${id}/`);
+    const response = await api.get(`/ohc/medicines/${id}/`);
     return response.data;
   },
 
@@ -99,7 +99,7 @@ export const medicineService = {
    * Create new medicine entry
    */
   createMedicine: async (data: any): Promise<LowStockMedicine> => {
-    const response = await api.post('/medicines/', data);
+    const response = await api.post('/ohc/medicines/', data);
     return response.data;
   },
 
@@ -108,7 +108,7 @@ export const medicineService = {
    * Updates stock and creates dispensing record
    */
   dispenseMedicine: async (medicineId: number, data: DispenseMedicineData): Promise<DispenseResponse> => {
-    const response = await api.post(`/medicines/${medicineId}/dispense/`, data);
+    const response = await api.post(`/ohc/medicines/${medicineId}/dispense/`, data);
     return response.data;
   },
 
@@ -116,7 +116,7 @@ export const medicineService = {
    * Get medicine dispensing history
    */
   getMedicineHistory: async (id: number): Promise<MedicineHistory> => {
-    const response = await api.get(`/medicines/${id}/history/`);
+    const response = await api.get(`/ohc/medicines/${id}/history/`);
     return response.data;
   },
 
@@ -124,7 +124,7 @@ export const medicineService = {
    * Get low stock medicines
    */
   getLowStockMedicines: async (): Promise<LowStockMedicine[]> => {
-    const response = await api.get('/medicines/', { params: { low_stock_only: true } });
+    const response = await api.get('/ohc/medicines/', { params: { low_stock_only: true } });
     return response.data.results?.filter((medicine: any) => medicine.is_low_stock) || [];
   },
 
@@ -132,7 +132,7 @@ export const medicineService = {
    * Get expiring soon medicines
    */
   getExpiringSoonMedicines: async (): Promise<LowStockMedicine[]> => {
-    const response = await api.get('/medicines/', { params: { expiring_soon: true } });
+    const response = await api.get('/ohc/medicines/', { params: { expiring_soon: true } });
     return response.data.results?.filter((medicine: any) => medicine.is_expiring_soon) || [];
   },
 
