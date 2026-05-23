@@ -1,0 +1,154 @@
+.medicineCard {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.medicineCard:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-color: #10b981;
+  transform: translateY(-2px);
+}
+
+.medicineCard.selected {
+  border-color: #10b981;
+  background-color: rgba(16, 185, 129, 0.05);
+}
+
+.medicineHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.medicineName {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-right: 8px;
+}
+
+.medicineId {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+  background-color: #f8f9fa;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.medicineBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.medicineGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.medicineInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #495057;
+}
+
+.infoLabel {
+  font-weight: 500;
+  color: #64748b;
+  min-width: 60px;
+}
+
+.stockValue {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.stockLevel {
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.medicineDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #e9ecef;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.detailLabel {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.detailValue {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.expired {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.medicineFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e9ecef;
+}
+
+.stockIndicator {
+  font-size: 16px;
+}
+
+.dispenseButton {
+  background-color: #10b981;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dispenseButton:hover {
+  background-color: #0a8a6f;
+}
+
+.healthy {
+  color: #10b981;
+}
+
+.lowStock {
+  color: #f59e0b;
+}
+
+.expiringSoon {
+  color: #f59e0b;
+}
+
+.expired {
+  color: #ef4444;
+}

@@ -155,6 +155,7 @@ export const mockUser = (overrides?: Partial<import('../types').User>): import('
  * Creates a mock OHCVisit object
  */
 export const mockVisit = (overrides?: Partial<import('../types').OHCVisit>): import('../types').OHCVisit => ({
+  id: 1,
   uuid: 'visit-uuid-001',
   employee: {
     id: 1,

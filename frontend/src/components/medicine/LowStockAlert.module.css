@@ -1,0 +1,95 @@
+.lowStockAlert {
+  background-color: #fff3cd;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.alertHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.alertTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.alertIcon {
+  font-size: 18px;
+}
+
+.dismissButton {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #1a1a1a;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.dismissButton:hover {
+  opacity: 1;
+}
+
+.alertBody {
+  color: #495057;
+}
+
+.alertText {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.alertCount {
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 24px;
+  margin-right: 8px;
+}
+
+.medicineList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.medicineItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-radius: 4px;
+  background-color: white;
+  margin-bottom: 8px;
+}
+
+.medicineItem strong {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.stockInfo {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.badge {
+  background-color: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+}

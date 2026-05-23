@@ -35,6 +35,10 @@ export { DepartmentComparisonChart } from './DepartmentComparisonChart';
 export { SeverityPieChart } from './SeverityPieChart';
 export { DiagnosisTrendLineChart } from './DiagnosisTrendLineChart';
 
+// Badges
+export { SeverityBadge } from './SeverityBadge';
+export { StatusBadge } from './StatusBadge';
+
 // Department Stats Chart Components
 export { HealthIndexGauge } from './HealthIndexGauge';
 export { VisitsReferralsStackedBar } from './VisitsReferralsStackedBar';

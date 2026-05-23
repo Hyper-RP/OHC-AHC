@@ -2,11 +2,34 @@ from django.db import transaction
 from rest_framework import serializers
 
 from accounts.models import DoctorProfile, EmployeeProfile, User
-from ohc.models import Diagnosis, MedicalTest, OHCVisit, Prescription
+from ohc.models import Diagnosis, MedicalTest, OHCVisit, Prescription, MedicineStock, MedicineDispense
 from ohc.services import process_diagnosis_outcome
 
 
+class EmployeeInfoSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmployeeProfile
+        fields = ['id', 'employee_code', 'user']
+        read_only_fields = ['id']
+
+    def get_user(self, obj):
+        return {
+            'first_name': obj.user.first_name,
+            'last_name': obj.user.last_name,
+        }
+
+class DoctorInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DoctorProfile
+        fields = ['id']
+        read_only_fields = ['id']
+
 class OHCVisitSerializer(serializers.ModelSerializer):
+    employee = EmployeeInfoSerializer(read_only=True)
+    consulted_doctor = DoctorInfoSerializer(read_only=True)
+
     class Meta:
         model = OHCVisit
         fields = "__all__"
@@ -16,13 +39,7 @@ class DiagnosisSerializer(serializers.ModelSerializer):
     class Meta:
         model = Diagnosis
         fields = "__all__"
-        read_only_fields = ("id", "created_at", "updated_at")
-
-    def validate(self, attrs):
-        request = self.context["request"]
-        if request.user.role in {request.user.Role.DOCTOR, request.user.Role.NURSE} and not attrs.get("diagnosed_by"):
-            attrs["diagnosed_by"] = DoctorProfile.objects.get(user=request.user)
-        return attrs
+        read_only_fields = ("id", "created_at", "updated_at", "diagnosed_by")
 
 class PrescriptionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,9 +64,15 @@ class DiagnosisWithPrescriptionsSerializer(serializers.Serializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        request = self.context["request"]
         diagnosis_data = validated_data["diagnosis"]
         prescriptions_data = validated_data.get("prescriptions", [])
-        diagnosis = Diagnosis.objects.create(**diagnosis_data)
+
+        diagnosed_by = None
+        if request.user.role in {request.user.Role.DOCTOR, request.user.Role.NURSE}:
+            diagnosed_by = DoctorProfile.objects.get(user=request.user)
+
+        diagnosis = Diagnosis.objects.create(**diagnosis_data, diagnosed_by=diagnosed_by)
 
         for prescription_data in prescriptions_data:
             Prescription.objects.create(
@@ -86,9 +109,16 @@ class DiagnosisWithPrescriptionsSerializer(serializers.Serializer):
         }
 
 class OHCVisitCreateSerializer(OHCVisitSerializer):
-    employee = serializers.CharField(max_length=50)
+    employee = serializers.CharField(max_length=50, required=False)
     employee_name = serializers.CharField(max_length=150, required=False, allow_blank=True, write_only=True)
     employee_department = serializers.CharField(max_length=120, required=False, allow_blank=True, write_only=True)
+    patient_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    patient_age = serializers.IntegerField(required=False, allow_null=True)
+    patient_gender = serializers.CharField(max_length=10, required=False, allow_blank=True)
+    patient_contact = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    visit_time = serializers.TimeField(required=False, allow_null=True)
+    chief_complaint = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    symptoms = serializers.CharField(required=False, allow_blank=True)
     consulted_doctor = serializers.PrimaryKeyRelatedField(
         queryset=DoctorProfile.objects.all(),
         required=False,
@@ -97,6 +127,7 @@ class OHCVisitCreateSerializer(OHCVisitSerializer):
 
     def validate(self, attrs):
         request = self.context["request"]
+
         emp_code = attrs.pop("employee", None)
         emp_name = attrs.pop("employee_name", "")
         emp_dept = attrs.pop("employee_department", "Unassigned")
@@ -109,12 +140,10 @@ class OHCVisitCreateSerializer(OHCVisitSerializer):
             try:
                 emp_profile = EmployeeProfile.objects.get(employee_code=emp_code)
             except EmployeeProfile.DoesNotExist:
-                # Use provided name or default to employee code
                 first_name = emp_name if emp_name else emp_code
-
                 user = User.objects.create(
                     username=emp_code,
-                    first_name=first_name[:150], # Max length protection
+                    first_name=first_name[:150],
                     email=f"{emp_code}@temp.local",
                     role=User.Role.EMPLOYEE,
                     is_verified=True
@@ -255,3 +284,121 @@ class CompleteOHCIntakeSerializer(serializers.Serializer):
             "referral_status": getattr(instance, "_generated_referral", None) and instance._generated_referral.referral_status,
             "message": "OHC intake and diagnosis completed successfully",
         }
+
+
+class MedicineStockSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicineStock
+        fields = "__all__"
+        read_only_fields = ("id", "created_at", "updated_at")
+
+
+class MedicineDispenseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicineDispense
+        fields = "__all__"
+        read_only_fields = ("id", "created_at", "updated_at")
+
+
+class MedicineDispenseCreateSerializer(serializers.Serializer):
+    medicine_id = serializers.IntegerField()
+    visit_id = serializers.IntegerField()
+    prescription_id = serializers.IntegerField(required=False, allow_null=True)
+    quantity_dispensed = serializers.IntegerField(min_value=1)
+    issue_date = serializers.DateField()
+    remarks = serializers.CharField(required=False, allow_blank=True)
+
+    def validate(self, attrs):
+        medicine_id = attrs.get("medicine_id")
+        try:
+            medicine = MedicineStock.objects.get(id=medicine_id)
+        except MedicineStock.DoesNotExist:
+            raise serializers.ValidationError({"medicine_id": "Medicine not found"})
+
+        quantity = attrs.get("quantity_dispensed", 0)
+        if quantity > medicine.stock_quantity:
+            raise serializers.ValidationError({
+                "quantity_dispensed": f"Cannot dispense {quantity}. Available stock: {medicine.stock_quantity}"
+            })
+
+        return attrs
+
+
+class VisitStatusLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicineDispense
+        fields = "__all__"
+        read_only_fields = ("id", "created_at", "updated_at")
+
+
+class PharmacistPrescriptionSerializer(serializers.ModelSerializer):
+    """Serializer for pharmacist to see pending prescriptions with visit and medicine details."""
+    class Meta:
+        model = Prescription
+        fields = [
+            "id",
+            "medicine_name",
+            "dosage",
+            "frequency",
+            "duration_days",
+            "route",
+            "instructions",
+            "start_date",
+            "status",
+        ]
+        read_only_fields = ("id", "start_date", "created_at", "updated_at")
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Add visit details
+        if instance.visit:
+            visit_data = {
+                "id": instance.visit.id,
+                "employee": {
+                    "id": instance.visit.employee.id,
+                    "employee_code": instance.visit.employee.employee_code,
+                    "user": {
+                        "first_name": instance.visit.employee.user.first_name,
+                        "last_name": instance.visit.employee.user.last_name,
+                    },
+                },
+                "visit_date": instance.visit.visit_date.isoformat() if instance.visit.visit_date else None,
+            }
+            data["visit"] = visit_data
+
+        # Check if prescription has been dispensed
+        from ohc.models import MedicineDispense
+        is_dispensed = MedicineDispense.objects.filter(
+            prescription=instance,
+            status=MedicineDispense.DispenseStatus.DISPENSED
+        ).exists()
+        data["is_dispensed"] = is_dispensed
+
+        # Try to find matching medicine in inventory
+        medicine_info = {}
+        try:
+            from ohc.models import MedicineStock
+            # Try exact match first
+            medicine = MedicineStock.objects.filter(
+                name__icontains=instance.medicine_name
+            ).first()
+            if medicine:
+                medicine_info = {
+                    "id": medicine.id,
+                    "name": medicine.name,
+                    "medicine_id": medicine.medicine_id,
+                    "stock_quantity": medicine.stock_quantity,
+                    "unit": medicine.unit,
+                    "reorder_level": medicine.reorder_level,
+                    "is_low_stock": medicine.is_low_stock,
+                    "is_expired": medicine.is_expired,
+                    "is_expiring_soon": medicine.is_expiring_soon,
+                    "supplier": medicine.supplier,
+                    "batch_number": medicine.batch_number,
+                    "expiry_date": medicine.expiry_date.isoformat() if medicine.expiry_date else None,
+                }
+        except Exception:
+            pass
+        data["medicine"] = medicine_info if medicine_info else None
+
+        return data

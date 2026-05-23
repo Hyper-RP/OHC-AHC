@@ -14,19 +14,26 @@ export const NAV_ITEMS: NavItem[] = [
     roles: [Role.ADMIN, Role.NURSE, Role.EHS, Role.HR, Role.KAM, Role.DOCTOR],
   },
   {
-    label: 'OHC Visit Form',
-    url: '/ohc/visit-form',
+    label: 'OHC',
+    url: '/ohc',
     urlName: 'ohc_visit_form',
     icon: '🏥',
-    roles: [Role.ADMIN, Role.NURSE, Role.DOCTOR],
+    roles: [Role.ADMIN, Role.NURSE, Role.DOCTOR, Role.PHARMACIST, Role.EHS, Role.MANAGEMENT],
+    children: [
+      { label: 'Nurse Module', url: '/nurse/visit-form', urlName: 'nurse', icon: '👩', roles: [Role.NURSE, Role.ADMIN] },
+      { label: 'Doctor Module', url: '/doctor/dashboard', urlName: 'doctor', icon: '👨', roles: [Role.DOCTOR, Role.ADMIN] },
+      { label: 'Pharmacist Module', url: '/pharmacist/dashboard', urlName: 'pharmacist', icon: '💊', roles: [Role.PHARMACIST, Role.ADMIN] },
+      { label: 'EHS Dashboard', url: '/ehs/dashboard', urlName: 'ehs', icon: '📈', roles: [Role.EHS, Role.ADMIN, Role.MANAGEMENT] },
+      { label: 'Management Dashboard', url: '/management/dashboard', urlName: 'management', icon: '📊', roles: [Role.MANAGEMENT, Role.ADMIN] },
+    ],
   },
-  {
-    label: 'Diagnosis Entry',
-    url: '/ohc/diagnosis-entry',
-    urlName: 'diagnosis_entry',
-    icon: '🔬',
-    roles: [Role.ADMIN, Role.DOCTOR],
-  },
+  // {
+  //   label: 'Diagnosis Entry',
+  //   url: '/ohc/diagnosis-entry',
+  //   urlName: 'diagnosis_entry',
+  //   icon: '🔬',
+  //   roles: [Role.ADMIN, Role.DOCTOR],
+  // },
   // {
   //   label: 'Complete Intake',
   //   url: '/ohc/complete-intake',
@@ -98,7 +105,27 @@ export const NAV_ITEMS: NavItem[] = [
  * @returns Array of navigation items accessible to the user
  */
 export const getNavItemsForRole = (userRole: Role): NavItem[] => {
-  return NAV_ITEMS.filter((item) => item.roles.includes(userRole));
+  const items: NavItem[] = [];
+
+  for (const item of NAV_ITEMS) {
+    if (item.roles.includes(userRole)) {
+      // Handle OHC Visit Form - convert children to direct navigation based on role
+      if (item.urlName === 'ohc_visit_form' && item.children) {
+        const roleSpecificChild = item.children.find((child) => child.roles.includes(userRole));
+        if (roleSpecificChild) {
+          items.push({
+            ...item,
+            url: roleSpecificChild.url,
+            children: undefined,
+          });
+        }
+      } else {
+        items.push(item);
+      }
+    }
+  }
+
+  return items;
 };
 
 /**
@@ -108,6 +135,21 @@ export const getNavItemsForRole = (userRole: Role): NavItem[] => {
  * @returns Boolean indicating if user has access
  */
 export const hasAccessToRoute = (url: string, userRole: Role): boolean => {
-  const navItem = NAV_ITEMS.find((item) => item.url === url);
-  return navItem ? navItem.roles.includes(userRole) : false;
+  const navItem = NAV_ITEMS.find((item) => {
+    // Check if URL matches item's URL or any of its children's URLs
+    if (item.url === url) return true;
+    if (item.children) {
+      return item.children.some((child) => child.url === url);
+    }
+    return false;
+  });
+  if (!navItem) return false;
+
+  // Check if item has children
+  if (navItem.children) {
+    const matchingChild = navItem.children.find((child) => child.url === url);
+    return matchingChild ? matchingChild.roles.includes(userRole) : false;
+  }
+
+  return navItem.roles.includes(userRole);
 };

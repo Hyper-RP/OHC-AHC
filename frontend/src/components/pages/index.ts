@@ -15,3 +15,13 @@ export { DepartmentStats } from './DepartmentStats';
 export { CompleteIntake } from './CompleteIntake';
 export { MedicineManagement } from './MedicineManagement';
 export { AddMedicine } from './AddMedicine';
+// OHC Role-based pages
+export { NurseVisitForm } from './NurseVisitForm';
+export { DoctorDashboard } from './DoctorDashboard';
+export { PharmacistDashboard } from './PharmacistDashboard';
+export { EHSDashboard } from './EHSDashboard';
+export { ManagementDashboard } from './ManagementDashboard';
+// Charts
+export * from '../charts';
+// Medicine components
+export * from '../medicine';

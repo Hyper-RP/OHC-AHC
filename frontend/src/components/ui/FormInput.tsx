@@ -17,7 +17,8 @@ interface FormInputProps {
   rows?: number; // For textarea
   options?: Array<{ value: string; label: string }>; // For select
   onBlur?: () => void; // For blur event
-  min?: string; // For number input min attribute
+  min?: string | number; // For number input min attribute
+  max?: string | number; // For number input max attribute
 }
 
 /**
@@ -41,6 +42,7 @@ export const FormInput: React.FC<FormInputProps> = ({
   options,
   onBlur,
   min,
+  max,
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     onChange(e.target.value);
@@ -104,6 +106,7 @@ export const FormInput: React.FC<FormInputProps> = ({
       readOnly={readonly}
       required={required}
       min={min}
+      max={max}
     />
   );
 

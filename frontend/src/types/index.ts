@@ -7,6 +7,8 @@ export const Role = {
   KAM: "KAM",
   DOCTOR: "DOCTOR",
   EMPLOYEE: "EMPLOYEE",
+  PHARMACIST: "PHARMACIST",
+  MANAGEMENT: "MANAGEMENT",
 } as const;
 export type Role = (typeof Role)[keyof typeof Role];
 
@@ -59,19 +61,42 @@ export interface DoctorProfile {
   hospital?: { id: number; name: string; code: string };
 }
 
-export const FitnessStatus = {
-  FIT: "FIT",
-  UNFIT: "UNFIT",
-  TEMPORARY_UNFIT: "TEMPORARY_UNFIT",
-  UNDER_OBSERVATION: "UNDER_OBSERVATION",
+export const Severity = {
+  MILD: "MILD",
+  MODERATE: "MODERATE",
+  SERIOUS: "SERIOUS",
+  CRITICAL: "CRITICAL",
 } as const;
-export type FitnessStatus = (typeof FitnessStatus)[keyof typeof FitnessStatus];
+export type Severity = (typeof Severity)[keyof typeof Severity];
+
+export const PrescriptionStatus = {
+  ACTIVE: "ACTIVE",
+  COMPLETED: "COMPLETED",
+  STOPPED: "STOPPED",
+} as const;
+export type PrescriptionStatus = (typeof PrescriptionStatus)[keyof typeof PrescriptionStatus];
+
+export const FitnessDecision = {
+  FIT: "FIT",
+  FIT_WITH_RESTRICTION: "FIT_WITH_RESTRICTION",
+  TEMPORARY_UNFIT: "TEMPORARY_UNFIT",
+  UNFIT: "UNFIT",
+} as const;
+export type FitnessDecision = (typeof FitnessDecision)[keyof typeof FitnessDecision];
 
 export const DoctorType = {
   OHC: "OHC",
   AHC: "AHC",
 } as const;
 export type DoctorType = (typeof DoctorType)[keyof typeof DoctorType];
+
+export const FitnessStatus = {
+  FIT: "FIT",
+  FIT_WITH_RESTRICTION: "FIT_WITH_RESTRICTION",
+  TEMPORARY_UNFIT: "TEMPORARY_UNFIT",
+  UNFIT: "UNFIT",
+} as const;
+export type FitnessStatus = (typeof FitnessStatus)[keyof typeof FitnessStatus];
 
 // OHC Types
 export const VisitType = {
@@ -89,6 +114,7 @@ export const VisitStatus = {
   REFERRED: "REFERRED",
   CLOSED: "CLOSED",
   CANCELLED: "CANCELLED",
+  COMPLETED: "COMPLETED",
 } as const;
 export type VisitStatus = (typeof VisitStatus)[keyof typeof VisitStatus];
 
@@ -137,22 +163,6 @@ export interface OHCVisit {
   updated_at: string;
 }
 
-export const Severity = {
-  MILD: "MILD",
-  MODERATE: "MODERATE",
-  SERIOUS: "SERIOUS",
-  CRITICAL: "CRITICAL",
-} as const;
-export type Severity = (typeof Severity)[keyof typeof Severity];
-
-export const FitnessDecision = {
-  FIT: "FIT",
-  FIT_WITH_RESTRICTION: "FIT_WITH_RESTRICTION",
-  TEMPORARY_UNFIT: "TEMPORARY_UNFIT",
-  UNFIT: "UNFIT",
-} as const;
-export type FitnessDecision = (typeof FitnessDecision)[keyof typeof FitnessDecision];
-
 export interface Diagnosis {
   id: number;
   visit: string | OHCVisit;
@@ -182,13 +192,6 @@ export interface Prescription {
   start_date: string;
   status: PrescriptionStatus;
 }
-
-export const PrescriptionStatus = {
-  ACTIVE: "ACTIVE",
-  COMPLETED: "COMPLETED",
-  STOPPED: "STOPPED",
-} as const;
-export type PrescriptionStatus = (typeof PrescriptionStatus)[keyof typeof PrescriptionStatus];
 
 // AHC Types
 export const HospitalStatus = {
@@ -273,6 +276,15 @@ export const InvoiceStatus = {
 } as const;
 export type InvoiceStatus = (typeof InvoiceStatus)[keyof typeof InvoiceStatus];
 
+export const PaymentMethod = {
+  CASH: "CASH",
+  CARD: "CARD",
+  UPI: "UPI",
+  NETBANKING: "NETBANKING",
+  RAZORPAY: "RAZORPAY",
+} as const;
+export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod];
+
 export interface Invoice {
   id: number;
   invoice_number: string;
@@ -292,15 +304,6 @@ export interface Invoice {
   created_at: string;
   updated_at: string;
 }
-
-export const PaymentMethod = {
-  CASH: "CASH",
-  CARD: "CARD",
-  UPI: "UPI",
-  NETBANKING: "NETBANKING",
-  RAZORPAY: "RAZORPAY",
-} as const;
-export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod];
 
 export interface Payment {
   id: number;
@@ -326,35 +329,20 @@ export interface EmployeeHealthHistory {
   };
   visits: Array<{
     id: number;
-    visit_date: string;
-    visit_type: string;
-    triage_level: string;
-    visit_status: string;
-    chief_complaint: string;
-    symptoms: string;
-    vitals: Record<string, string>;
-    preliminary_notes: string;
-    requires_referral: boolean;
-    doctor_name: string;
-    follow_up_date: string;
+    visit_date?: string;
+    visit_type?: string;
+    triage_level?: string;
+    visit_status?: string;
+    doctor_name?: string;
+    chief_complaint?: string;
+    symptoms?: string;
+    vitals?: Record<string, unknown>;
+    preliminary_notes?: string;
+    requires_referral?: boolean;
+    follow_up_date?: string;
     next_action?: string;
-    diagnoses: Array<{
-      diagnosis_name: string;
-      severity: string;
-      fitness_decision: string;
-      diagnosed_at: string;
-    }>;
-    prescriptions: Array<{
-      medicine_name: string;
-      dosage: string;
-      start_date: string;
-    }>;
-  }>;
-  referrals: Array<{
-    id: number;
-    hospital_name: string;
-    referral_status: string;
-    created_at: string;
+    diagnoses?: unknown[];
+    prescriptions?: unknown[];
   }>;
 }
 
@@ -441,6 +429,7 @@ export interface NavItem {
   urlName: string;
   icon: string;
   roles: Role[];
+  children?: NavItem[];
 }
 
 export interface SnackbarMessage {
@@ -468,19 +457,17 @@ export interface OHCVisitFormData {
 
 export interface DiagnosisFormData {
   visit: number;
-  diagnosed_by: number;
-  diagnosis: {
-    diagnosis_code?: string;
-    diagnosis_name: string;
-    diagnosis_notes?: string;
-    severity: Severity;
-    is_primary?: boolean;
-    is_referral_required?: boolean;
-    fitness_decision: FitnessDecision;
-    work_restrictions?: string;
-    advised_rest_days: number;
-    follow_up_date?: string;
-  };
+  diagnosed_by?: number;
+  diagnosis_code?: string;
+  diagnosis_name: string;
+  diagnosis_notes?: string;
+  severity: Severity;
+  is_primary?: boolean;
+  is_referral_required?: boolean;
+  fitness_decision: FitnessDecision;
+  work_restrictions?: string;
+  advised_rest_days: number;
+  follow_up_date?: string;
   prescriptions?: PrescriptionFormData[];
 }
 
@@ -514,3 +501,7 @@ export interface PaymentFormData {
   provider?: string;
   transaction_reference?: string;
 }
+
+export * from './ohc';
+export * from './medicine';
+export * from './dashboard';
