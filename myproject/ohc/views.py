@@ -337,6 +337,208 @@ class AnalyticsViewSet(viewsets.GenericViewSet):
             ]
         }, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=["get"], url_path='ehs-statistics', permission_classes=[permissions.IsAuthenticated, HasHealthPortalAccess, IsEHSOrManagement])
+    def ehs_statistics(self, request, *args, **kwargs):
+        """Get comprehensive EHS statistics including OPD, pre-employment, AHC, incidents, emergencies, and referrals."""
+        from django.db.models import Count, Case, When, IntegerField, Q
+        from django.utils import timezone
+        from datetime import datetime
+        from ohc.models import Diagnosis
+        from accounts.models import EmployeeProfile
+        from ahc.models import Referral
+
+        today = timezone.now().date()
+        current_year = today.year
+
+        date_from = request.query_params.get("date_from")
+        date_to = request.query_params.get("date_to")
+        department = request.query_params.get("department")
+
+        base_visits = OHCVisit.objects.select_related("employee", "employee__user")
+
+        if date_from:
+            base_visits = base_visits.filter(visit_date__gte=date_from)
+        if date_to:
+            base_visits = base_visits.filter(visit_date__lte=date_to)
+        if department:
+            base_visits = base_visits.filter(employee__department__icontains=department)
+
+        # OPD Statistics (WALK_IN, FOLLOW_UP, PERIODIC - exclude PRE_EMPLOYMENT and EMERGENCY)
+        opd_types = [
+            OHCVisit.VisitType.WALK_IN,
+            OHCVisit.VisitType.FOLLOW_UP,
+            OHCVisit.VisitType.PERIODIC,
+        ]
+        opd_visits_today = (
+            base_visits.filter(
+                visit_date__date=today,
+                visit_type__in=opd_types,
+            )
+            .select_related("employee__user")
+            .order_by("-visit_time")[:50]
+        )
+        opd_today_count = opd_visits_today.count()
+        opd_till_date = base_visits.filter(visit_type__in=opd_types).count()
+
+        opd_visits_list = []
+        for visit in opd_visits_today:
+            visit_time = visit.visit_time.isoformat() if visit.visit_time else visit.visit_date.isoformat()
+            opd_visits_list.append({
+                "id": str(visit.id),
+                "employee_code": visit.employee.employee_code,
+                "employee_name": f"{visit.employee.user.first_name} {visit.employee.user.last_name}",
+                "department": visit.employee.department or "N/A",
+                "visit_time": visit_time,
+                "chief_complaint": visit.chief_complaint or "",
+                "status": visit.visit_status,
+            })
+
+        # Pre-Employment Statistics
+        pre_employment_visits = base_visits.filter(visit_type=OHCVisit.VisitType.PRE_EMPLOYMENT)
+        total_pre_employment = pre_employment_visits.count()
+        today_pre_employment = pre_employment_visits.filter(visit_date__date=today).count()
+
+        fitness_stats = Diagnosis.objects.filter(
+            visit__visit_type=OHCVisit.VisitType.PRE_EMPLOYMENT,
+            is_primary=True,
+        ).aggregate(
+            fit_count=Count(Case(
+                When(fitness_decision__in=["FIT", "FIT_WITH_RESTRICTION"], then=1),
+                output_field=IntegerField(),
+            )),
+            unfit_count=Count(Case(
+                When(fitness_decision__in=["TEMPORARY_UNFIT", "UNFIT"], then=1),
+                output_field=IntegerField(),
+            ))
+        )
+        fit_count = fitness_stats["fit_count"] or 0
+        unfit_count = fitness_stats["unfit_count"] or 0
+        fit_rate = round((fit_count / total_pre_employment * 100), 2) if total_pre_employment > 0 else 0
+
+        # AHC Statistics (Annual Health Checkup - PERIODIC visits grouped by employee and year)
+        ahc_visits_today = base_visits.filter(
+            visit_type=OHCVisit.VisitType.PERIODIC,
+            visit_date__date=today,
+        ).count()
+
+        employees_with_ahc = (
+            base_visits.filter(
+                visit_type=OHCVisit.VisitType.PERIODIC,
+                visit_date__year=current_year,
+            )
+            .values("employee_id")
+            .distinct()
+            .count()
+        )
+        total_employees = EmployeeProfile.objects.count()
+        ahc_completion_percentage = round((employees_with_ahc / total_employees * 100), 2) if total_employees > 0 else 0
+
+        # Incident Cases Statistics (work-related injuries, NOT medical emergencies)
+        incident_keywords = [
+            "injury", "accident", "cut", "burn", "fall", "machine",
+            "equipment", "crush", "puncture", "fracture", "sprain",
+            "strain", "work", "occupational"
+        ]
+        incident_q = Q()
+        for keyword in incident_keywords:
+            incident_q |= Q(chief_complaint__icontains=keyword)
+
+        incident_visits = base_visits.filter(
+            incident_q,
+            ~Q(visit_type=OHCVisit.VisitType.EMERGENCY)
+        )
+        incident_today_count = incident_visits.filter(visit_date__date=today).count()
+        incident_till_date_count = incident_visits.count()
+
+        incident_severity = {
+            "LOW": incident_visits.filter(triage_level=OHCVisit.TriageLevel.LOW).count(),
+            "MEDIUM": incident_visits.filter(triage_level=OHCVisit.TriageLevel.MEDIUM).count(),
+            "HIGH": incident_visits.filter(triage_level=OHCVisit.TriageLevel.HIGH).count(),
+            "CRITICAL": incident_visits.filter(triage_level=OHCVisit.TriageLevel.CRITICAL).count(),
+        }
+
+        # Emergency Cases Statistics (medical emergencies)
+        emergency_keywords = [
+            "heart attack", "unconscious", "fainted", "seizure",
+            "stroke", "breathing difficulty", "chest pain",
+            "severe pain", "emergency", "collapse"
+        ]
+        emergency_q = Q()
+        for keyword in emergency_keywords:
+            emergency_q |= Q(chief_complaint__icontains=keyword)
+
+        emergency_visits = base_visits.filter(
+            Q(visit_type=OHCVisit.VisitType.EMERGENCY) | emergency_q
+        )
+        emergency_today_count = emergency_visits.filter(visit_date__date=today).count()
+        emergency_till_date_count = emergency_visits.count()
+
+        emergency_severity = {
+            "LOW": emergency_visits.filter(triage_level=OHCVisit.TriageLevel.LOW).count(),
+            "MEDIUM": emergency_visits.filter(triage_level=OHCVisit.TriageLevel.MEDIUM).count(),
+            "HIGH": emergency_visits.filter(triage_level=OHCVisit.TriageLevel.HIGH).count(),
+            "CRITICAL": emergency_visits.filter(triage_level=OHCVisit.TriageLevel.CRITICAL).count(),
+        }
+
+        # Referred Cases Statistics
+        referred_from_status = base_visits.filter(visit_status=OHCVisit.VisitStatus.REFERRED)
+        referred_from_flag = base_visits.filter(requires_referral=True)
+        referred_visits = referred_from_status.union(referred_from_flag)
+        referred_till_date_count = referred_visits.count()
+
+        today_referrals = Referral.objects.filter(created_at__date=today).count()
+        today_referral_count = today_referrals
+
+        hospital_stats = Referral.objects.values("hospital__name").annotate(
+            referral_count=Count("id")
+        ).filter(hospital__name__isnull=False).order_by("-referral_count")[:10]
+
+        hospital_list = [
+            {"hospital_name": item["hospital__name"], "referral_count": item["referral_count"]}
+            for item in hospital_stats
+        ]
+
+        return Response(
+            {
+                "opd": {
+                    "today_count": opd_today_count,
+                    "till_date_count": opd_till_date,
+                    "visits": opd_visits_list,
+                },
+                "preEmployment": {
+                    "total_checks": total_pre_employment,
+                    "fit_count": fit_count,
+                    "unfit_count": unfit_count,
+                    "fit_rate": fit_rate,
+                    "today_count": today_pre_employment,
+                },
+                "ahc": {
+                    "today_count": ahc_visits_today,
+                    "till_date_count": employees_with_ahc,
+                    "total_employees": total_employees,
+                    "completion_percentage": ahc_completion_percentage,
+                },
+                "incident": {
+                    "today_count": incident_today_count,
+                    "till_date_count": incident_till_date_count,
+                    "severity": incident_severity,
+                    "attention_required": incident_today_count > 0,
+                },
+                "emergency": {
+                    "today_count": emergency_today_count,
+                    "till_date_count": emergency_till_date_count,
+                    "severity": emergency_severity,
+                    "critical_alert": emergency_today_count > 0,
+                },
+                "referred": {
+                    "today_count": today_referral_count,
+                    "till_date_count": referred_till_date_count,
+                    "hospitals": hospital_list,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
+
 
 class MedicineSummaryViewSet(viewsets.GenericViewSet):
     """ViewSet for medicine usage summary (Management only)."""
