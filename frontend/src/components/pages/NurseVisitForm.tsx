@@ -37,7 +37,7 @@ interface VisitFormData {
 
 /**
  * Nurse Visit Form component
- * Create patient visit with patient details and vitals, then assign to doctor
+ * Create employee visit with employee details and vitals, then assign to doctor
  */
 export const NurseVisitForm: React.FC = () => {
   const navigate = useNavigate();
@@ -102,8 +102,8 @@ export const NurseVisitForm: React.FC = () => {
 
     // Validation
     if (!formData.patient_name.trim()) {
-      setError('Patient name is required');
-      show('Please enter patient name', 'error');
+      setError('Employee name is required');
+      show('Please enter employee name', 'error');
       return;
     }
 
@@ -147,12 +147,17 @@ export const NurseVisitForm: React.FC = () => {
 
     try {
       const visitData = {
-        employee: parseInt(formData.employee_id) || 0,
+        employee: formData.employee_id.trim(),
         employee_name: formData.patient_name,
         employee_department: formData.department,
+        patient_name: formData.patient_name,
+        patient_age: parseInt(formData.age, 10) || undefined,
+        patient_gender: formData.gender,
+        patient_contact: formData.contact_number.trim(),
         visit_type: VisitType.WALK_IN,
         triage_level: 'LOW',
         visit_date: formData.visit_date,
+        visit_time: formData.visit_time,
         vitals: formData.vitals,
         consulted_doctor: formData.consulted_doctor,
       };
@@ -171,32 +176,32 @@ export const NurseVisitForm: React.FC = () => {
 
   return (
     <div className={styles.visitForm}>
-      <Header title="Nurse Visit Form" subtitle="Record patient visit and assign to doctor" />
+      <Header title="Nurse Visit Form" subtitle="Record employee visit and assign to doctor" />
 
       <main className={styles.visitFormMain}>
         {error && <Alert type="danger" onDismiss={() => setError('')}>{error}</Alert>}
 
         <Card>
           <form onSubmit={handleSubmit}>
-            {/* Patient Information */}
+            {/* Employee Information */}
             <div className={styles.formSection}>
-              <h3>Patient Information</h3>
+              <h3>Employee Information</h3>
               <div className={styles.formGrid}>
                 <FormInput
-                  label="Patient Name *"
+                  label="Employee Name *"
                   type="text"
                   value={formData.patient_name}
                   onChange={(value) => handleInputChange('patient_name', value)}
                   required
-                  helperText="Full name of the patient"
+                  helperText="Full name of the employee"
                 />
                 <FormInput
-                  label="Employee ID / Patient ID *"
+                  label="Employee ID *"
                   type="text"
                   value={formData.employee_id}
                   onChange={(value) => handleInputChange('employee_id', value)}
                   required
-                  helperText="Employee code or patient ID"
+                  helperText="Employee code"
                 />
                 <FormInput
                   label="Department *"

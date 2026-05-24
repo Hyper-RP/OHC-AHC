@@ -8,6 +8,7 @@ import { listMedicines, dispenseMedicine } from '../../services/medicine';
 import { getPharmacistPrescriptions, updateVisitStatus } from '../../services/ohc';
 import { handleApiError } from '../../services/api';
 import { Role, VisitStatus } from '../../types';
+import receiptLogo from '../../assets/mediGplus.png';
 import styles from './PharmacistDashboard.module.css';
 
 interface PrescriptionItem {
@@ -17,12 +18,41 @@ interface PrescriptionItem {
     employee: {
       user: { first_name: string; last_name: string };
       employee_code: string;
+      department?: string;
+      designation?: string;
+      fitness_status?: string;
     };
     visit_date: string;
     visit_time?: string;
+    visit_type?: string;
+    triage_level?: string;
+    visit_status?: string;
     vitals?: Record<string, any>;
     chief_complaint?: string;
     symptoms?: string;
+    preliminary_notes?: string;
+    follow_up_date?: string;
+    next_action?: string;
+    doctor_name?: string;
+    diagnoses?: Array<{
+      diagnosis_name?: string;
+      severity?: string;
+      fitness_decision?: string;
+      work_restrictions?: string;
+      advised_rest_days?: number;
+      follow_up_date?: string;
+      diagnosis_notes?: string;
+    }>;
+    prescriptions?: Array<{
+      medicine_name?: string;
+      dosage?: string;
+      frequency?: string;
+      duration_days?: number;
+      route?: string;
+      instructions?: string;
+      start_date?: string;
+      status?: string;
+    }>;
   };
   medicine_name: string;
   dosage: string;
@@ -195,6 +225,356 @@ export const PharmacistDashboard: React.FC = () => {
 
   const totalStock = medicines.reduce((sum, m) => sum + m.stock_quantity, 0);
   const totalUsed = medicines.reduce((sum, m) => sum + m.used_quantity, 0);
+
+  const escapeHtml = (value: unknown) =>
+    String(value ?? '-')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+  const formatFieldLabel = (value: string) =>
+    value
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
+  const formatDate = (value?: string) => {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString();
+  };
+
+  const formatTime = (value?: string) => {
+    if (!value) return '-';
+    const time = new Date(`2000-01-01T${value}`);
+    if (Number.isNaN(time.getTime())) return value;
+    return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const buildKeyValueRows = (rows: Array<[string, unknown]>) =>
+    rows
+      .filter(([, value]) => value !== undefined && value !== null && value !== '')
+      .map(
+        ([label, value]) => `
+          <div class="receipt-row">
+            <span class="receipt-label">${escapeHtml(label)}</span>
+            <span class="receipt-value">${escapeHtml(value)}</span>
+          </div>
+        `,
+      )
+      .join('');
+
+  const handlePrintReceipt = () => {
+    if (!selectedPrescription || !selectedMedicine) return;
+
+    const { visit } = selectedPrescription;
+    const employeeName = `${visit.employee.user.first_name} ${visit.employee.user.last_name}`;
+    const logoUrl = new URL(receiptLogo, window.location.origin).href;
+    const diagnosisItems = visit.diagnoses ?? [];
+    const prescriptionItems =
+      visit.prescriptions && visit.prescriptions.length > 0
+        ? visit.prescriptions
+        : [
+            {
+              medicine_name: selectedPrescription.medicine_name,
+              dosage: selectedPrescription.dosage,
+              frequency: selectedPrescription.frequency,
+              duration_days: selectedPrescription.duration_days,
+              instructions: selectedPrescription.instructions,
+            },
+          ];
+
+    const diagnosisMarkup =
+      diagnosisItems.length > 0
+        ? diagnosisItems
+            .map(
+              (diagnosis, index) => `
+                <div class="receipt-card">
+                  <h4>Diagnosis ${index + 1}</h4>
+                  ${buildKeyValueRows([
+                    ['Diagnosis Name', diagnosis.diagnosis_name],
+                    ['Work Restrictions', diagnosis.work_restrictions],
+                    ['Follow-up Date', diagnosis.follow_up_date ? formatDate(diagnosis.follow_up_date) : ''],
+                    ['Diagnosis Notes', diagnosis.diagnosis_notes],
+                  ])}
+                </div>
+              `,
+            )
+            .join('')
+        : '<p class="receipt-empty">No diagnosis details available.</p>';
+
+    const prescriptionMarkup =
+      prescriptionItems.length > 0
+        ? prescriptionItems
+            .map(
+              (prescription, index) => `
+                <div class="receipt-card">
+                  <h4>Prescription ${index + 1}</h4>
+                  ${buildKeyValueRows([
+                    ['Medicine', prescription.medicine_name],
+                    ['Dosage', prescription.dosage],
+                    ['Frequency', prescription.frequency],
+                    ['Duration (Days)', prescription.duration_days],
+                    ['Route', prescription.route],
+                    ['Start Date', prescription.start_date ? formatDate(prescription.start_date) : ''],
+                    ['Instructions', prescription.instructions],
+                    ['Status', prescription.status],
+                  ])}
+                </div>
+              `,
+            )
+            .join('')
+        : '<p class="receipt-empty">No prescription details available.</p>';
+
+    const vitalsMarkup =
+      visit.vitals && Object.keys(visit.vitals).length > 0
+        ? Object.entries(visit.vitals)
+            .map(
+              ([key, value]) => `
+                <div class="receipt-pill">
+                  <strong>${escapeHtml(formatFieldLabel(key))}:</strong> ${escapeHtml(value)}
+                </div>
+              `,
+            )
+            .join('')
+        : '<p class="receipt-empty">No vitals recorded.</p>';
+
+    const receiptHtml = `
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Employee Visit Receipt</title>
+          <style>
+            body {
+              margin: 0;
+              padding: 32px;
+              font-family: Arial, Helvetica, sans-serif;
+              color: #0f172a;
+              background: #f8fafc;
+            }
+            .receipt-shell {
+              max-width: 920px;
+              margin: 0 auto;
+              background: #ffffff;
+              border: 1px solid #dbe4ee;
+              border-radius: 16px;
+              padding: 28px;
+            }
+            .receipt-header {
+              display: flex;
+              justify-content: space-between;
+              gap: 16px;
+              align-items: flex-start;
+              border-bottom: 2px solid #e2e8f0;
+              padding-bottom: 18px;
+              margin-bottom: 24px;
+            }
+            .receipt-brand {
+              display: flex;
+              align-items: flex-start;
+              gap: 16px;
+            }
+            .receipt-logo {
+              width: 220px;
+              max-width: 100%;
+              height: auto;
+              display: block;
+            }
+            .receipt-brand-copy {
+              display: flex;
+              flex-direction: column;
+              gap: 6px;
+            }
+            .receipt-header h1 {
+              margin: 0 0 6px;
+              font-size: 28px;
+            }
+            .receipt-header p {
+              margin: 0;
+              color: #475569;
+            }
+            .receipt-badge {
+              background: #e0f2fe;
+              color: #075985;
+              border-radius: 999px;
+              padding: 8px 14px;
+              font-weight: 700;
+              font-size: 12px;
+            }
+            .receipt-section {
+              margin-top: 24px;
+            }
+            .receipt-section h2 {
+              margin: 0 0 14px;
+              font-size: 18px;
+              color: #0f172a;
+            }
+            .receipt-grid {
+              display: grid;
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+              gap: 12px 24px;
+            }
+            .receipt-row {
+              display: flex;
+              justify-content: space-between;
+              gap: 16px;
+              padding: 8px 0;
+              border-bottom: 1px solid #eef2f7;
+            }
+            .receipt-label {
+              color: #475569;
+              font-weight: 600;
+            }
+            .receipt-value {
+              text-align: right;
+              color: #0f172a;
+            }
+            .receipt-card {
+              border: 1px solid #dbe4ee;
+              border-radius: 12px;
+              padding: 14px 16px;
+              margin-bottom: 12px;
+            }
+            .receipt-card h4 {
+              margin: 0 0 10px;
+              font-size: 15px;
+            }
+            .receipt-pills {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 10px;
+            }
+            .receipt-pill {
+              background: #eff6ff;
+              color: #1d4ed8;
+              border-radius: 999px;
+              padding: 8px 12px;
+              font-size: 13px;
+            }
+            .receipt-empty {
+              margin: 0;
+              color: #64748b;
+            }
+            .receipt-footer {
+              margin-top: 28px;
+              padding-top: 18px;
+              border-top: 2px solid #e2e8f0;
+              color: #475569;
+              font-size: 12px;
+            }
+            @media print {
+              body {
+                padding: 0;
+                background: #ffffff;
+              }
+              .receipt-shell {
+                border: none;
+                border-radius: 0;
+                max-width: none;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="receipt-shell">
+            <div class="receipt-header">
+              <div class="receipt-brand">
+                <img class="receipt-logo" src="${logoUrl}" alt="MediGPlus Healthcare logo" />
+                <div class="receipt-brand-copy">
+                  <h1>Employee Visit Receipt</h1>
+                  <p>Consolidated nurse, doctor, and pharmacist visit details.</p>
+                </div>
+              </div>
+              <div class="receipt-badge">Visit ID: ${escapeHtml(visit.id)}</div>
+            </div>
+
+            <section class="receipt-section">
+              <h2>Employee Summary</h2>
+              <div class="receipt-grid">
+                ${buildKeyValueRows([
+                  ['Employee Name', employeeName],
+                  ['Employee Code', visit.employee.employee_code],
+                  ['Department', visit.employee.department],
+                  ['Designation', visit.employee.designation],
+                  ['Fitness Status', visit.employee.fitness_status],
+                ])}
+              </div>
+            </section>
+
+            <section class="receipt-section">
+              <h2>Nurse Entry</h2>
+              <div class="receipt-grid">
+                ${buildKeyValueRows([
+                  ['Visit Date', formatDate(visit.visit_date)],
+                  ['Visit Time', formatTime(visit.visit_time)],
+                  ['Visit Type', visit.visit_type],
+                  ['Chief Complaint', visit.chief_complaint],
+                  ['Symptoms', visit.symptoms],
+                  ['Preliminary Notes', visit.preliminary_notes],
+                  ['Follow-up Date', visit.follow_up_date ? formatDate(visit.follow_up_date) : ''],
+                ])}
+              </div>
+              <div class="receipt-section">
+                <h2>Vitals</h2>
+                <div class="receipt-pills">${vitalsMarkup}</div>
+              </div>
+            </section>
+
+            <section class="receipt-section">
+              <h2>Doctor Entry</h2>
+              <div class="receipt-grid">
+                ${buildKeyValueRows([['Doctor', visit.doctor_name]])}
+              </div>
+              <div class="receipt-section">
+                <h2>Diagnoses</h2>
+                ${diagnosisMarkup}
+              </div>
+              <div class="receipt-section">
+                <h2>Prescriptions</h2>
+                ${prescriptionMarkup}
+              </div>
+            </section>
+
+            <section class="receipt-section">
+              <h2>Pharmacist Entry</h2>
+              <div class="receipt-grid">
+                ${buildKeyValueRows([
+                  ['Dispensed Medicine', dispenseForm.medicine_name],
+                  ['Quantity Dispensed', `${dispenseForm.quantity_dispensed} ${selectedMedicine.unit}`],
+                  ['Issue Date', formatDate(dispenseForm.issue_date)],
+                  ['Stock Available', `${dispenseForm.stock_available} ${selectedMedicine.unit}`],
+                  ['Remaining Stock', `${dispenseForm.remaining_stock} ${selectedMedicine.unit}`],
+                  ['Pharmacist Remarks', dispenseForm.remarks],
+                ])}
+              </div>
+            </section>
+
+            <div class="receipt-footer">
+              Printed on ${escapeHtml(new Date().toLocaleString())}
+            </div>
+          </div>
+          <script>
+            window.onload = function () {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank', 'width=960,height=900');
+    if (!printWindow) {
+      show('Unable to open print window. Please allow pop-ups and try again.', 'error');
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(receiptHtml);
+    printWindow.document.close();
+  };
 
   if (loading) {
     return (
@@ -399,7 +779,7 @@ export const PharmacistDashboard: React.FC = () => {
 
             <div className={styles.modalContent}>
               <div className={styles.modalSection}>
-                <h4>Patient Details</h4>
+                <h4>Employee Details</h4>
                 <div className={styles.modalDetailRow}>
                   <span>Name:</span>
                   <span>
@@ -509,6 +889,13 @@ export const PharmacistDashboard: React.FC = () => {
             </div>
 
             <div className={styles.modalActions}>
+              <Button
+                type="button"
+                variant="outline-brand"
+                onClick={handlePrintReceipt}
+              >
+                Print
+              </Button>
               <Button
                 type="button"
                 variant="outline-secondary"

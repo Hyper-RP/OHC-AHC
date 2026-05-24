@@ -29,7 +29,7 @@ describe('OHCVisitForm', () => {
 
   it('renders page header', () => {
     renderWithProviders(<OHCVisitForm />);
-    expect(screen.getByText('Patient Information')).toBeInTheDocument();
+    expect(screen.getByText('Employee Information')).toBeInTheDocument();
   });
 
   it('renders chief complaint section', () => {
@@ -49,7 +49,7 @@ describe('OHCVisitForm', () => {
 
   it('renders medicine given to patient section', () => {
     renderWithProviders(<OHCVisitForm />);
-    expect(screen.getByText('Medicine Given to Patient')).toBeInTheDocument();
+    expect(screen.getByText('Medicine Given to Employee')).toBeInTheDocument();
   });
 
   it('renders Cancel and Create Visit buttons', () => {
