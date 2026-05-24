@@ -64,6 +64,18 @@
   gap: 16px;
 }
 
+.ehsStatisticsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .ehsStatisticsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .summaryCard {
   padding: 20px;
   text-align: center;

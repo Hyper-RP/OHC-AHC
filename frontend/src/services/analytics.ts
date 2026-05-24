@@ -1,9 +1,9 @@
 import api, { handleApiError } from './api';
-import type { DashboardAnalytics, MedicineSummary, AnalyticsFilters, DateRangeParams } from '../types';
+import type { DashboardAnalytics, MedicineSummary, AnalyticsFilters, DateRangeParams, EHSStatistics } from '../types';
 
 export const getDashboard = async (params?: AnalyticsFilters): Promise<DashboardAnalytics> => {
   try {
-    const response = await api.get<DashboardAnalytics>('/ohc/analytics/dashboard/', { params });
+    const response = await api.get<DashboardAnalytics>('/ohc/analytics/', { params });
     return response.data;
   } catch (error) {
     throw new Error(handleApiError(error), { cause: error });
@@ -12,7 +12,16 @@ export const getDashboard = async (params?: AnalyticsFilters): Promise<Dashboard
 
 export const getMedicineSummary = async (params?: DateRangeParams): Promise<MedicineSummary> => {
   try {
-    const response = await api.get<MedicineSummary>('/ohc/analytics/medicine-summary/', { params });
+    const response = await api.get<MedicineSummary>('/ohc/medicine-summary/', { params });
+    return response.data;
+  } catch (error) {
+    throw new Error(handleApiError(error), { cause: error });
+  }
+};
+
+export const getEHSStatistics = async (params?: AnalyticsFilters): Promise<EHSStatistics> => {
+  try {
+    const response = await api.get<EHSStatistics>('/ohc/analytics/ehs-statistics/', { params });
     return response.data;
   } catch (error) {
     throw new Error(handleApiError(error), { cause: error });

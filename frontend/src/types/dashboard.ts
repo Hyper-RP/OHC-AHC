@@ -98,3 +98,69 @@ export interface DateRangeParams {
   date_from?: string;
   date_to?: string;
 }
+
+// EHS Statistics Types
+export interface EHSStatistics {
+  opd: OPDStatistics;
+  preEmployment: PreEmploymentStatistics;
+  ahc: AHCStatistics;
+  incident: IncidentStatistics;
+  emergency: EmergencyStatistics;
+  referred: ReferredStatistics;
+}
+
+export interface OPDStatistics {
+  today_count: number;
+  till_date_count: number;
+  visits: OPDVisitDetail[];
+}
+
+export interface OPDVisitDetail {
+  id: string;
+  employee_code: string;
+  employee_name: string;
+  department: string;
+  visit_time: string;
+  chief_complaint: string;
+  status: string;
+}
+
+export interface PreEmploymentStatistics {
+  total_checks: number;
+  fit_count: number;
+  unfit_count: number;
+  fit_rate: number;
+  today_count: number;
+}
+
+export interface AHCStatistics {
+  today_count: number;
+  till_date_count: number;
+  total_employees: number;
+  completion_percentage: number;
+}
+
+export interface IncidentStatistics {
+  today_count: number;
+  till_date_count: number;
+  severity: SeverityDistribution;
+  attention_required: boolean;
+}
+
+export interface EmergencyStatistics {
+  today_count: number;
+  till_date_count: number;
+  severity: SeverityDistribution;
+  critical_alert: boolean;
+}
+
+export interface ReferredStatistics {
+  today_count: number;
+  till_date_count: number;
+  hospitals: HospitalReferral[];
+}
+
+export interface HospitalReferral {
+  hospital_name: string;
+  referral_count: number;
+}
