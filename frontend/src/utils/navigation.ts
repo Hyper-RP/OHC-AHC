@@ -41,13 +41,13 @@ export const NAV_ITEMS: NavItem[] = [
   //   icon: '✅',
   //   roles: [Role.ADMIN, Role.NURSE, Role.DOCTOR],
   // },
-  {
-    label: 'Referrals',
-    url: '/ahc/referrals',
-    urlName: 'referrals',
-    icon: '🏢',
-    roles: [Role.ADMIN, Role.NURSE, Role.EHS, Role.HR, Role.DOCTOR],
-  },
+  // {
+  //   label: 'Referrals',
+  //   url: '/ahc/referrals',
+  //   urlName: 'referrals',
+  //   icon: '🏢',
+  //   roles: [Role.ADMIN, Role.NURSE, Role.EHS, Role.HR, Role.DOCTOR],
+  // },
   // {
   //   label: 'Hospital Selection',
   //   url: '/ahc/hospital-selection',
