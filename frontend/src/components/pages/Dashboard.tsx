@@ -137,7 +137,7 @@ export const Dashboard: React.FC = () => {
   const quickActions = [
     {
       title: 'New OHC Visit',
-      description: 'Record a new patient visit',
+      description: 'Record a new employee visit',
       icon: '🏥',
       link: '/ohc/visit-form',
       variant: 'primary' as const,
@@ -151,7 +151,7 @@ export const Dashboard: React.FC = () => {
     },
     {
       title: 'Create Referral',
-      description: 'Refer patient to AHC',
+      description: 'Refer employee to AHC',
       icon: '🏢',
       link: '/ahc/referrals',
       variant: 'tertiary' as const,

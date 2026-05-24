@@ -124,7 +124,7 @@ describe('EmployeeHealthHistory', () => {
 
     await waitFor(() => {
       expect(getEmployeeHealthHistory).toHaveBeenCalledWith(undefined);
-      expect(screen.getByText('Patient Records (2)')).toBeInTheDocument();
+      expect(screen.getByText('Employee Records (2)')).toBeInTheDocument();
       expect(screen.getByText('John Doe')).toBeInTheDocument();
       expect(screen.getByText('Jane Roe')).toBeInTheDocument();
     });

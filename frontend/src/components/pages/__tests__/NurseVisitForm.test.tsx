@@ -46,14 +46,14 @@ describe('NurseVisitForm', () => {
       renderWithProviders(<NurseVisitForm />);
       await waitFor(() => {
         expect(screen.getByText('Nurse Visit Form')).toBeInTheDocument();
-        expect(screen.getByText('Record patient visit and assign to doctor')).toBeInTheDocument();
+        expect(screen.getByText('Record employee visit and assign to doctor')).toBeInTheDocument();
       });
     });
 
     it('renders all form sections', async () => {
       renderWithProviders(<NurseVisitForm />);
       await waitFor(() => {
-        expect(screen.getByText('Patient Information')).toBeInTheDocument();
+        expect(screen.getByText('Employee Information')).toBeInTheDocument();
         expect(screen.getByText('Vital Signs')).toBeInTheDocument();
         expect(screen.getByText('Visit Details')).toBeInTheDocument();
         expect(screen.getByText('Assign to Doctor')).toBeInTheDocument();
@@ -99,7 +99,7 @@ describe('NurseVisitForm', () => {
     });
   });
 
-  describe('Patient Information Form', () => {
+  describe('Employee Information Form', () => {
     it('renders employee ID input', async () => {
       renderWithProviders(<NurseVisitForm />);
       await waitFor(() => {

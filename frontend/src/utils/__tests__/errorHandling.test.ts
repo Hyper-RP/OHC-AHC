@@ -13,7 +13,7 @@ describe('Error Handling Utilities', () => {
       const result = validateDiagnosisForm({
         diagnosisName: 'Headache',
         diagnosisCode: 'R51',
-        diagnosisNotes: 'Patient reports mild headache',
+        diagnosisNotes: 'Employee reports mild headache',
         severity: 'MILD',
         fitnessDecision: 'FIT',
         advisedRestDays: 2,
