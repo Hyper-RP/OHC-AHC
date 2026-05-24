@@ -2,11 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSnackbar } from '../../contexts/SnackbarContext';
-import type { DashboardAnalytics, AnalyticsFilters } from '../../types';
+import type { DashboardAnalytics, AnalyticsFilters, EHSStatistics } from '../../types';
 import { Header } from '../layout';
 import { Card, Alert, Button } from '../ui';
-import { getDashboard, exportAnalytics } from '../../services/analytics';
+import { getDashboard, getEHSStatistics, exportAnalytics } from '../../services/analytics';
 import { Role } from '../../types';
+import {
+  OPDStatisticsCard,
+  PreEmploymentStatisticsCard,
+  AHCStatisticsCard,
+  IncidentStatisticsCard,
+  EmergencyStatisticsCard,
+  ReferredStatisticsCard,
+} from '../dashboard';
 import styles from './EHSDashboard.module.css';
 
 /**
@@ -20,6 +28,7 @@ export const EHSDashboard: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null);
+  const [ehsStatistics, setEhsStatistics] = useState<EHSStatistics | null>(null);
   const [filters, setFilters] = useState<AnalyticsFilters>({});
 
   useEffect(() => {
@@ -29,6 +38,7 @@ export const EHSDashboard: React.FC = () => {
       return;
     }
     fetchAnalytics();
+    fetchEHSStatistics();
   }, [user, navigate, filters]);
 
   const fetchAnalytics = async () => {
@@ -46,10 +56,21 @@ export const EHSDashboard: React.FC = () => {
     }
   };
 
+  const fetchEHSStatistics = async () => {
+    try {
+      const data = await getEHSStatistics(filters);
+      setEhsStatistics(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch EHS statistics';
+      show(errorMessage, 'error');
+    }
+  };
+
   // Auto-refresh every 60 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       fetchAnalytics();
+      fetchEHSStatistics();
     }, 60000);
 
     return () => clearInterval(interval);
@@ -137,6 +158,16 @@ export const EHSDashboard: React.FC = () => {
 
         {analytics && (
           <>
+            {/* EHS Statistics Cards - New Section */}
+            <div className={styles.ehsStatisticsGrid}>
+              <OPDStatisticsCard statistics={ehsStatistics?.opd || null} loading={loading} />
+              <PreEmploymentStatisticsCard statistics={ehsStatistics?.preEmployment || null} loading={loading} />
+              <AHCStatisticsCard statistics={ehsStatistics?.ahc || null} loading={loading} />
+              <IncidentStatisticsCard statistics={ehsStatistics?.incident || null} loading={loading} />
+              <EmergencyStatisticsCard statistics={ehsStatistics?.emergency || null} loading={loading} />
+              <ReferredStatisticsCard statistics={ehsStatistics?.referred || null} loading={loading} />
+            </div>
+
             {/* Summary Cards */}
             <div className={styles.summaryCards}>
               <Card className={styles.summaryCard}>
