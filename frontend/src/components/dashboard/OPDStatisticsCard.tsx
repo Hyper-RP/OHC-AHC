@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../ui';
 import type { OPDStatistics } from '../../types';
 import styles from './OPDStatisticsCard.module.css';
@@ -12,6 +13,11 @@ export const OPDStatisticsCard: React.FC<OPDStatisticsCardProps> = ({
   statistics,
   loading,
 }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate('/ehs/opd-details');
+  };
   if (loading) {
     return (
       <Card className={styles.card}>
@@ -33,7 +39,7 @@ export const OPDStatisticsCard: React.FC<OPDStatisticsCardProps> = ({
   const hasVisitsToday = statistics.visits.length > 0;
 
   return (
-    <Card className={styles.card}>
+    <Card className={styles.card} onClick={handleClick}>
       <div className={styles.header}>
         <h3>📋 OPD Visits Today</h3>
         <div className={styles.todayBadge}>{statistics.today_count}</div>

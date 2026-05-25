@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../ui';
 import type { PreEmploymentStatistics } from '../../types';
 import styles from './PreEmploymentStatisticsCard.module.css';
@@ -12,6 +13,12 @@ export const PreEmploymentStatisticsCard: React.FC<PreEmploymentStatisticsCardPr
   statistics,
   loading,
 }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate('/ehs/pre-employment-details');
+  };
+
   if (loading) {
     return (
       <Card className={styles.card}>
@@ -31,7 +38,7 @@ export const PreEmploymentStatisticsCard: React.FC<PreEmploymentStatisticsCardPr
   }
 
   return (
-    <Card className={styles.card}>
+    <Card className={styles.card} onClick={handleClick}>
       <div className={styles.header}>
         <h3>🩺 Pre-Employment Checkups</h3>
         <span className={styles.todayBadge}>Today: {statistics.today_count}</span>

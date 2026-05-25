@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from django_filters import rest_framework as df_filters
 
 from accounts.permissions import (
     HasHealthPortalAccess,
@@ -23,11 +24,31 @@ from ohc.serializers import (
 )
 
 
+class OHCVisitFilter(df_filters.FilterSet):
+    """Custom filter for OHCVisit with date range support"""
+    date_from = df_filters.DateFilter(field_name='visit_date', lookup_expr='gte')
+    date_to = df_filters.DateFilter(field_name='visit_date', lookup_expr='lte')
+    department = df_filters.CharFilter(field_name='employee__department', lookup_expr='icontains')
+
+    # Map 'OPD' to 'WALK_IN' for filtering
+    visit_type = df_filters.CharFilter(method='filter_visit_type')
+
+    def filter_visit_type(self, queryset, name, value):
+        """Map OPD to WALK_IN for filtering"""
+        if value == 'OPD':
+            return queryset.filter(visit_type='WALK_IN')
+        return queryset.filter(visit_type=value)
+
+    class Meta:
+        model = OHCVisit
+        fields = ['visit_status', 'visit_type', 'triage_level']
+
+
 class OHCVisitViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'id'
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['visit_status', 'visit_type', 'triage_level']
+    filterset_class = OHCVisitFilter
     search_fields = ['employee__user__first_name', 'employee__user__last_name', 'employee__employee_code']
     ordering_fields = ['visit_date', 'created_at', 'visit_time']
     ordering = ['-created_at']
