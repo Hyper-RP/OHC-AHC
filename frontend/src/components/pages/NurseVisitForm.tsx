@@ -19,7 +19,7 @@ interface VisitFormData {
   patient_name: string;
   employee_id: string;
   department: string;
-  age: string;
+  date_of_birth: string;
   gender: string;
   contact_number: string;
   visit_date: string;
@@ -52,7 +52,7 @@ export const NurseVisitForm: React.FC = () => {
     patient_name: '',
     employee_id: '',
     department: '',
-    age: '',
+    date_of_birth: '',
     gender: '',
     contact_number: '',
     visit_date: new Date().toISOString().split('T')[0],
@@ -96,6 +96,23 @@ export const NurseVisitForm: React.FC = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const calculateAgeFromDob = (dateOfBirth: string) => {
+    if (!dateOfBirth) return undefined;
+
+    const dob = new Date(dateOfBirth);
+    if (Number.isNaN(dob.getTime())) return undefined;
+
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDifference = today.getMonth() - dob.getMonth();
+
+    if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < dob.getDate())) {
+      age -= 1;
+    }
+
+    return age >= 0 ? age : undefined;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -119,9 +136,16 @@ export const NurseVisitForm: React.FC = () => {
       return;
     }
 
-    if (!formData.age.trim()) {
-      setError('Age is required');
-      show('Please enter age', 'error');
+    if (!formData.date_of_birth) {
+      setError('Date of birth is required');
+      show('Please enter date of birth', 'error');
+      return;
+    }
+
+    const calculatedAge = calculateAgeFromDob(formData.date_of_birth);
+    if (calculatedAge === undefined) {
+      setError('Valid date of birth is required');
+      show('Please enter a valid date of birth', 'error');
       return;
     }
 
@@ -151,7 +175,7 @@ export const NurseVisitForm: React.FC = () => {
         employee_name: formData.patient_name,
         employee_department: formData.department,
         patient_name: formData.patient_name,
-        patient_age: parseInt(formData.age, 10) || undefined,
+        patient_age: calculatedAge,
         patient_gender: formData.gender,
         patient_contact: formData.contact_number.trim(),
         visit_type: VisitType.WALK_IN,
@@ -212,14 +236,13 @@ export const NurseVisitForm: React.FC = () => {
                   helperText="Department name"
                 />
                 <FormInput
-                  label="Age *"
-                  type="number"
-                  value={formData.age}
-                  onChange={(value) => handleInputChange('age', value)}
+                  label="DOB *"
+                  type="date"
+                  value={formData.date_of_birth}
+                  onChange={(value) => handleInputChange('date_of_birth', value)}
                   required
-                  helperText="Age in years"
-                  min="1"
-                  max="120"
+                  helperText="Date of birth"
+                  max={new Date().toISOString().split('T')[0]}
                 />
                 <FormInput
                   label="Gender *"
