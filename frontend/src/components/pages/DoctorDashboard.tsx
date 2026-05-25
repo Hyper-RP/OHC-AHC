@@ -10,6 +10,7 @@ import { createDiagnosis } from '../../services/ohc';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import { Role, VisitStatus } from '../../types';
 import { validatePrescriptions, formatSubmitError } from '../../utils/errorHandling';
+import { api } from '../../services/api';
 import styles from './DoctorDashboard.module.css';
 
 interface PrescriptionInput {
@@ -34,7 +35,9 @@ export const DoctorDashboard: React.FC = () => {
     show(err.message, 'error');
   }, [show]);
 
-  const visitParams = useMemo(() => ({ status: VisitStatus.OPEN }), []);
+  const [selectedFilter, setSelectedFilter] = useState<string>(VisitStatus.OPEN);
+
+  const visitParams = useMemo(() => ({ visit_status: selectedFilter }), [selectedFilter]);
 
   // Fetch visits assigned to doctor, with manual refresh option
   const { data: visitsData, isLoading: loading, refetch, lastUpdated } = useDashboardData<any>(
@@ -104,6 +107,29 @@ export const DoctorDashboard: React.FC = () => {
 
     return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
+
+  // Fetch medicines for dropdown
+  const [medicines, setMedicines] = useState<Array<{ value: string; label: string }>>([]);
+
+  useEffect(() => {
+    const fetchMedicines = async () => {
+      try {
+        const response = await api.get('/ohc/medicines/');
+        const data = Array.isArray(response.data) ? response.data : response.data?.results || [];
+        const inStockMedicines = [
+          { value: '', label: 'Select medicine' },
+          ...data
+            .filter((m: any) => m.stock_quantity > 0)
+            .map((m: any) => ({ value: m.name, label: m.name })),
+        ];
+        console.log('Medicines fetched:', data, 'In stock:', inStockMedicines);
+        setMedicines(inStockMedicines);
+      } catch (err) {
+        console.error('Failed to fetch medicines:', err);
+      }
+    };
+    fetchMedicines();
+  }, []);
 
   // Diagnosis form state
   const [diagnosisName, setDiagnosisName] = useState('');
@@ -293,6 +319,18 @@ export const DoctorDashboard: React.FC = () => {
           <h2>Assigned Visits</h2>
           <div className={styles.filterBar}>
             <span>{visits.length} visit{visits.length === 1 ? '' : 's'}</span>
+            <FormInput
+              type="select"
+              value={selectedFilter}
+              onChange={setSelectedFilter}
+              options={[
+                { value: VisitStatus.OPEN, label: 'OPEN' },
+                { value: VisitStatus.IN_PROGRESS, label: 'IN PROGRESS' },
+                { value: VisitStatus.COMPLETED, label: 'COMPLETED' },
+                { value: VisitStatus.REFERRED, label: 'REFERRED' },
+              ]}
+              className={styles.filterSelect}
+            />
             <LastUpdated lastUpdated={lastUpdated} isLoading={loading} />
             <RefreshControl onRefresh={refetch} isRefreshing={loading} label="Refresh" />
           </div>
@@ -304,35 +342,35 @@ export const DoctorDashboard: React.FC = () => {
             <p>Create a new visit from the OHC Visit Form to get started.</p>
           </div>
         ) : (
-          <div className={styles.visitsGrid}>
+          <div className={styles.visitsList}>
+            <div className={styles.listHeader}>
+              <div className={styles.columnHeader}>Employee</div>
+              <div className={styles.columnHeader}>Department</div>
+              <div className={styles.columnHeader}>Date</div>
+              <div className={styles.columnHeader}>Status</div>
+            </div>
             {visits.map((visit: any) => (
-              <Card key={visit.id} className={styles.visitCard} onClick={() => handleViewVisit(visit.id)}>
-                <div className={styles.visitHeader}>
-                  <div className={styles.visitInfo}>
-                    <div>
-                      <span className={styles.patientName}>
-                        {getVisitDisplayName(visit)}
-                      </span>
-                      <span className={styles.employeeCode}>
-                        {getVisitDisplayCode(visit)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className={styles.label}>Department:</span>
-                      <span className={styles.value}>{getVisitDisplayDepartment(visit)}</span>
-                    </div>
-                    <div>
-                      <span className={styles.label}>Date:</span>
-                      <span className={styles.value}>
-                        {new Date(visit.visit_date).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                  <div className={styles.visitStatus}>
-                    <StatusBadge status={visit.visit_status} size="medium" />
-                  </div>
+              <div key={visit.id} className={styles.visitListItem} onClick={() => handleViewVisit(visit.id)}>
+                <div className={styles.listCell}>
+                  <span className={styles.patientName}>
+                    {getVisitDisplayName(visit)}
+                  </span>
+                  <span className={styles.employeeCode}>
+                    {getVisitDisplayCode(visit)}
+                  </span>
                 </div>
-              </Card>
+                <div className={styles.listCell}>
+                  <span className={styles.value}>{getVisitDisplayDepartment(visit)}</span>
+                </div>
+                <div className={styles.listCell}>
+                  <span className={styles.value}>
+                    {new Date(visit.visit_date).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className={styles.listCell}>
+                  <StatusBadge status={visit.visit_status} size="medium" />
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -417,6 +455,24 @@ export const DoctorDashboard: React.FC = () => {
               {!selectedVisit.vitals && <p>No vitals recorded</p>}
             </div>
 
+            {(selectedVisit.visit_status === VisitStatus.IN_PROGRESS ||
+              selectedVisit.visit_status === VisitStatus.COMPLETED ||
+              selectedVisit.visit_status === VisitStatus.REFERRED) &&
+              selectedVisit.prescriptions &&
+              selectedVisit.prescriptions.length > 0 && (
+              <div className={styles.section}>
+                <h4>Medicines Prescribed</h4>
+                <div className={styles.medicinesList}>
+                  {selectedVisit.prescriptions.map((prescription: any) => (
+                    <div key={prescription.id} className={styles.medicineItem}>
+                      <span className={styles.medicineName}>{prescription.medicine_name}</span>
+                      <span className={styles.medicineDosage}>{prescription.dosage}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {selectedVisit.visit_status === VisitStatus.OPEN && (
               <div className={styles.actionSection}>
                 {!showDiagnosisForm ? (
@@ -467,9 +523,11 @@ export const DoctorDashboard: React.FC = () => {
                           )}
                           <div className={styles.prescriptionForm}>
                             <FormInput
+                              type="select"
                               label={`Medicine Name ${prescriptions.length > 1 ? index + 1 : ''} *`}
                               value={prescription.medicine_name}
                               onChange={(value) => handlePrescriptionChange(index, 'medicine_name', value)}
+                              options={medicines}
                               required
                               error={fieldErrors[`prescriptions_${index}_medicine_name`]}
                             />
