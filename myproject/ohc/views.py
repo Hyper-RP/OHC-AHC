@@ -1,7 +1,8 @@
-from rest_framework import mixins, permissions, status, viewsets
+from rest_framework import mixins, permissions, status, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
 
 from accounts.permissions import (
     HasHealthPortalAccess,
@@ -25,6 +26,11 @@ from ohc.serializers import (
 class OHCVisitViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'id'
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['visit_status', 'visit_type', 'triage_level']
+    search_fields = ['employee__user__first_name', 'employee__user__last_name', 'employee__employee_code']
+    ordering_fields = ['visit_date', 'created_at', 'visit_time']
+    ordering = ['-created_at']
 
     def get_permissions(self):
         if self.action in {"create", "update", "destroy"}:
