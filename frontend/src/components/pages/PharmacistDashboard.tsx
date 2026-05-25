@@ -253,24 +253,12 @@ export const PharmacistDashboard: React.FC = () => {
     return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const buildKeyValueRows = (rows: Array<[string, unknown]>) =>
-    rows
-      .filter(([, value]) => value !== undefined && value !== null && value !== '')
-      .map(
-        ([label, value]) => `
-          <div class="receipt-row">
-            <span class="receipt-label">${escapeHtml(label)}</span>
-            <span class="receipt-value">${escapeHtml(value)}</span>
-          </div>
-        `,
-      )
-      .join('');
-
   const handlePrintReceipt = () => {
     if (!selectedPrescription || !selectedMedicine) return;
 
     const { visit } = selectedPrescription;
     const employeeName = `${visit.employee.user.first_name} ${visit.employee.user.last_name}`;
+    const doctorName = visit.doctor_name?.trim() || 'Doctor';
     const logoUrl = new URL(receiptLogo, window.location.origin).href;
     const diagnosisItems = visit.diagnoses ?? [];
     const prescriptionItems =
@@ -285,194 +273,257 @@ export const PharmacistDashboard: React.FC = () => {
               instructions: selectedPrescription.instructions,
             },
           ];
-
+    const complaintLines = [visit.chief_complaint, visit.symptoms]
+      .filter(Boolean)
+      .map((item) => `<div>${escapeHtml(item)}</div>`)
+      .join('');
     const diagnosisMarkup =
       diagnosisItems.length > 0
         ? diagnosisItems
             .map(
-              (diagnosis, index) => `
-                <div class="receipt-card">
-                  <h4>Diagnosis ${index + 1}</h4>
-                  ${buildKeyValueRows([
-                    ['Diagnosis Name', diagnosis.diagnosis_name],
-                    ['Work Restrictions', diagnosis.work_restrictions],
-                    ['Follow-up Date', diagnosis.follow_up_date ? formatDate(diagnosis.follow_up_date) : ''],
-                    ['Diagnosis Notes', diagnosis.diagnosis_notes],
-                  ])}
+              (diagnosis) => `
+                <div class="plain-line">
+                  <strong>${escapeHtml(diagnosis.diagnosis_name || 'Diagnosis')}</strong>
+                  ${diagnosis.diagnosis_notes ? ` - ${escapeHtml(diagnosis.diagnosis_notes)}` : ''}
                 </div>
+                ${
+                  diagnosis.work_restrictions
+                    ? `<div class="sub-line">Restriction: ${escapeHtml(diagnosis.work_restrictions)}</div>`
+                    : ''
+                }
+                ${
+                  diagnosis.follow_up_date
+                    ? `<div class="sub-line">Follow-up: ${escapeHtml(formatDate(diagnosis.follow_up_date))}</div>`
+                    : ''
+                }
               `,
             )
             .join('')
-        : '<p class="receipt-empty">No diagnosis details available.</p>';
-
+        : '<div class="plain-line">No diagnosis details available.</div>';
     const prescriptionMarkup =
       prescriptionItems.length > 0
-        ? prescriptionItems
-            .map(
-              (prescription, index) => `
-                <div class="receipt-card">
-                  <h4>Prescription ${index + 1}</h4>
-                  ${buildKeyValueRows([
-                    ['Medicine', prescription.medicine_name],
-                    ['Dosage', prescription.dosage],
-                    ['Frequency', prescription.frequency],
-                    ['Duration (Days)', prescription.duration_days],
-                    ['Route', prescription.route],
-                    ['Start Date', prescription.start_date ? formatDate(prescription.start_date) : ''],
-                    ['Instructions', prescription.instructions],
-                    ['Status', prescription.status],
-                  ])}
-                </div>
-              `,
-            )
-            .join('')
-        : '<p class="receipt-empty">No prescription details available.</p>';
-
-    const vitalsMarkup =
+        ? `
+          <table class="medicine-table">
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Medicine</th>
+                <th>Dosage</th>
+                <th>Frequency</th>
+                <th>Duration</th>
+                <th>Instructions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${prescriptionItems
+                .map(
+                  (prescription, index) => `
+                    <tr>
+                      <td>${index + 1}</td>
+                      <td>${escapeHtml(prescription.medicine_name || '-')}</td>
+                      <td>${escapeHtml(prescription.dosage || '-')}</td>
+                      <td>${escapeHtml(prescription.frequency || '-')}</td>
+                      <td>${escapeHtml(
+                        prescription.duration_days ? `${prescription.duration_days} day(s)` : '-',
+                      )}</td>
+                      <td>${escapeHtml(prescription.instructions || '-')}</td>
+                    </tr>
+                  `,
+                )
+                .join('')}
+            </tbody>
+          </table>
+        `
+        : '<div class="plain-line">No prescription details available.</div>';
+    const vitalsSummary =
       visit.vitals && Object.keys(visit.vitals).length > 0
         ? Object.entries(visit.vitals)
+            .map(([key, value]) => `${formatFieldLabel(key)}: ${value}`)
+            .join('   ')
+        : 'No vitals recorded';
+    const adviceEntries = [
+      ['Advice', visit.preliminary_notes],
+      ['Pharmacist Note', dispenseForm.remarks],
+      ['Follow Up Date', visit.follow_up_date ? formatDate(visit.follow_up_date) : ''],
+    ].filter(([, value]) => Boolean(value));
+
+    const adviceMarkup =
+      adviceEntries.length > 0
+        ? adviceEntries
             .map(
-              ([key, value]) => `
-                <div class="receipt-pill">
-                  <strong>${escapeHtml(formatFieldLabel(key))}:</strong> ${escapeHtml(value)}
+              ([label, value]) => `
+                <div class="advice-row">
+                  <div class="advice-label">${escapeHtml(label)}</div>
+                  <div class="advice-value">${escapeHtml(value)}</div>
                 </div>
               `,
             )
             .join('')
-        : '<p class="receipt-empty">No vitals recorded.</p>';
+        : '<div class="plain-line">No additional advice recorded.</div>';
 
     const receiptHtml = `
       <!doctype html>
       <html>
         <head>
           <meta charset="utf-8" />
-          <title>Employee Visit Receipt</title>
+          <title>Prescription Receipt</title>
           <style>
+            @page {
+              margin: 18mm;
+            }
             body {
               margin: 0;
-              padding: 32px;
-              font-family: Arial, Helvetica, sans-serif;
-              color: #0f172a;
-              background: #f8fafc;
+              padding: 0;
+              font-family: "Times New Roman", Georgia, serif;
+              color: #111111;
+              background: #ffffff;
             }
             .receipt-shell {
-              max-width: 920px;
+              max-width: 760px;
               margin: 0 auto;
               background: #ffffff;
-              border: 1px solid #dbe4ee;
-              border-radius: 16px;
-              padding: 28px;
+              padding: 18px 24px 12px;
             }
             .receipt-header {
               display: flex;
               justify-content: space-between;
-              gap: 16px;
+              gap: 12px;
               align-items: flex-start;
-              border-bottom: 2px solid #e2e8f0;
-              padding-bottom: 18px;
-              margin-bottom: 24px;
+              padding-bottom: 8px;
+              border-bottom: 1px solid #111111;
             }
             .receipt-brand {
               display: flex;
-              align-items: flex-start;
-              gap: 16px;
+              align-items: center;
+              gap: 10px;
             }
             .receipt-logo {
-              width: 220px;
-              max-width: 100%;
+              width: 150px;
               height: auto;
               display: block;
             }
-            .receipt-brand-copy {
-              display: flex;
-              flex-direction: column;
-              gap: 6px;
-            }
-            .receipt-header h1 {
-              margin: 0 0 6px;
-              font-size: 28px;
-            }
-            .receipt-header p {
-              margin: 0;
-              color: #475569;
-            }
-            .receipt-badge {
-              background: #e0f2fe;
-              color: #075985;
-              border-radius: 999px;
-              padding: 8px 14px;
-              font-weight: 700;
+            .header-meta {
+              text-align: right;
               font-size: 12px;
+              line-height: 1.5;
             }
-            .receipt-section {
-              margin-top: 24px;
+            .patient-block {
+              padding: 8px 0 6px;
+              border-bottom: 1px solid #111111;
             }
-            .receipt-section h2 {
-              margin: 0 0 14px;
-              font-size: 18px;
-              color: #0f172a;
-            }
-            .receipt-grid {
-              display: grid;
-              grid-template-columns: repeat(2, minmax(0, 1fr));
-              gap: 12px 24px;
-            }
-            .receipt-row {
+            .row {
               display: flex;
               justify-content: space-between;
-              gap: 16px;
-              padding: 8px 0;
-              border-bottom: 1px solid #eef2f7;
-            }
-            .receipt-label {
-              color: #475569;
-              font-weight: 600;
-            }
-            .receipt-value {
-              text-align: right;
-              color: #0f172a;
-            }
-            .receipt-card {
-              border: 1px solid #dbe4ee;
-              border-radius: 12px;
-              padding: 14px 16px;
-              margin-bottom: 12px;
-            }
-            .receipt-card h4 {
-              margin: 0 0 10px;
-              font-size: 15px;
-            }
-            .receipt-pills {
-              display: flex;
-              flex-wrap: wrap;
-              gap: 10px;
-            }
-            .receipt-pill {
-              background: #eff6ff;
-              color: #1d4ed8;
-              border-radius: 999px;
-              padding: 8px 12px;
-              font-size: 13px;
-            }
-            .receipt-empty {
-              margin: 0;
-              color: #64748b;
-            }
-            .receipt-footer {
-              margin-top: 28px;
-              padding-top: 18px;
-              border-top: 2px solid #e2e8f0;
-              color: #475569;
+              gap: 18px;
               font-size: 12px;
+              line-height: 1.45;
+              margin-bottom: 3px;
+            }
+            .row strong {
+              font-weight: 700;
+            }
+            .single-line {
+              font-size: 12px;
+              line-height: 1.45;
+              margin: 6px 0;
+            }
+            .section {
+              padding: 8px 0 6px;
+              border-bottom: 1px solid #111111;
+            }
+            .section-title {
+              margin: 0;
+              font-size: 12px;
+              font-weight: 700;
+              text-transform: uppercase;
+            }
+            .plain-line {
+              font-size: 12px;
+              line-height: 1.45;
+              margin-top: 4px;
+            }
+            .sub-line {
+              font-size: 11px;
+              line-height: 1.45;
+              margin-top: 2px;
+              padding-left: 14px;
+            }
+            .rx-title {
+              font-size: 12px;
+              font-weight: 700;
+              margin: 12px 0 8px;
+            }
+            .medicine-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 6px;
+              font-size: 12px;
+            }
+            .medicine-table th,
+            .medicine-table td {
+              border: 1px solid #111111;
+              padding: 6px 8px;
+              text-align: left;
+              vertical-align: top;
+              line-height: 1.35;
+            }
+            .medicine-table th {
+              font-weight: 700;
+              background: #f4f4f4;
+            }
+            .signature-wrap {
+              display: flex;
+              justify-content: flex-end;
+              gap: 28px;
+              flex-wrap: wrap;
+              margin-top: 34px;
+            }
+            .advice-row {
+              display: grid;
+              grid-template-columns: 110px 1fr;
+              gap: 10px;
+              padding: 5px 0;
+              border-bottom: 1px dotted #777777;
+              font-size: 12px;
+              line-height: 1.45;
+            }
+            .advice-row:last-child {
+              border-bottom: none;
+            }
+            .advice-label {
+              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 0.4px;
+            }
+            .advice-value {
+              word-break: break-word;
+            }
+            .signature-box {
+              width: 220px;
+              text-align: center;
+            }
+            .signature-mark {
+              font-family: "Brush Script MT", "Segoe Script", cursive;
+              font-size: 28px;
+              line-height: 1;
+              margin-bottom: 6px;
+            }
+            .signature-line {
+              border-top: 1px solid #111111;
+              padding-top: 4px;
+              font-size: 11px;
+            }
+            .print-meta {
+              margin-top: 12px;
+              font-size: 10px;
+              color: #444444;
             }
             @media print {
               body {
                 padding: 0;
-                background: #ffffff;
               }
               .receipt-shell {
                 border: none;
-                border-radius: 0;
                 max-width: none;
               }
             }
@@ -483,76 +534,60 @@ export const PharmacistDashboard: React.FC = () => {
             <div class="receipt-header">
               <div class="receipt-brand">
                 <img class="receipt-logo" src="${logoUrl}" alt="MediGPlus Healthcare logo" />
-                <div class="receipt-brand-copy">
-                  <h1>Employee Visit Receipt</h1>
-                  <p>Consolidated nurse, doctor, and pharmacist visit details.</p>
-                </div>
               </div>
-              <div class="receipt-badge">Visit ID: ${escapeHtml(visit.id)}</div>
+              <div class="header-meta">
+                <div><strong>Date:</strong> ${escapeHtml(formatDate(visit.visit_date || dispenseForm.issue_date))}</div>
+                <div><strong>Time:</strong> ${escapeHtml(formatTime(visit.visit_time))}</div>
+                <div><strong>Visit No:</strong> ${escapeHtml(visit.id)}</div>
+              </div>
             </div>
 
-            <section class="receipt-section">
-              <h2>Employee Summary</h2>
-              <div class="receipt-grid">
-                ${buildKeyValueRows([
-                  ['Employee Name', employeeName],
-                  ['Employee Code', visit.employee.employee_code],
-                  ['Department', visit.employee.department],
-                  ['Designation', visit.employee.designation],
-                  ['Fitness Status', visit.employee.fitness_status],
-                ])}
+            <section class="patient-block">
+              <div class="single-line"><strong>Patient Name:</strong> ${escapeHtml(employeeName)}</div>
+              <div class="row">
+                <div><strong>Employee ID:</strong> ${escapeHtml(visit.employee.employee_code)}</div>
+                <div><strong>Department:</strong> ${escapeHtml(visit.employee.department)}</div>
+                <div><strong>Designation:</strong> ${escapeHtml(visit.employee.designation)}</div>
               </div>
+              <div class="row">
+                <div><strong>Visit Type:</strong> ${escapeHtml(visit.visit_type)}</div>
+                <div><strong>Fitness:</strong> ${escapeHtml(visit.employee.fitness_status)}</div>
+                <div><strong>Doctor:</strong> ${escapeHtml(visit.doctor_name)}</div>
+              </div>
+              <div class="single-line"><strong>Vitals:</strong> ${escapeHtml(vitalsSummary)}</div>
             </section>
 
-            <section class="receipt-section">
-              <h2>Nurse Entry</h2>
-              <div class="receipt-grid">
-                ${buildKeyValueRows([
-                  ['Visit Date', formatDate(visit.visit_date)],
-                  ['Visit Time', formatTime(visit.visit_time)],
-                  ['Visit Type', visit.visit_type],
-                  ['Chief Complaint', visit.chief_complaint],
-                  ['Symptoms', visit.symptoms],
-                  ['Preliminary Notes', visit.preliminary_notes],
-                  ['Follow-up Date', visit.follow_up_date ? formatDate(visit.follow_up_date) : ''],
-                ])}
-              </div>
-              <div class="receipt-section">
-                <h2>Vitals</h2>
-                <div class="receipt-pills">${vitalsMarkup}</div>
-              </div>
+            <section class="section">
+              <h2 class="section-title">Complaints</h2>
+              ${complaintLines || '<div class="plain-line">No complaints recorded.</div>'}
             </section>
 
-            <section class="receipt-section">
-              <h2>Doctor Entry</h2>
-              <div class="receipt-grid">
-                ${buildKeyValueRows([['Doctor', visit.doctor_name]])}
-              </div>
-              <div class="receipt-section">
-                <h2>Diagnoses</h2>
-                ${diagnosisMarkup}
-              </div>
-              <div class="receipt-section">
-                <h2>Prescriptions</h2>
-                ${prescriptionMarkup}
-              </div>
+            <section class="section">
+              <h2 class="section-title">Diagnosis</h2>
+              ${diagnosisMarkup}
             </section>
 
-            <section class="receipt-section">
-              <h2>Pharmacist Entry</h2>
-              <div class="receipt-grid">
-                ${buildKeyValueRows([
-                  ['Dispensed Medicine', dispenseForm.medicine_name],
-                  ['Quantity Dispensed', `${dispenseForm.quantity_dispensed} ${selectedMedicine.unit}`],
-                  ['Issue Date', formatDate(dispenseForm.issue_date)],
-                  ['Stock Available', `${dispenseForm.stock_available} ${selectedMedicine.unit}`],
-                  ['Remaining Stock', `${dispenseForm.remaining_stock} ${selectedMedicine.unit}`],
-                  ['Pharmacist Remarks', dispenseForm.remarks],
-                ])}
-              </div>
+            <div class="rx-title">Rx</div>
+            <section class="section">
+              ${prescriptionMarkup}
             </section>
 
-            <div class="receipt-footer">
+            <section class="section">
+              <h2 class="section-title">Advice</h2>
+              ${adviceMarkup}
+            </section>
+
+            <div class="signature-wrap">
+              <div class="signature-box">
+                <div class="signature-mark">${escapeHtml(doctorName)}</div>
+                <div class="signature-line">
+                  Doctor Digital Signature<br />
+                  ${escapeHtml(doctorName)}
+                </div>
+              </div>
+            </div>
+
+            <div class="print-meta">
               Printed on ${escapeHtml(new Date().toLocaleString())}
             </div>
           </div>
