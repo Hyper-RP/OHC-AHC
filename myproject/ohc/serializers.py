@@ -11,7 +11,7 @@ class EmployeeInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EmployeeProfile
-        fields = ['id', 'employee_code', 'user']
+        fields = ['id', 'employee_code', 'department', 'designation', 'fitness_status', 'user']
         read_only_fields = ['id']
 
     def get_user(self, obj):
@@ -369,6 +369,29 @@ class PharmacistPrescriptionSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         # Add visit details
         if instance.visit:
+            diagnoses = list(
+                instance.visit.diagnoses.all().values(
+                    "diagnosis_name",
+                    "severity",
+                    "fitness_decision",
+                    "work_restrictions",
+                    "advised_rest_days",
+                    "follow_up_date",
+                    "diagnosis_notes",
+                )
+            )
+            prescriptions = list(
+                instance.visit.prescriptions.all().values(
+                    "medicine_name",
+                    "dosage",
+                    "frequency",
+                    "duration_days",
+                    "route",
+                    "instructions",
+                    "start_date",
+                    "status",
+                )
+            )
             visit_data = {
                 "id": instance.visit.id,
                 "employee": {
@@ -381,9 +404,18 @@ class PharmacistPrescriptionSerializer(serializers.ModelSerializer):
                 },
                 "visit_date": instance.visit.visit_date.isoformat() if instance.visit.visit_date else None,
                 "visit_time": instance.visit.visit_time.isoformat() if instance.visit.visit_time else None,
+                "visit_type": instance.visit.visit_type,
+                "triage_level": instance.visit.triage_level,
+                "visit_status": instance.visit.visit_status,
                 "vitals": instance.visit.vitals,
                 "chief_complaint": instance.visit.chief_complaint,
                 "symptoms": instance.visit.symptoms,
+                "preliminary_notes": instance.visit.preliminary_notes,
+                "follow_up_date": instance.visit.follow_up_date.isoformat() if instance.visit.follow_up_date else None,
+                "next_action": instance.visit.next_action,
+                "doctor_name": instance.visit.consulted_doctor.user.get_full_name() or instance.visit.consulted_doctor.user.username,
+                "diagnoses": diagnoses,
+                "prescriptions": prescriptions,
             }
             data["visit"] = visit_data
 

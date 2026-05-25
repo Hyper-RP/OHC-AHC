@@ -54,7 +54,7 @@ describe('DoctorDashboard', () => {
       renderWithProviders(<DoctorDashboard />);
       await waitFor(() => {
         expect(screen.getByText('Doctor Dashboard')).toBeInTheDocument();
-        expect(screen.getByText('Manage your assigned patient visits')).toBeInTheDocument();
+        expect(screen.getByText('Manage your assigned employee visits')).toBeInTheDocument();
       });
     });
 
@@ -113,7 +113,7 @@ describe('DoctorDashboard', () => {
         fireEvent.click(screen.getByText('John Doe'));
       });
       await waitFor(() => {
-        expect(screen.getByText('Patient:')).toBeInTheDocument();
+        expect(screen.getByText('Employee:')).toBeInTheDocument();
         expect(screen.getByText('John Doe')).toBeInTheDocument();
         expect(screen.getByText('Employee Code:')).toBeInTheDocument();
         expect(screen.getByText('EMP-001')).toBeInTheDocument();

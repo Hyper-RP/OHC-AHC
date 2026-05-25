@@ -20,7 +20,7 @@ export const HowItWorks: React.FC = () => {
       number: 2,
       title: 'Doctor Consultation & Diagnosis',
       description:
-        'OHC doctors examine patients, provide diagnoses, and determine fitness status. Prescriptions are issued when necessary.',
+        'OHC doctors examine employees, provide diagnoses, and determine fitness status. Prescriptions are issued when necessary.',
       details: ['Medical examination', 'Diagnosis entry', 'Fitness assessment', 'Prescription'],
     },
     {
@@ -101,7 +101,7 @@ export const HowItWorks: React.FC = () => {
             </Card>
             <Card className={styles.featureCard}>
               <h3>🔒 Secure Access</h3>
-              <p>Role-based access control ensuring patient data privacy and security</p>
+              <p>Role-based access control ensuring employee data privacy and security</p>
             </Card>
           </div>
         </section>

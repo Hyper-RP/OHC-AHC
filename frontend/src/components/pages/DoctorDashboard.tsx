@@ -72,6 +72,39 @@ export const DoctorDashboard: React.FC = () => {
   const [selectedVisit, setSelectedVisit] = useState<any | null>(null);
   const [showDiagnosisForm, setShowDiagnosisForm] = useState(false);
 
+  const getVisitDisplayName = (visit: any) => {
+    const explicitVisitName = visit.patient_name?.trim() || visit.employee_name?.trim();
+    if (explicitVisitName) {
+      return explicitVisitName;
+    }
+
+    const firstName = visit.employee?.user?.first_name || '';
+    const lastName = visit.employee?.user?.last_name || '';
+    const linkedEmployeeName = `${firstName} ${lastName}`.trim();
+    return linkedEmployeeName || 'N/A';
+  };
+
+  const getVisitDisplayCode = (visit: any) => {
+    return visit.employee_id || visit.employee?.employee_code || 'N/A';
+  };
+
+  const getVisitDisplayDepartment = (visit: any) => {
+    return visit.employee_department || visit.employee?.department || 'N/A';
+  };
+
+  const getVisitDisplayTime = (visit: any) => {
+    if (!visit.visit_time) {
+      return 'N/A';
+    }
+
+    const time = new Date(`2000-01-01T${visit.visit_time}`);
+    if (Number.isNaN(time.getTime())) {
+      return visit.visit_time;
+    }
+
+    return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   // Diagnosis form state
   const [diagnosisName, setDiagnosisName] = useState('');
   const [diagnosisNotes, setDiagnosisNotes] = useState('');
@@ -278,15 +311,15 @@ export const DoctorDashboard: React.FC = () => {
                   <div className={styles.visitInfo}>
                     <div>
                       <span className={styles.patientName}>
-                        {visit.employee?.user?.first_name || visit.employee_name || 'N/A'} {visit.employee?.user?.last_name || ''}
+                        {getVisitDisplayName(visit)}
                       </span>
                       <span className={styles.employeeCode}>
-                        {visit.employee?.employee_code || visit.employee_id || 'N/A'}
+                        {getVisitDisplayCode(visit)}
                       </span>
                     </div>
                     <div>
                       <span className={styles.label}>Department:</span>
-                      <span className={styles.value}>{visit.employee?.department || visit.employee_department || 'N/A'}</span>
+                      <span className={styles.value}>{getVisitDisplayDepartment(visit)}</span>
                     </div>
                     <div>
                       <span className={styles.label}>Date:</span>
@@ -321,20 +354,20 @@ export const DoctorDashboard: React.FC = () => {
           <div className={styles.detailContent}>
             <div className={styles.patientInfo}>
               <div>
-                <span className={styles.label}>Patient:</span>
-                <span>{selectedVisit.employee?.user?.first_name || selectedVisit.employee_name || 'N/A'} {selectedVisit.employee?.user?.last_name || ''}</span>
+                <span className={styles.label}>Employee:</span>
+                <span>{getVisitDisplayName(selectedVisit)}</span>
               </div>
               <div>
                 <span className={styles.label}>Employee Code:</span>
-                <span>{selectedVisit.employee?.employee_code || selectedVisit.employee_id || 'N/A'}</span>
+                <span>{getVisitDisplayCode(selectedVisit)}</span>
               </div>
               <div>
                 <span className={styles.label}>Department:</span>
-                <span>{selectedVisit.employee?.department || selectedVisit.employee_department || 'N/A'}</span>
+                <span>{getVisitDisplayDepartment(selectedVisit)}</span>
               </div>
-              {selectedVisit.patient_name && (
+              {selectedVisit.patient_name && selectedVisit.patient_name.trim() !== getVisitDisplayName(selectedVisit) && (
                 <div>
-                  <span className={styles.label}>Patient Name:</span>
+                  <span className={styles.label}>Employee Name:</span>
                   <span>{selectedVisit.patient_name}</span>
                 </div>
               )}
@@ -365,7 +398,7 @@ export const DoctorDashboard: React.FC = () => {
               </div>
               <div>
                 <span className={styles.label}>Visit Time:</span>
-                <span>{selectedVisit.visit_time || 'N/A'}</span>
+                <span>{getVisitDisplayTime(selectedVisit)}</span>
               </div>
               <div>
                 <span className={styles.label}>Status:</span>
@@ -420,7 +453,7 @@ export const DoctorDashboard: React.FC = () => {
                         />
                       </div>
 
-                      <h4>Medicine Given to Patient</h4>
+                      <h4>Medicine Given to Employee</h4>
                       {prescriptions.map((prescription, index) => (
                         <div key={index} className={styles.prescriptionRow}>
                           {prescriptions.length > 1 && (
@@ -471,7 +504,7 @@ export const DoctorDashboard: React.FC = () => {
                               value={prescription.instructions || ''}
                               onChange={(value) => handlePrescriptionChange(index, 'instructions', value)}
                               rows={2}
-                              placeholder="Dosage instructions for patient"
+                              placeholder="Dosage instructions for employee"
                             />
                           </div>
                         </div>

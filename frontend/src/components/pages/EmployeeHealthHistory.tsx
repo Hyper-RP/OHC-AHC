@@ -96,14 +96,14 @@ export const EmployeeHealthHistory: React.FC = () => {
         {isListMode && data && (
           <Card className={styles.visitsCard}>
             <div className={styles.cardHeader}>
-              <h3>Patient Records ({data.records.length})</h3>
+              <h3>Employee Records ({data.records.length})</h3>
             </div>
             <div className={styles.tableWrap}>
               <table className={styles.recordsTable}>
                 <thead>
                   <tr>
                     <th>Employee ID</th>
-                    <th>Patient Name</th>
+                    <th>Employee Name</th>
                     <th>Visit Date</th>
                     <th>Chief Complaint</th>
                     <th>Doctor</th>

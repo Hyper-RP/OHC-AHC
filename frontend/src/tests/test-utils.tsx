@@ -182,7 +182,7 @@ export const mockVisit = (overrides?: Partial<import('../types').OHCVisit>): imp
     weight: '70',
     height: '175',
   },
-  preliminary_notes: 'Patient appears stable',
+  preliminary_notes: 'Employee appears stable',
   requires_referral: false,
   created_at: '2026-05-01T10:00:00Z',
   ...overrides,
