@@ -18,7 +18,7 @@ interface DispensedMedicineForm {
 
 /**
  * OHC Visit Form page component
- * Form to record new patient visits with vitals and symptoms
+ * Form to record new employee visits with vitals and symptoms
  */
 export const OHCVisitForm: React.FC = () => {
   const navigate = useNavigate();
@@ -166,7 +166,7 @@ export const OHCVisitForm: React.FC = () => {
 
       const combinedPreliminaryNotes = [
         formData.preliminary_notes.trim(),
-        medicineSummary ? `Medicine Given To Patient:\n${medicineSummary}` : '',
+        medicineSummary ? `Medicine Given To Employee:\n${medicineSummary}` : '',
       ]
         .filter(Boolean)
         .join('\n\n');
@@ -192,14 +192,14 @@ export const OHCVisitForm: React.FC = () => {
 
   return (
     <div className={styles.visitForm}>
-      <Header title="OHC Visit Form" subtitle="Record new patient visit" />
+      <Header title="OHC Visit Form" subtitle="Record new employee visit" />
       <main className={styles.visitFormMain}>
         {error && <Alert type="danger" onDismiss={() => setError('')}>{error}</Alert>}
 
         <Card>
           <form onSubmit={handleSubmit}>
             <div className={styles.formSection}>
-              <h3>Patient Information</h3>
+              <h3>Employee Information</h3>
               <div className={styles.formGrid}>
                 <FormInput
                   label="Employee Code *"
@@ -366,7 +366,7 @@ export const OHCVisitForm: React.FC = () => {
 
             <div className={styles.formSection}>
               <div className={styles.sectionHeaderRow}>
-                <h3>Medicine Given to Patient</h3>
+                <h3>Medicine Given to Employee</h3>
                 <Button
                   type="button"
                   variant="outline-secondary"
@@ -424,7 +424,7 @@ export const OHCVisitForm: React.FC = () => {
                           type="textarea"
                           value={medicine.instructions}
                           onChange={(value) => handleDispensedMedicineChange(index, 'instructions', value)}
-                          placeholder="Optional instructions for the patient"
+                          placeholder="Optional instructions for the employee"
                           rows={3}
                           className={styles.fullWidth}
                         />

@@ -63,7 +63,7 @@ describe('StatCard Component', () => {
   it('renders all props together', () => {
     render(
       <StatCard
-        label="Active Patients"
+        label="Active Employees"
         value={78}
         trend={15}
         trendLabel="vs last month"
@@ -71,7 +71,7 @@ describe('StatCard Component', () => {
         className="highlight"
       />
     );
-    expect(screen.getByText('Active Patients')).toBeInTheDocument();
+    expect(screen.getByText('Active Employees')).toBeInTheDocument();
     expect(screen.getByText('78')).toBeInTheDocument();
     expect(screen.getAllByText(/↑/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/15/).length).toBeGreaterThan(0);

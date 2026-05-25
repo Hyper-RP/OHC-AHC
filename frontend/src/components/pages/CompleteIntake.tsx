@@ -21,7 +21,7 @@ export const CompleteIntake: React.FC = () => {
 
   return (
     <div className={styles.completeIntake}>
-      <Header title="Complete Intake" subtitle="Finalize patient visit intake" />
+      <Header title="Complete Intake" subtitle="Finalize employee visit intake" />
       <main className={styles.intakeMain}>
         <Card>
           <h3>Complete Visit Intake</h3>

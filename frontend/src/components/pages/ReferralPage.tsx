@@ -10,7 +10,7 @@ import styles from './ReferralPage.module.css';
 
 /**
  * Referral Page component
- * Form to create AHC referrals for patients
+ * Form to create AHC referrals for employees
  */
 export const ReferralPage: React.FC = () => {
   const navigate = useNavigate();
@@ -69,7 +69,7 @@ export const ReferralPage: React.FC = () => {
     <div className={styles.referralPage}>
       <Header
         title="Create Referral"
-        subtitle="Refer patient to AHC partner hospital"
+        subtitle="Refer employee to AHC partner hospital"
       />
       <main className={styles.referralMain}>
         {error && <Alert type="danger" onDismiss={() => setError('')}>{error}</Alert>}
