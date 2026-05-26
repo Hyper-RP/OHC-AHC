@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'django_filters',  # Add django-filter for query parameter filtering
     'corsheaders',  # Add CORS headers
     'accounts',
     'ohc',

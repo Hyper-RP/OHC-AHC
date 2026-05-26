@@ -21,6 +21,9 @@ export { DoctorDashboard } from './DoctorDashboard';
 export { PharmacistDashboard } from './PharmacistDashboard';
 export { EHSDashboard } from './EHSDashboard';
 export { ManagementDashboard } from './ManagementDashboard';
+// EHS Detail Pages
+export { OPDDetailsPage } from './OPDDetailsPage';
+export { PreEmploymentDetailsPage } from './PreEmploymentDetailsPage';
 // Charts
 export * from '../charts';
 // Medicine components

@@ -1,0 +1,228 @@
+.preEmploymentDetailsPage {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.main {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.filterCard {
+  padding: 16px;
+}
+
+.filterRow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.filterRow > * {
+  min-width: 180px;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.summaryCard {
+  padding: 20px;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.summaryCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.summaryValue {
+  font-size: 32px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.summaryLabel {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.fitCard {
+  border: 2px solid #10b981;
+}
+
+.fitCard .summaryValue {
+  color: #059669;
+}
+
+.unfitCard {
+  border: 2px solid #ef4444;
+}
+
+.unfitCard .summaryValue {
+  color: #dc2626;
+}
+
+.rateCard {
+  border: 2px solid #3b82f6;
+}
+
+.rateCard .summaryValue {
+  color: #2563eb;
+}
+
+.chartCard {
+  padding: 20px;
+}
+
+.barContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.barRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.barLabel {
+  min-width: 100px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.barTrack {
+  flex: 1;
+  height: 24px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.barFill.fit {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.barFill.unfit {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.barFill.pending {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.barValue {
+  min-width: 40px;
+  text-align: right;
+  font-weight: 500;
+  color: #374151;
+}
+
+.listCard {
+  padding: 20px;
+}
+
+.listCard h3 {
+  margin: 0 0 16px;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 48px;
+  color: #6b7280;
+}
+
+.visitorsTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.visitorsTable thead {
+  background: #f3f4f6;
+}
+
+.visitorsTable th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+}
+
+.visitorsTable td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.visitorsTable tbody tr:hover {
+  background: #f9fafb;
+}
+
+.fitnessBadge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.fitnessBadge.fit {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.fitnessBadge.unfit {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.fitnessBadge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.statusBadge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.statusBadge.open {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.statusBadge.inprogress {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.statusBadge.completed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.statusBadge.referred {
+  background: #e0e7ff;
+  color: #3730a3;
+}

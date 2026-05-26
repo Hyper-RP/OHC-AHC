@@ -87,7 +87,11 @@ export const FormInput: React.FC<FormInputProps> = ({
       required={required}
     >
       {options?.map((option) => (
-        <option key={option.value} value={option.value}>
+        <option
+          key={option.value}
+          value={option.value}
+          disabled={option.value === ''}
+        >
           {option.label}
         </option>
       ))}

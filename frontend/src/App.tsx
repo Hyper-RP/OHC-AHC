@@ -26,6 +26,8 @@ import {
   PharmacistDashboard,
   EHSDashboard,
   ManagementDashboard,
+  OPDDetailsPage,
+  PreEmploymentDetailsPage,
 } from './components/pages';
 
 /**
@@ -72,6 +74,8 @@ function App() {
               <Route path="doctor/dashboard" element={<DoctorDashboard />} />
               <Route path="pharmacist/dashboard" element={<PharmacistDashboard />} />
               <Route path="ehs/dashboard" element={<EHSDashboard />} />
+              <Route path="ehs/opd-details" element={<OPDDetailsPage />} />
+              <Route path="ehs/pre-employment-details" element={<PreEmploymentDetailsPage />} />
               <Route path="management/dashboard" element={<ManagementDashboard />} />
             </Route>
 

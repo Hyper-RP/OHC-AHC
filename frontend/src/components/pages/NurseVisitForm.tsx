@@ -200,7 +200,7 @@ export const NurseVisitForm: React.FC = () => {
 
   return (
     <div className={styles.visitForm}>
-      <Header title="Nurse Visit Form" subtitle="Record employee visit and assign to doctor" />
+      <Header title="Employee Registration Form" subtitle="Record employee visit and assign to doctor" />
 
       <main className={styles.visitFormMain}>
         {error && <Alert type="danger" onDismiss={() => setError('')}>{error}</Alert>}
