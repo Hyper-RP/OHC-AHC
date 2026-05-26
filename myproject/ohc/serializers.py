@@ -29,11 +29,36 @@ class DoctorInfoSerializer(serializers.ModelSerializer):
 class OHCVisitSerializer(serializers.ModelSerializer):
     employee = EmployeeInfoSerializer(read_only=True)
     consulted_doctor = DoctorInfoSerializer(read_only=True)
+    prescriptions = serializers.SerializerMethodField()
 
     class Meta:
         model = OHCVisit
         fields = "__all__"
         read_only_fields = ("id", "created_at", "updated_at")
+
+    def get_prescriptions(self, obj):
+        """Get all prescriptions for this visit through diagnoses"""
+        from accounts.models import DoctorProfile
+        prescriptions = Prescription.objects.filter(diagnosis__visit=obj).select_related('diagnosis', 'prescribed_by')
+        return [
+            {
+                'id': p.id,
+                'medicine_name': p.medicine_name,
+                'dosage': p.dosage,
+                'frequency': p.frequency,
+                'duration_days': p.duration_days,
+                'route': p.route,
+                'instructions': p.instructions,
+                'start_date': p.start_date,
+                'end_date': p.end_date,
+                'status': p.status,
+                'prescribed_by': {
+                    'id': p.prescribed_by.id,
+                    'name': f"{p.prescribed_by.user.first_name} {p.prescribed_by.user.last_name}"
+                } if p.prescribed_by else None,
+            }
+            for p in prescriptions
+        ]
 
 class DiagnosisSerializer(serializers.ModelSerializer):
     class Meta:

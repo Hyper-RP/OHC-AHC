@@ -35,6 +35,10 @@
   font-size: 14px;
 }
 
+.filterSelect {
+  min-width: 140px;
+}
+
 .loadingState {
   display: flex;
   justify-content: center;
@@ -55,39 +59,55 @@
   margin: 8px 0;
 }
 
-.visitsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
-}
-
-.visitCard {
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.visitCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-}
-
-.visitHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
-}
-
-.visitInfo {
+.visitsList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.visitInfo > div {
+.listHeader {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 120px;
+  gap: 16px;
+  padding: 12px 16px;
+  background: #f3f4f6;
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.columnHeader {
   display: flex;
-  gap: 8px;
   align-items: center;
+}
+
+.visitListItem {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 120px;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: background 0.2s;
+  align-items: center;
+}
+
+.visitListItem:last-child {
+  border-bottom: none;
+}
+
+.visitListItem:hover {
+  background: #f9fafb;
+}
+
+.listCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .patientName {
@@ -113,12 +133,6 @@
 .value {
   color: #1f2937;
   font-size: 14px;
-}
-
-.visitStatus {
-  display: flex;
-  gap: 8px;
-  align-items: center;
 }
 
 .visitDetailCard {
@@ -212,6 +226,32 @@
   color: #1f2937;
   font-size: 14px;
   font-weight: 500;
+}
+
+.medicinesList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.medicineItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}
+
+.medicineName {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.medicineDosage {
+  color: #6b7280;
+  font-size: 14px;
 }
 
 .sections {
