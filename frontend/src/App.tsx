@@ -29,6 +29,7 @@ import {
   OPDDetailsPage,
   PreEmploymentDetailsPage,
   MetricDetailsPage,
+  DepartmentDetailsPage,
 } from './components/pages';
 
 /**
@@ -78,6 +79,7 @@ function App() {
               <Route path="ehs/opd-details" element={<OPDDetailsPage />} />
               <Route path="ehs/pre-employment-details" element={<PreEmploymentDetailsPage />} />
               <Route path="dashboard/metric-details/:metricSlug" element={<MetricDetailsPage />} />
+              <Route path="dashboard/department-details/:departmentMetricSlug" element={<DepartmentDetailsPage />} />
               <Route path="management/dashboard" element={<ManagementDashboard />} />
             </Route>
 
