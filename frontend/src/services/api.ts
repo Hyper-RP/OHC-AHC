@@ -86,6 +86,28 @@ export const handleApiError = (error: unknown, defaultMessage = 'An unexpected e
 
     // Server responded with error
     if (response?.data) {
+      if (typeof response.data === 'string') {
+        const trimmed = response.data.trim();
+        if (trimmed.startsWith('<')) {
+          if (response.status) {
+            const statusMessages: Record<number, string> = {
+              400: 'Invalid request. Please check your input.',
+              401: 'Your session has expired. Please log in again.',
+              403: 'You do not have permission to perform this action.',
+              404: 'The requested resource was not found.',
+              429: 'Too many requests. Please try again later.',
+              500: 'Server error. Please try again later.',
+              502: 'Service unavailable. Please try again later.',
+              503: 'Service temporarily unavailable. Please try again later.',
+            };
+            return statusMessages[response.status] || defaultMessage;
+          }
+          return defaultMessage;
+        }
+
+        return trimmed || defaultMessage;
+      }
+
       const data = response.data as Record<string, unknown>;
 
       // Handle DRF validation errors (non-field errors)

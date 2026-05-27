@@ -589,7 +589,6 @@ class EmployeeHealthHistoryPDFExportView(APIView):
                 ("Patient Name", full_name or employee_info["employee_code"]),
                 ("Employee Code", employee_info["employee_code"]),
                 ("Department", employee_info["department"] or "-"),
-                ("Designation", employee_info["designation"] or "-"),
                 ("Fitness Status", employee_info["fitness_status"] or "-"),
                 ("Total Visits", len(visits)),
             ],

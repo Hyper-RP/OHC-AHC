@@ -1,0 +1,125 @@
+.page {
+  min-height: 100vh;
+}
+
+.main {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.filterCard,
+.summaryCard,
+.tableCard {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
+  gap: 1rem;
+  align-items: end;
+}
+
+.filterActions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.summaryValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #11313d;
+}
+
+.summaryLabel {
+  margin-top: 0.4rem;
+  color: #647984;
+  font-size: 0.9rem;
+}
+
+.tableHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tableHead h3 {
+  margin: 0;
+  color: #11313d;
+}
+
+.tableHead span {
+  color: #647984;
+  font-size: 0.9rem;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 0.9rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(32, 85, 110, 0.08);
+  font-size: 0.92rem;
+}
+
+.table th {
+  color: #647984;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.loadingState,
+.emptyState {
+  padding: 2rem;
+  text-align: center;
+  color: #647984;
+}
+
+@media (max-width: 1100px) {
+  .filterGrid,
+  .summaryGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .filterActions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .main {
+    padding: 1rem;
+  }
+
+  .filterGrid,
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .filterActions,
+  .tableHead {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

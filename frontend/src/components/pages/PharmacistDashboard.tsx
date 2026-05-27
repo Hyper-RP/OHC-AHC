@@ -291,11 +291,6 @@ export const PharmacistDashboard: React.FC = () => {
                     ? `<div class="sub-line">Restriction: ${escapeHtml(diagnosis.work_restrictions)}</div>`
                     : ''
                 }
-                ${
-                  diagnosis.follow_up_date
-                    ? `<div class="sub-line">Follow-up: ${escapeHtml(formatDate(diagnosis.follow_up_date))}</div>`
-                    : ''
-                }
               `,
             )
             .join('')
@@ -308,8 +303,7 @@ export const PharmacistDashboard: React.FC = () => {
               <tr>
                 <th>No.</th>
                 <th>Medicine</th>
-                <th>Dosage</th>
-                <th>Frequency</th>
+                <th>Frequency per day</th>
                 <th>Duration</th>
                 <th>Instructions</th>
               </tr>
@@ -320,8 +314,9 @@ export const PharmacistDashboard: React.FC = () => {
                   (prescription, index) => `
                     <tr>
                       <td>${index + 1}</td>
-                      <td>${escapeHtml(prescription.medicine_name || '-')}</td>
-                      <td>${escapeHtml(prescription.dosage || '-')}</td>
+                      <td>${escapeHtml(
+                        [prescription.medicine_name, prescription.dosage].filter(Boolean).join(' ') || '-',
+                      )}</td>
                       <td>${escapeHtml(prescription.frequency || '-')}</td>
                       <td>${escapeHtml(
                         prescription.duration_days ? `${prescription.duration_days} day(s)` : '-',
@@ -338,28 +333,22 @@ export const PharmacistDashboard: React.FC = () => {
     const vitalsSummary =
       visit.vitals && Object.keys(visit.vitals).length > 0
         ? Object.entries(visit.vitals)
-            .map(([key, value]) => `${formatFieldLabel(key)}: ${value}`)
-            .join('   ')
-        : 'No vitals recorded';
-    const adviceEntries = [
-      ['Advice', visit.preliminary_notes],
-      ['Pharmacist Note', dispenseForm.remarks],
-      ['Follow Up Date', visit.follow_up_date ? formatDate(visit.follow_up_date) : ''],
-    ].filter(([, value]) => Boolean(value));
-
-    const adviceMarkup =
-      adviceEntries.length > 0
-        ? adviceEntries
             .map(
-              ([label, value]) => `
-                <div class="advice-row">
-                  <div class="advice-label">${escapeHtml(label)}</div>
-                  <div class="advice-value">${escapeHtml(value)}</div>
-                </div>
-              `,
+              ([key, value]) =>
+                `<div class="vital-chip"><strong>${escapeHtml(formatFieldLabel(key))}:</strong> ${escapeHtml(
+                  String(value),
+                )}</div>`,
             )
             .join('')
-        : '<div class="plain-line">No additional advice recorded.</div>';
+        : 'No vitals recorded';
+    const followUpMarkup = visit.follow_up_date
+      ? `
+        <section class="section">
+          <h2 class="section-title">Follow Up Date</h2>
+          <div class="plain-line">${escapeHtml(formatDate(visit.follow_up_date))}</div>
+        </section>
+      `
+      : '';
 
     const receiptHtml = `
       <!doctype html>
@@ -413,11 +402,16 @@ export const PharmacistDashboard: React.FC = () => {
             }
             .row {
               display: flex;
-              justify-content: space-between;
-              gap: 18px;
+              justify-content: flex-start;
+              gap: 28px;
+              flex-wrap: wrap;
               font-size: 12px;
               line-height: 1.45;
               margin-bottom: 3px;
+            }
+            .row div {
+              min-width: 210px;
+              text-align: left;
             }
             .row strong {
               font-weight: 700;
@@ -447,6 +441,17 @@ export const PharmacistDashboard: React.FC = () => {
               line-height: 1.45;
               margin-top: 2px;
               padding-left: 14px;
+            }
+            .vitals-grid {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 6px 12px;
+              margin-top: 6px;
+            }
+            .vital-chip {
+              font-size: 12px;
+              line-height: 1.45;
+              min-width: 140px;
             }
             .rx-title {
               font-size: 12px;
@@ -478,26 +483,6 @@ export const PharmacistDashboard: React.FC = () => {
               flex-wrap: wrap;
               margin-top: 34px;
             }
-            .advice-row {
-              display: grid;
-              grid-template-columns: 110px 1fr;
-              gap: 10px;
-              padding: 5px 0;
-              border-bottom: 1px dotted #777777;
-              font-size: 12px;
-              line-height: 1.45;
-            }
-            .advice-row:last-child {
-              border-bottom: none;
-            }
-            .advice-label {
-              font-weight: 700;
-              text-transform: uppercase;
-              letter-spacing: 0.4px;
-            }
-            .advice-value {
-              word-break: break-word;
-            }
             .signature-box {
               width: 220px;
               text-align: center;
@@ -508,10 +493,9 @@ export const PharmacistDashboard: React.FC = () => {
               line-height: 1;
               margin-bottom: 6px;
             }
-            .signature-line {
-              border-top: 1px solid #111111;
-              padding-top: 4px;
-              font-size: 11px;
+            .signature-name {
+              font-size: 12px;
+              margin-top: 4px;
             }
             .print-meta {
               margin-top: 12px;
@@ -546,21 +530,17 @@ export const PharmacistDashboard: React.FC = () => {
               <div class="single-line"><strong>Patient Name:</strong> ${escapeHtml(employeeName)}</div>
               <div class="row">
                 <div><strong>Employee ID:</strong> ${escapeHtml(visit.employee.employee_code)}</div>
-                <div><strong>Department:</strong> ${escapeHtml(visit.employee.department)}</div>
-                <div><strong>Designation:</strong> ${escapeHtml(visit.employee.designation)}</div>
+                <div><strong>Department:</strong> ${escapeHtml(visit.employee.department || '-')}</div>
               </div>
               <div class="row">
                 <div><strong>Visit Type:</strong> ${escapeHtml(visit.visit_type)}</div>
-                <div><strong>Fitness:</strong> ${escapeHtml(visit.employee.fitness_status)}</div>
-                <div><strong>Doctor:</strong> ${escapeHtml(visit.doctor_name)}</div>
+                <div><strong>Fitness:</strong> ${escapeHtml(formatFieldLabel(visit.employee.fitness_status || 'fit'))}</div>
               </div>
-              <div class="single-line"><strong>Vitals:</strong> ${escapeHtml(vitalsSummary)}</div>
+              <div class="single-line"><strong>Vitals:</strong></div>
+              <div class="vitals-grid">${vitalsSummary}</div>
             </section>
 
-            <section class="section">
-              <h2 class="section-title">Complaints</h2>
-              ${complaintLines || '<div class="plain-line">No complaints recorded.</div>'}
-            </section>
+            ${complaintLines ? `<section class="section"><h2 class="section-title">Complaints</h2>${complaintLines}</section>` : ''}
 
             <section class="section">
               <h2 class="section-title">Diagnosis</h2>
@@ -572,18 +552,12 @@ export const PharmacistDashboard: React.FC = () => {
               ${prescriptionMarkup}
             </section>
 
-            <section class="section">
-              <h2 class="section-title">Advice</h2>
-              ${adviceMarkup}
-            </section>
+            ${followUpMarkup}
 
             <div class="signature-wrap">
               <div class="signature-box">
                 <div class="signature-mark">${escapeHtml(doctorName)}</div>
-                <div class="signature-line">
-                  Doctor Digital Signature<br />
-                  ${escapeHtml(doctorName)}
-                </div>
+                <div class="signature-name">${escapeHtml(doctorName)}</div>
               </div>
             </div>
 
