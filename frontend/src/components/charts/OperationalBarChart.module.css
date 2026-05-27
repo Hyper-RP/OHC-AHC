@@ -1,0 +1,11 @@
+.chart {
+  width: 100%;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7f89;
+  font-size: 0.95rem;
+}

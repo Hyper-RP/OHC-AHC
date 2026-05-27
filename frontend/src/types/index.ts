@@ -92,9 +92,9 @@ export type DoctorType = (typeof DoctorType)[keyof typeof DoctorType];
 
 export const FitnessStatus = {
   FIT: "FIT",
-  FIT_WITH_RESTRICTION: "FIT_WITH_RESTRICTION",
   TEMPORARY_UNFIT: "TEMPORARY_UNFIT",
   UNFIT: "UNFIT",
+  UNDER_OBSERVATION: "UNDER_OBSERVATION",
 } as const;
 export type FitnessStatus = (typeof FitnessStatus)[keyof typeof FitnessStatus];
 
@@ -441,7 +441,10 @@ export interface SnackbarMessage {
 
 // Form Types
 export interface OHCVisitFormData {
-  employee: number;
+  employee: number | string;
+  employee_name?: string;
+  employee_department?: string;
+  employee_fitness_status?: FitnessStatus;
   consulted_doctor?: number;
   visit_type: VisitType;
   triage_level: TriageLevel;

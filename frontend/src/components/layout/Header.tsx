@@ -84,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className={styles.headerStats}>
             {stats.visitCount !== undefined && (
               <div className={styles.statItem}>
-                <span className={styles.statLabel}>Total Visits</span>
+                <span className={styles.statLabel}>Total OHC Visits</span>
                 <span className={styles.statValue}>{stats.visitCount}</span>
               </div>
             )}
@@ -92,7 +92,7 @@ export const Header: React.FC<HeaderProps> = ({
               <>
                 <div className={styles.headerDivider} />
                 <div className={styles.statItem}>
-                  <span className={styles.statLabel}>Open Referrals</span>
+                  <span className={styles.statLabel}>Preamtive Check Ups</span>
                   <span className={styles.statValue}>{stats.referralCount}</span>
                 </div>
               </>
@@ -101,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
               <>
                 <div className={styles.headerDivider} />
                 <div className={styles.statItem}>
-                  <span className={styles.statLabel}>Pending</span>
+                  <span className={styles.statLabel}>Annual Checkup</span>
                   <span className={styles.statValue}>{stats.pendingInvoices}</span>
                 </div>
               </>

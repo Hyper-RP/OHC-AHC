@@ -154,6 +154,11 @@ class OHCVisitCreateSerializer(OHCVisitSerializer):
     employee = serializers.CharField(max_length=50, required=False)
     employee_name = serializers.CharField(max_length=150, required=False, allow_blank=True, write_only=True)
     employee_department = serializers.CharField(max_length=120, required=False, allow_blank=True, write_only=True)
+    employee_fitness_status = serializers.ChoiceField(
+        choices=EmployeeProfile.FitnessStatus.choices,
+        required=False,
+        write_only=True,
+    )
     patient_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     patient_age = serializers.IntegerField(required=False, allow_null=True)
     patient_gender = serializers.CharField(max_length=10, required=False, allow_blank=True)
@@ -173,6 +178,7 @@ class OHCVisitCreateSerializer(OHCVisitSerializer):
         emp_code = attrs.pop("employee", None)
         emp_name = attrs.pop("employee_name", "")
         emp_dept = attrs.pop("employee_department", "Unassigned")
+        emp_fitness_status = attrs.pop("employee_fitness_status", None)
 
         # If department was left empty, fallback to Unassigned
         if not emp_dept:
@@ -181,6 +187,16 @@ class OHCVisitCreateSerializer(OHCVisitSerializer):
         if emp_code:
             try:
                 emp_profile = EmployeeProfile.objects.get(employee_code=emp_code)
+                updated_fields = []
+                if emp_dept and emp_dept != "Unassigned" and emp_profile.department != emp_dept:
+                    emp_profile.department = emp_dept
+                    updated_fields.append("department")
+                if emp_fitness_status and emp_profile.fitness_status != emp_fitness_status:
+                    emp_profile.fitness_status = emp_fitness_status
+                    updated_fields.append("fitness_status")
+                if updated_fields:
+                    updated_fields.append("updated_at")
+                    emp_profile.save(update_fields=updated_fields)
             except EmployeeProfile.DoesNotExist:
                 first_name = emp_name if emp_name else emp_code
                 user = User.objects.create(
@@ -194,7 +210,8 @@ class OHCVisitCreateSerializer(OHCVisitSerializer):
                     user=user,
                     employee_code=emp_code,
                     department=emp_dept,
-                    designation="Unassigned"
+                    designation="Unassigned",
+                    fitness_status=emp_fitness_status or EmployeeProfile.FitnessStatus.FIT,
                 )
             attrs["employee"] = emp_profile
 
@@ -422,6 +439,8 @@ class PharmacistPrescriptionSerializer(serializers.ModelSerializer):
                 "employee": {
                     "id": instance.visit.employee.id,
                     "employee_code": instance.visit.employee.employee_code,
+                    "department": instance.visit.employee.department,
+                    "fitness_status": instance.visit.employee.fitness_status,
                     "user": {
                         "first_name": instance.visit.employee.user.first_name,
                         "last_name": instance.visit.employee.user.last_name,

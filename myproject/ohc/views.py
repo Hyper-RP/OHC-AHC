@@ -10,8 +10,6 @@ from accounts.permissions import (
     IsClinicalOrComplianceStaff,
     IsClinicalStaff,
     IsPharmacist,
-    IsEHSOrManagement,
-    IsManagement,
 )
 from ohc.models import MedicalTest, OHCVisit, MedicineStock, MedicineDispense
 from ohc.serializers import (
@@ -22,6 +20,43 @@ from ohc.serializers import (
     OHCVisitCreateSerializer,
     OHCVisitSerializer,
 )
+
+
+def get_accessible_ohc_visits(user):
+    """Return the OHC visits a user is allowed to view."""
+    queryset = OHCVisit.objects.select_related(
+        "employee",
+        "employee__user",
+        "consulted_doctor",
+        "consulted_doctor__user",
+    ).order_by("-created_at")
+
+    if user.is_superuser or user.role in {
+        user.Role.ADMIN,
+        user.Role.MANAGEMENT,
+        user.Role.HR,
+        user.Role.EHS,
+        user.Role.KAM,
+    }:
+        return queryset
+
+    if user.role == user.Role.DOCTOR:
+        doctor_profile = getattr(user, "doctor_profile", None)
+        if doctor_profile:
+            return queryset.filter(consulted_doctor=doctor_profile)
+
+    if user.role == user.Role.NURSE:
+        return queryset
+
+    if user.role == user.Role.PHARMACIST:
+        return queryset.filter(visit_status=OHCVisit.VisitStatus.IN_PROGRESS)
+
+    if user.role == user.Role.EMPLOYEE:
+        employee_profile = getattr(user, "employee_profile", None)
+        if employee_profile:
+            return queryset.filter(employee=employee_profile)
+
+    return queryset.none()
 
 
 class OHCVisitFilter(df_filters.FilterSet):
@@ -61,29 +96,7 @@ class OHCVisitViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated(), HasHealthPortalAccess()]
 
     def get_queryset(self):
-        queryset = OHCVisit.objects.select_related(
-            "employee",
-            "employee__user",
-            "consulted_doctor",
-            "consulted_doctor__user",
-        ).order_by("-created_at")
-        user = self.request.user
-        if user.is_superuser or user.role in {user.Role.ADMIN, user.Role.MANAGEMENT, user.Role.HR, user.Role.EHS, user.Role.KAM}:
-            return queryset
-        if user.role == user.Role.DOCTOR:
-            doctor_profile = getattr(user, "doctor_profile", None)
-            if doctor_profile:
-                return queryset.filter(consulted_doctor=doctor_profile)
-        if user.role == user.Role.NURSE:
-            # Nurses can see all visits (they create visits for doctors)
-            return queryset
-        if user.role == user.Role.PHARMACIST:
-            return queryset.filter(visit_status=OHCVisit.VisitStatus.IN_PROGRESS)
-        if user.role == user.Role.EMPLOYEE:
-            employee_profile = getattr(user, "employee_profile", None)
-            if employee_profile:
-                return queryset.filter(employee=employee_profile)
-        return queryset.none()
+        return get_accessible_ohc_visits(self.request.user)
 
     def get_serializer_class(self):
         if self.action in {"create", "update", "partial_update"}:
@@ -239,7 +252,7 @@ class MedicineStockViewSet(viewsets.ModelViewSet):
 
 class AnalyticsViewSet(viewsets.GenericViewSet):
     """ViewSet for EHS and Management analytics."""
-    permission_classes = [permissions.IsAuthenticated, HasHealthPortalAccess, IsEHSOrManagement]
+    permission_classes = [permissions.IsAuthenticated, HasHealthPortalAccess]
 
     def list(self, request, *args, **kwargs):
         """Get dashboard analytics data."""
@@ -253,7 +266,7 @@ class AnalyticsViewSet(viewsets.GenericViewSet):
         severity = request.query_params.get("severity")
         status_filter = request.query_params.get("status")
 
-        visits = OHCVisit.objects.all()
+        visits = get_accessible_ohc_visits(request.user)
 
         if date_from:
             visits = visits.filter(visit_date__gte=date_from)
@@ -364,7 +377,7 @@ class AnalyticsViewSet(viewsets.GenericViewSet):
             ]
         }, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=["get"], url_path='ehs-statistics', permission_classes=[permissions.IsAuthenticated, HasHealthPortalAccess, IsEHSOrManagement])
+    @action(detail=False, methods=["get"], url_path='ehs-statistics', permission_classes=[permissions.IsAuthenticated, HasHealthPortalAccess])
     def ehs_statistics(self, request, *args, **kwargs):
         """Get comprehensive EHS statistics including OPD, pre-employment, AHC, incidents, emergencies, and referrals."""
         from django.db.models import Count, Case, When, IntegerField, Q
@@ -381,7 +394,7 @@ class AnalyticsViewSet(viewsets.GenericViewSet):
         date_to = request.query_params.get("date_to")
         department = request.query_params.get("department")
 
-        base_visits = OHCVisit.objects.select_related("employee", "employee__user")
+        base_visits = get_accessible_ohc_visits(request.user)
 
         if date_from:
             base_visits = base_visits.filter(visit_date__gte=date_from)
@@ -508,8 +521,10 @@ class AnalyticsViewSet(viewsets.GenericViewSet):
         }
 
         # Referred Cases Statistics
-        referred_from_status = base_visits.filter(visit_status=OHCVisit.VisitStatus.REFERRED)
-        referred_from_flag = base_visits.filter(requires_referral=True)
+        referred_from_status = base_visits.filter(
+            visit_status=OHCVisit.VisitStatus.REFERRED
+        ).order_by()
+        referred_from_flag = base_visits.filter(requires_referral=True).order_by()
         referred_visits = referred_from_status.union(referred_from_flag)
         referred_till_date_count = referred_visits.count()
 
@@ -569,13 +584,13 @@ class AnalyticsViewSet(viewsets.GenericViewSet):
 
 class MedicineSummaryViewSet(viewsets.GenericViewSet):
     """ViewSet for medicine usage summary (Management only)."""
-    permission_classes = [permissions.IsAuthenticated, HasHealthPortalAccess, IsManagement]
+    permission_classes = [permissions.IsAuthenticated, HasHealthPortalAccess]
 
     def list(self, request, *args, **kwargs):
         """Get medicine summary data."""
         from django.db.models import Sum, Count
 
-        visits = OHCVisit.objects.all()
+        visits = get_accessible_ohc_visits(request.user)
 
         total_ohc_visits = visits.count()
 
@@ -587,6 +602,7 @@ class MedicineSummaryViewSet(viewsets.GenericViewSet):
             "total_items": medicine_stocks.count(),
             "low_stock_items": sum(1 for m in medicine_stocks if m.is_low_stock),
             "expiring_items": sum(1 for m in medicine_stocks if m.is_expiring_soon),
+            "total_stock_value": 0,
         }
 
         return Response({

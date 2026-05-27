@@ -1,52 +1,118 @@
-/* Dashboard Styles - Ported from portal.css for exact visual parity */
-
 .dashboard {
   min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(19, 114, 137, 0.12), transparent 30%),
+    linear-gradient(180deg, #f4fbfc 0%, #f8f5ef 100%);
 }
 
 .dashboardMain {
-  padding: 2rem;
-  max-width: 1400px;
+  max-width: 1440px;
   margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
-/* Welcome Section */
-.welcomeSection {
-  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-strong) 100%);
-  color: white;
-  padding: 3rem 2rem;
-  border-radius: 24px;
-  margin-bottom: 2rem;
-  text-align: center;
+.sectionBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
 }
 
-.welcomeContent h1 {
-  font-size: 2.5rem;
-  font-weight: 600;
-  margin: 0 0 0.5rem;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+.sectionHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #11313d;
+  line-height: 1.1;
+}
+
+.sectionSubtitle {
+  margin: 0.45rem 0 0;
+  color: #647984;
+  font-size: 0.95rem;
+}
+
+.summaryMetricsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.summaryMetricsCenterRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 360px));
+  justify-content: center;
+  gap: 1rem;
+}
+
+.summaryChartCard {
+  min-height: 370px;
+}
+
+.metricCount {
+  margin: 0 0 0.65rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #11313d;
   line-height: 1;
 }
 
-.welcomeContent p {
-  font-size: 1.2rem;
-  margin: 0 0 2rem;
-  opacity: 0.9;
+.priorityGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
 }
 
-/* Sections */
-.chartsSection,
-.trendsSection,
-.actionsSection,
-.insightsSection,
-.recentSection {
-  margin-bottom: 2rem;
+.priorityCard {
+  border-radius: 22px;
+  box-shadow: 0 14px 32px rgba(46, 76, 100, 0.08);
 }
 
-/* Charts Grid */
+.priorityCritical {
+  background: linear-gradient(180deg, #fff4f2 0%, #ffffff 100%);
+}
+
+.priorityFollowUp {
+  background: linear-gradient(180deg, #fff9ef 0%, #ffffff 100%);
+}
+
+.prioritySupply {
+  background: linear-gradient(180deg, #f2fbf7 0%, #ffffff 100%);
+}
+
+.priorityLabel {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #657985;
+}
+
+.priorityValue {
+  margin: 0 0 0.4rem;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #11313d;
+}
+
+.priorityDetail {
+  margin: 0;
+  color: #5f7380;
+  line-height: 1.5;
+}
+
 .chartsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1.5rem;
 }
 
@@ -54,156 +120,23 @@
   height: 400px;
 }
 
-.sectionTitle {
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: #11313d;
-  margin: 0 0 1.5rem;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* Actions Grid */
-.actionsGrid {
+.analyticsRail {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr);
   gap: 1.5rem;
+  align-items: start;
 }
 
-.actionCard {
-  padding: 1.5rem;
-  border-radius: 16px;
-  text-decoration: none;
-  color: #11313d;
-  border: 1px solid rgba(32, 85, 110, 0.12);
-  background: #ffffff;
-  box-shadow: 0 8px 24px rgba(46, 76, 100, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+.analyticsMain,
+.activityAside {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  height: 100%;
-}
-
-.actionCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 32px rgba(34, 69, 95, 0.15);
-  text-decoration: none;
-  color: #11313d;
-}
-
-.actionCard.primary {
-  border-left: 4px solid var(--brand);
-}
-
-.actionCard.secondary {
-  border-left: 4px solid var(--accent);
-}
-
-.actionCard.tertiary {
-  border-left: 4px solid #2c875f;
-}
-
-.actionIcon {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-  line-height: 1;
-}
-
-.actionCard h3 {
-  font-size: 1.2rem;
-  margin: 0 0 0.5rem;
-  font-weight: 600;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #11313d;
-}
-
-.actionCard p {
-  font-size: 0.9rem;
-  color: #5f7380;
-  margin: 0;
-  line-height: 1.4;
-}
-
-/* Insights Grid */
-.insightsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-}
-
-.insightCard {
-  background: #ffffff;
-  padding: 1.5rem;
-  border-radius: 16px;
-  border: 1px solid rgba(32, 85, 110, 0.12);
-  box-shadow: 0 8px 24px rgba(46, 76, 100, 0.08);
-  text-align: center;
-}
-
-.insightHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-  width: 100%;
-}
-
-.insightHeader h4 {
-  margin: 0;
-  font-size: 1.1rem;
-  color: #11313d;
-  font-weight: 500;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.insightTrend {
-  padding: 0.3rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.insightTrend.success {
-  background: rgba(44, 135, 95, 0.12);
-  color: #2c875f;
-}
-
-.insightTrend.danger {
-  background: rgba(196, 93, 93, 0.12);
-  color: #c45d5d;
-}
-
-.insightValue {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #0a5f78;
-  margin-bottom: 0.5rem;
-}
-
-.insightCard p {
-  font-size: 0.9rem;
-  color: #5f7380;
-  margin: 0;
-}
-
-/* Recent Activity */
-.sectionHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: 1rem;
-  padding-bottom: 0.8rem;
-  border-bottom: 1px solid rgba(34, 81, 108, 0.12);
-  margin-bottom: 1.5rem;
-  width: 100%;
 }
 
-.sectionHead h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #11313d;
+.activityPanel {
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .activityList {
@@ -216,36 +149,44 @@
   display: flex;
   gap: 1rem;
   padding: 1rem;
-  border-radius: 0.75rem;
-  background: rgba(10, 95, 120, 0.02);
-  transition: background 0.2s ease;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(244, 251, 252, 0.9), rgba(255, 255, 255, 0.95));
 }
 
-.activityItem:hover {
-  background: rgba(10, 95, 120, 0.05);
-}
-
-.activityIcon {
+.activityMarker {
   flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgba(10, 95, 120, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
+  width: 10px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #0a5f78 0%, #8bc4ae 100%);
 }
 
 .activityContent {
   flex: 1;
 }
 
+.activityTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.35rem;
+}
+
 .activityTitle {
-  margin: 0 0 0.35rem;
+  margin: 0;
+  font-size: 0.95rem;
   font-weight: 600;
   color: #11313d;
-  font-size: 0.95rem;
+}
+
+.activityTag {
+  display: inline-flex;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(10, 95, 120, 0.08);
+  color: #0a5f78;
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
 .activityDescription {
@@ -261,22 +202,30 @@
   font-size: 0.85rem;
 }
 
-/* Responsive Styles */
+@media (max-width: 1180px) {
+  .analyticsRail,
+  .summaryMetricsGrid,
+  .summaryMetricsCenterRow,
+  .priorityGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
-  .welcomeContent h1 {
-    font-size: 2rem;
+  .dashboardMain {
+    padding: 1rem;
   }
 
-  .sectionTitle {
-    font-size: 1.5rem;
-  }
-
-  .actionsGrid,
-  .insightsGrid {
+  .chartsGrid {
     grid-template-columns: 1fr;
   }
 
-  .sectionHead {
+  .sectionTitle {
+    font-size: 1.45rem;
+  }
+
+  .sectionHead,
+  .activityTop {
     flex-direction: column;
     align-items: flex-start;
   }

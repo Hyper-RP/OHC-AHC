@@ -34,6 +34,9 @@ export { VisitTrendsChart } from './VisitTrendsChart';
 export { DepartmentComparisonChart } from './DepartmentComparisonChart';
 export { SeverityPieChart } from './SeverityPieChart';
 export { DiagnosisTrendLineChart } from './DiagnosisTrendLineChart';
+export { DashboardMetricsChart } from './DashboardMetricsChart';
+export type { DashboardMetricsPoint } from './DashboardMetricsChart';
+export { OperationalBarChart } from './OperationalBarChart';
 
 // Badges
 export { SeverityBadge } from './SeverityBadge';
