@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '../layout';
 import { FormInput, Button, Card, Alert } from '../ui';
 import { createVisit } from '../../services/ohc';
-import { VISIT_TYPE_OPTIONS, TRIAGE_LEVEL_OPTIONS } from '../../utils/constants';
+import { VISIT_TYPE_OPTIONS, TRIAGE_LEVEL_OPTIONS, FITNESS_STATUS_OPTIONS } from '../../utils/constants';
 import { aggregateVitals, validateVitals } from '../../services/vitals';
 import { useSnackbar } from '../../contexts/SnackbarContext';
-import { VisitType, TriageLevel } from '../../types';
+import { VisitType, TriageLevel, FitnessStatus } from '../../types';
 import { loadMedicineRecords, type MedicineRecord } from './medicineInventory';
 import styles from './OHCVisitForm.module.css';
 
@@ -31,6 +31,7 @@ export const OHCVisitForm: React.FC = () => {
     employee: '',
     employee_name: '',
     employee_department: '',
+    employee_fitness_status: FitnessStatus.FIT,
     visit_type: VisitType.WALK_IN,
     triage_level: TriageLevel.LOW,
     visit_date: new Date().toISOString().split('T')[0],
@@ -221,13 +222,22 @@ export const OHCVisitForm: React.FC = () => {
                   helperText="Only needed if employee code is new"
                 />
                 <FormInput
-                  label="Department (If New)"
+                  label="Department"
                   name="employee_department"
                   type="text"
                   value={formData.employee_department}
                   onChange={(value) => handleInputChange('employee_department', value)}
                   placeholder="Manufacturing"
-                  helperText="Only needed if employee code is new"
+                  helperText="Used for new employees and can update an existing employee department"
+                />
+                <FormInput
+                  label="Fitness Status"
+                  name="employee_fitness_status"
+                  type="select"
+                  value={formData.employee_fitness_status}
+                  onChange={(value) => handleInputChange('employee_fitness_status', value)}
+                  options={FITNESS_STATUS_OPTIONS}
+                  helperText="This selection will appear on the receipt"
                 />
                 <FormInput
                   label="Visit Type *"

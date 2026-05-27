@@ -24,6 +24,7 @@ export { ManagementDashboard } from './ManagementDashboard';
 // EHS Detail Pages
 export { OPDDetailsPage } from './OPDDetailsPage';
 export { PreEmploymentDetailsPage } from './PreEmploymentDetailsPage';
+export { MetricDetailsPage } from './MetricDetailsPage';
 // Charts
 export * from '../charts';
 // Medicine components

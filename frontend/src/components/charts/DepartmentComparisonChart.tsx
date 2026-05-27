@@ -16,11 +16,16 @@ interface DepartmentData {
   visits: number;
   employees: number;
   referrals: number;
+  preamtiveCheckUps?: number;
+  annualCheckup?: number;
 }
 
 interface DepartmentComparisonChartProps {
   data: DepartmentData[];
-  sortBy?: 'department' | 'visits' | 'referrals';
+  dataKey?: 'visits' | 'referrals' | 'preamtiveCheckUps' | 'annualCheckup';
+  titleLabel?: string;
+  color?: string;
+  sortBy?: 'department' | 'visits' | 'referrals' | 'preamtiveCheckUps' | 'annualCheckup';
   sortOrder?: 'asc' | 'desc';
   loading?: boolean;
   height?: number;
@@ -32,6 +37,9 @@ interface DepartmentComparisonChartProps {
  */
 export const DepartmentComparisonChart: React.FC<DepartmentComparisonChartProps> = ({
   data,
+  dataKey = 'visits',
+  titleLabel = 'Visits',
+  color = '#3b82f6',
   sortBy = 'visits',
   sortOrder = 'desc',
   loading = false,
@@ -40,8 +48,8 @@ export const DepartmentComparisonChart: React.FC<DepartmentComparisonChartProps>
   // Sort data
   const sortedData = React.useMemo(() => {
     const sorted = [...data].sort((a, b) => {
-      const aValue = sortBy === 'department' ? a.department : a[sortBy];
-      const bValue = sortBy === 'department' ? b.department : b[sortBy];
+      const aValue = sortBy === 'department' ? a.department : (a[sortBy] ?? 0);
+      const bValue = sortBy === 'department' ? b.department : (b[sortBy] ?? 0);
       const comparison = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
       return sortOrder === 'asc' ? comparison : -comparison;
     });
@@ -56,8 +64,8 @@ export const DepartmentComparisonChart: React.FC<DepartmentComparisonChartProps>
         <div className={styles.tooltip}>
           <p className={styles.tooltipTitle}>{data.department}</p>
           <p className={styles.tooltipRow}>
-            <span className={styles.tooltipLabel}>Visits:</span>
-            <span className={styles.tooltipValue}>{data.visits}</span>
+            <span className={styles.tooltipLabel}>{titleLabel}:</span>
+            <span className={styles.tooltipValue}>{data[dataKey] ?? 0}</span>
           </p>
           <p className={styles.tooltipRow}>
             <span className={styles.tooltipLabel}>Employees:</span>
@@ -106,7 +114,13 @@ export const DepartmentComparisonChart: React.FC<DepartmentComparisonChartProps>
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend />
-          <Bar dataKey="visits" fill="#3b82f6" name="Visits" radius={[0, 4, 4, 0]} animationDuration={500} />
+          <Bar
+            dataKey={dataKey}
+            fill={color}
+            name={titleLabel}
+            radius={[0, 4, 4, 0]}
+            animationDuration={500}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>

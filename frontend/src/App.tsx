@@ -28,6 +28,7 @@ import {
   ManagementDashboard,
   OPDDetailsPage,
   PreEmploymentDetailsPage,
+  MetricDetailsPage,
 } from './components/pages';
 
 /**
@@ -76,6 +77,7 @@ function App() {
               <Route path="ehs/dashboard" element={<EHSDashboard />} />
               <Route path="ehs/opd-details" element={<OPDDetailsPage />} />
               <Route path="ehs/pre-employment-details" element={<PreEmploymentDetailsPage />} />
+              <Route path="dashboard/metric-details/:metricSlug" element={<MetricDetailsPage />} />
               <Route path="management/dashboard" element={<ManagementDashboard />} />
             </Route>
 

@@ -1,4 +1,4 @@
-import { VisitType, TriageLevel, ReferralPriority, InvoiceStatus, PaymentMethod } from '../types';
+import { VisitType, TriageLevel, ReferralPriority, InvoiceStatus, PaymentMethod, FitnessStatus } from '../types';
 
 /**
  * Visit type options for dropdowns
@@ -81,6 +81,15 @@ export const FITNESS_DECISION_OPTIONS = [
   { value: 'FIT_WITH_RESTRICTION', label: 'Fit with Restriction' },
   { value: 'TEMPORARY_UNFIT', label: 'Temporarily Unfit' },
   { value: 'UNFIT', label: 'Unfit' },
+];
+
+/**
+ * Employee fitness status options
+ */
+export const FITNESS_STATUS_OPTIONS = [
+  { value: FitnessStatus.FIT, label: 'Fit' },
+  { value: FitnessStatus.TEMPORARY_UNFIT, label: 'Temporarily Unfit' },
+  { value: FitnessStatus.UNFIT, label: 'Unfit' },
 ];
 
 /**
