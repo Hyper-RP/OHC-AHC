@@ -1,8 +1,9 @@
 import React from 'react';
 import {
-  Area,
-  AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
+  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -46,13 +47,7 @@ export const DashboardMetricsChart: React.FC<DashboardMetricsChartProps> = ({
   return (
     <div className={styles.chart} style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 8 }}>
-          <defs>
-            <linearGradient id={`dashboard-metric-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={color} stopOpacity={0.38} />
-              <stop offset="95%" stopColor={color} stopOpacity={0.04} />
-            </linearGradient>
-          </defs>
+        <BarChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 8 }} barGap={10}>
           <CartesianGrid strokeDasharray="3 3" stroke="#dce8eb" vertical={false} />
           <XAxis
             dataKey="period"
@@ -77,17 +72,22 @@ export const DashboardMetricsChart: React.FC<DashboardMetricsChartProps> = ({
               boxShadow: '0 14px 24px rgba(27, 61, 82, 0.10)',
             }}
           />
-          <Area
-            type="monotone"
+          <Bar
             dataKey={dataKey}
             name={label}
-            stroke={color}
-            strokeWidth={3}
-            fill={`url(#dashboard-metric-${dataKey})`}
-            dot={{ r: 4, fill: color, stroke: '#ffffff', strokeWidth: 2 }}
-            activeDot={{ r: 6, fill: color, stroke: '#ffffff', strokeWidth: 2 }}
-          />
-        </AreaChart>
+            fill={color}
+            radius={[10, 10, 0, 0]}
+            maxBarSize={48}
+          >
+            {data.map((entry) => (
+              <Cell
+                key={`${entry.period}-${dataKey}`}
+                fill={color}
+                fillOpacity={entry[dataKey] === 0 ? 0.32 : 0.95}
+              />
+            ))}
+          </Bar>
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );

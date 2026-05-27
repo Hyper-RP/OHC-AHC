@@ -8,6 +8,7 @@ interface ChartContainerProps {
   loading: boolean;
   error: string | null;
   empty: boolean;
+  headerActions?: React.ReactNode;
   onClick?: () => void;
   onExport?: (format: 'png' | 'svg') => void;
   exportFormats?: Array<'png' | 'svg'>;
@@ -25,6 +26,7 @@ export const ChartContainer: React.FC<ChartContainerProps> = ({
   loading,
   error,
   empty,
+  headerActions,
   onClick,
   onExport,
   exportFormats = ['png', 'svg'],
@@ -48,38 +50,41 @@ export const ChartContainer: React.FC<ChartContainerProps> = ({
           <h3 className={styles.chartTitle}>{title}</h3>
           {description && <p className={styles.chartDescription}>{description}</p>}
         </div>
-        {onExport && (
+        {(headerActions || onExport) && (
           <div className={styles.chartActions}>
-            <div className={styles.exportMenu}>
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={() => setShowExportMenu(!showExportMenu)}
-                className={styles.exportButton}
-              >
-                ⬇ Export
-              </Button>
-              {showExportMenu && (
-                <div className={styles.exportDropdown}>
-                  {exportFormats.includes('png') && (
-                    <button
-                      className={styles.exportOption}
-                      onClick={() => handleExport('png')}
-                    >
-                      PNG Image
-                    </button>
-                  )}
-                  {exportFormats.includes('svg') && (
-                    <button
-                      className={styles.exportOption}
-                      onClick={() => handleExport('svg')}
-                    >
-                      SVG Image
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+            {headerActions}
+            {onExport && (
+              <div className={styles.exportMenu}>
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  className={styles.exportButton}
+                >
+                  ⬇ Export
+                </Button>
+                {showExportMenu && (
+                  <div className={styles.exportDropdown}>
+                    {exportFormats.includes('png') && (
+                      <button
+                        className={styles.exportOption}
+                        onClick={() => handleExport('png')}
+                      >
+                        PNG Image
+                      </button>
+                    )}
+                    {exportFormats.includes('svg') && (
+                      <button
+                        className={styles.exportOption}
+                        onClick={() => handleExport('svg')}
+                      >
+                        SVG Image
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

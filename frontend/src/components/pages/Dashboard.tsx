@@ -9,7 +9,6 @@ import { listMedicines } from '../../services/medicine';
 import {
   ChartContainer,
   DashboardMetricsChart,
-  DepartmentComparisonChart,
   SeverityPieChart,
   DiagnosisTrendLineChart,
   OperationalBarChart,
@@ -42,6 +41,15 @@ type SummaryTrendPoint = {
   incidentCount: number;
 };
 
+type TrendGranularity = 'daily' | 'monthly' | 'yearly';
+
+type MetricKey =
+  | 'ohcVisits'
+  | 'preamtiveCheckUps'
+  | 'annualCheckup'
+  | 'emergencyCount'
+  | 'incidentCount';
+
 type DepartmentPoint = {
   department: string;
   visits: number;
@@ -50,6 +58,8 @@ type DepartmentPoint = {
   preamtiveCheckUps: number;
   annualCheckup: number;
 };
+
+type DepartmentMetricKey = 'visits' | 'preamtiveCheckUps' | 'annualCheckup';
 
 type SeverityPoint = {
   severity: 'MILD' | 'MODERATE' | 'SEVERE' | 'CRITICAL';
@@ -76,7 +86,7 @@ type OperationalBarPoint = {
 };
 
 type ChartState = {
-  summaryTrends: SummaryTrendPoint[];
+  summaryTrends: Record<TrendGranularity, SummaryTrendPoint[]>;
   departmentComparison: DepartmentPoint[];
   severityBreakdown: SeverityPoint[];
   diagnosisTrends: DiagnosisTrendPoint[];
@@ -104,7 +114,11 @@ const EMERGENCY_KEYWORDS = [
 const DIAGNOSIS_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 const emptyCharts: ChartState = {
-  summaryTrends: [],
+  summaryTrends: {
+    daily: [],
+    monthly: [],
+    yearly: [],
+  },
   departmentComparison: [],
   severityBreakdown: [],
   diagnosisTrends: [],
@@ -158,6 +172,36 @@ const isEmergencyVisit = (visit: DashboardVisit) =>
 const isIncidentVisit = (visit: DashboardVisit) =>
   visit.visit_type !== 'EMERGENCY' && matchesKeywords(visit.chief_complaint, INCIDENT_KEYWORDS);
 
+const isWithinGranularity = (visitDateValue: string | undefined, granularity: TrendGranularity) => {
+  if (!visitDateValue) {
+    return false;
+  }
+
+  const visitDate = new Date(visitDateValue);
+  if (Number.isNaN(visitDate.getTime())) {
+    return false;
+  }
+
+  const now = new Date();
+
+  if (granularity === 'daily') {
+    return (
+      visitDate.getFullYear() === now.getFullYear() &&
+      visitDate.getMonth() === now.getMonth() &&
+      visitDate.getDate() === now.getDate()
+    );
+  }
+
+  if (granularity === 'monthly') {
+    return (
+      visitDate.getFullYear() === now.getFullYear() &&
+      visitDate.getMonth() === now.getMonth()
+    );
+  }
+
+  return visitDate.getFullYear() === now.getFullYear();
+};
+
 const fetchAllVisits = async (): Promise<DashboardVisit[]> => {
   const visits: DashboardVisit[] = [];
   let page = 1;
@@ -177,8 +221,9 @@ const fetchAllVisits = async (): Promise<DashboardVisit[]> => {
   return visits;
 };
 
-const buildSummaryTrends = (visits: DashboardVisit[]) => {
-  const monthlyMap = new Map<string, SummaryTrendPoint & { sortKey: number }>();
+const buildSummaryTrends = (visits: DashboardVisit[], granularity: TrendGranularity) => {
+  const trendMap = new Map<string, SummaryTrendPoint & { sortKey: number }>();
+  const bucketLimit = granularity === 'daily' ? 7 : granularity === 'monthly' ? 6 : 5;
 
   visits.forEach((visit) => {
     if (!visit.visit_date) {
@@ -192,13 +237,26 @@ const buildSummaryTrends = (visits: DashboardVisit[]) => {
 
     const year = visitDate.getFullYear();
     const month = visitDate.getMonth();
-    const bucketKey = `${year}-${month}`;
-    const period = visitDate.toLocaleDateString('en-US', { month: 'short' });
+    const day = visitDate.getDate();
 
-    if (!monthlyMap.has(bucketKey)) {
-      monthlyMap.set(bucketKey, {
+    let bucketKey = `${year}`;
+    let period = `${year}`;
+    let sortKey = year;
+
+    if (granularity === 'daily') {
+      bucketKey = `${year}-${month}-${day}`;
+      period = visitDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      sortKey = new Date(year, month, day).getTime();
+    } else if (granularity === 'monthly') {
+      bucketKey = `${year}-${month}`;
+      period = visitDate.toLocaleDateString('en-US', { month: 'short' });
+      sortKey = year * 100 + month;
+    }
+
+    if (!trendMap.has(bucketKey)) {
+      trendMap.set(bucketKey, {
         period,
-        sortKey: year * 100 + month,
+        sortKey,
         ohcVisits: 0,
         preamtiveCheckUps: 0,
         annualCheckup: 0,
@@ -207,7 +265,7 @@ const buildSummaryTrends = (visits: DashboardVisit[]) => {
       });
     }
 
-    const bucket = monthlyMap.get(bucketKey)!;
+    const bucket = trendMap.get(bucketKey)!;
     bucket.ohcVisits += 1;
 
     if (visit.visit_type === 'PRE_EMPLOYMENT') {
@@ -227,9 +285,9 @@ const buildSummaryTrends = (visits: DashboardVisit[]) => {
     }
   });
 
-  return Array.from(monthlyMap.values())
+  return Array.from(trendMap.values())
     .sort((a, b) => a.sortKey - b.sortKey)
-    .slice(-6)
+    .slice(-bucketLimit)
     .map(({ sortKey: _sortKey, ...item }) => item);
 };
 
@@ -422,6 +480,19 @@ export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [chartLoading, setChartLoading] = useState(true);
+  const [allVisits, setAllVisits] = useState<DashboardVisit[]>([]);
+  const [metricGranularity, setMetricGranularity] = useState<Record<MetricKey, TrendGranularity>>({
+    ohcVisits: 'monthly',
+    preamtiveCheckUps: 'monthly',
+    annualCheckup: 'monthly',
+    emergencyCount: 'monthly',
+    incidentCount: 'monthly',
+  });
+  const [departmentGranularity, setDepartmentGranularity] = useState<Record<DepartmentMetricKey, TrendGranularity>>({
+    visits: 'monthly',
+    preamtiveCheckUps: 'monthly',
+    annualCheckup: 'monthly',
+  });
   const [stats, setStats] = useState({
     visitCount: 0,
     referralCount: 0,
@@ -476,10 +547,15 @@ export const Dashboard: React.FC = () => {
         medicinesResult.status === 'fulfilled' && Array.isArray(medicinesResult.value?.results)
           ? medicinesResult.value.results as MedicineInventoryItem[]
           : [];
+      setAllVisits(visits);
 
       if (visits.length > 0) {
         setChartData({
-          summaryTrends: buildSummaryTrends(visits),
+          summaryTrends: {
+            daily: buildSummaryTrends(visits, 'daily'),
+            monthly: buildSummaryTrends(visits, 'monthly'),
+            yearly: buildSummaryTrends(visits, 'yearly'),
+          },
           departmentComparison: buildDepartmentComparison(visits),
           severityBreakdown: analytics
             ? [
@@ -576,13 +652,8 @@ export const Dashboard: React.FC = () => {
     return <Loading fullScreen text="Loading dashboard..." />;
   }
 
-  const latestSummary =
-    chartData.summaryTrends.length > 0
-      ? chartData.summaryTrends[chartData.summaryTrends.length - 1]
-      : null;
-
   const metricConfigs: Array<{
-    key: 'ohcVisits' | 'preamtiveCheckUps' | 'annualCheckup' | 'emergencyCount' | 'incidentCount';
+    key: MetricKey;
     title: string;
     description: string;
     color: string;
@@ -625,6 +696,56 @@ export const Dashboard: React.FC = () => {
     },
   ];
 
+  const departmentMetricConfigs: Array<{
+    key: DepartmentMetricKey;
+    title: string;
+    description: string;
+    detailRoute: string;
+  }> = [
+    {
+      key: 'visits',
+      title: 'Department-wise OHC',
+      description: 'OHC visits by department',
+      detailRoute: '/dashboard/department-details/ohc',
+    },
+    {
+      key: 'preamtiveCheckUps',
+      title: 'Department-wise Preamtive',
+      description: 'Preamtive check ups by department',
+      detailRoute: '/dashboard/department-details/preamtive',
+    },
+    {
+      key: 'annualCheckup',
+      title: 'Department-wise Annual',
+      description: 'Annual checkup counts by department',
+      detailRoute: '/dashboard/department-details/annual',
+    },
+  ];
+
+  const departmentTotalsByGranularity = departmentMetricConfigs.reduce<Record<DepartmentMetricKey, number>>(
+    (totals, metric) => {
+      const filteredVisits = allVisits.filter((visit) =>
+        isWithinGranularity(visit.visit_date, departmentGranularity[metric.key])
+      );
+      const comparison = buildDepartmentComparison(filteredVisits);
+      totals[metric.key] = comparison.reduce((sum, row) => sum + row[metric.key], 0);
+      return totals;
+    },
+    { visits: 0, preamtiveCheckUps: 0, annualCheckup: 0 }
+  );
+
+  const granularityOptions: Array<{ value: TrendGranularity; label: string }> = [
+    { value: 'daily', label: 'Daily' },
+    { value: 'monthly', label: 'Monthly' },
+    { value: 'yearly', label: 'Yearly' },
+  ];
+
+  const granularityLabels: Record<TrendGranularity, string> = {
+    daily: 'Daily',
+    monthly: 'Monthly',
+    yearly: 'Yearly',
+  };
+
   return (
     <div className={styles.dashboard}>
       <Header
@@ -637,7 +758,7 @@ export const Dashboard: React.FC = () => {
         <section className={styles.sectionBlock}>
           <div className={styles.sectionHead}>
             <div>
-              <h2 className={styles.sectionTitle}>Performance Snapshot</h2>
+              <h2 className={styles.sectionTitle}>Overview</h2>
               <p className={styles.sectionSubtitle}>
                 Graph view of the core OHC programs tracked on this dashboard.
               </p>
@@ -645,48 +766,110 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className={styles.summaryMetricsGrid}>
             {metricConfigs.slice(0, 3).map((metric) => (
-              <ChartContainer
-                key={metric.key}
-                title={metric.title}
-                description={metric.description}
-                loading={chartLoading}
-                error={chartError}
-                empty={chartData.summaryTrends.length === 0}
-                className={styles.summaryChartCard}
-                onClick={() => navigate(metric.detailRoute)}
-              >
-                <div className={styles.metricCount}>{latestSummary?.[metric.key] ?? 0}</div>
-                <DashboardMetricsChart
-                  data={chartData.summaryTrends}
-                  dataKey={metric.key}
-                  color={metric.color}
-                  label={metric.title}
-                  height={280}
-                />
-              </ChartContainer>
+              (() => {
+                const selectedGranularity = metricGranularity[metric.key];
+                const trendData = chartData.summaryTrends[selectedGranularity];
+                const latestPoint = trendData.length > 0 ? trendData[trendData.length - 1] : null;
+
+                return (
+                  <ChartContainer
+                    key={metric.key}
+                    title={metric.title}
+                    description={`${granularityLabels[selectedGranularity]} view. ${metric.description}`}
+                    loading={chartLoading}
+                    error={chartError}
+                    empty={trendData.length === 0}
+                    className={styles.summaryChartCard}
+                    onClick={() => navigate(metric.detailRoute)}
+                    headerActions={(
+                      <div
+                        className={styles.metricFilterWrap}
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <select
+                          className={styles.metricFilterSelect}
+                          value={selectedGranularity}
+                          onChange={(event) =>
+                            setMetricGranularity((current) => ({
+                              ...current,
+                              [metric.key]: event.target.value as TrendGranularity,
+                            }))
+                          }
+                        >
+                          {granularityOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  >
+                    <div className={styles.metricCount}>{latestPoint?.[metric.key] ?? 0}</div>
+                    <DashboardMetricsChart
+                      data={trendData}
+                      dataKey={metric.key}
+                      color={metric.color}
+                      label={metric.title}
+                      height={280}
+                    />
+                  </ChartContainer>
+                );
+              })()
             ))}
           </div>
           <div className={styles.summaryMetricsCenterRow}>
             {metricConfigs.slice(3).map((metric) => (
-              <ChartContainer
-                key={metric.key}
-                title={metric.title}
-                description={metric.description}
-                loading={chartLoading}
-                error={chartError}
-                empty={chartData.summaryTrends.length === 0}
-                className={styles.summaryChartCard}
-                onClick={() => navigate(metric.detailRoute)}
-              >
-                <div className={styles.metricCount}>{latestSummary?.[metric.key] ?? 0}</div>
-                <DashboardMetricsChart
-                  data={chartData.summaryTrends}
-                  dataKey={metric.key}
-                  color={metric.color}
-                  label={metric.title}
-                  height={280}
-                />
-              </ChartContainer>
+              (() => {
+                const selectedGranularity = metricGranularity[metric.key];
+                const trendData = chartData.summaryTrends[selectedGranularity];
+                const latestPoint = trendData.length > 0 ? trendData[trendData.length - 1] : null;
+
+                return (
+                  <ChartContainer
+                    key={metric.key}
+                    title={metric.title}
+                    description={`${granularityLabels[selectedGranularity]} view. ${metric.description}`}
+                    loading={chartLoading}
+                    error={chartError}
+                    empty={trendData.length === 0}
+                    className={styles.summaryChartCard}
+                    onClick={() => navigate(metric.detailRoute)}
+                    headerActions={(
+                      <div
+                        className={styles.metricFilterWrap}
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <select
+                          className={styles.metricFilterSelect}
+                          value={selectedGranularity}
+                          onChange={(event) =>
+                            setMetricGranularity((current) => ({
+                              ...current,
+                              [metric.key]: event.target.value as TrendGranularity,
+                            }))
+                          }
+                        >
+                          {granularityOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  >
+                    <div className={styles.metricCount}>{latestPoint?.[metric.key] ?? 0}</div>
+                    <DashboardMetricsChart
+                      data={trendData}
+                      dataKey={metric.key}
+                      color={metric.color}
+                      label={metric.title}
+                      height={280}
+                    />
+                  </ChartContainer>
+                );
+              })()
             ))}
           </div>
         </section>
@@ -723,65 +906,51 @@ export const Dashboard: React.FC = () => {
         <section className={styles.sectionBlock}>
           <div className={styles.sectionHead}>
             <div>
-              <h2 className={styles.sectionTitle}>Overview</h2>
+              <h2 className={styles.sectionTitle}>Department Overview</h2>
               <p className={styles.sectionSubtitle}>
                 A quick read on demand, distribution, and department load.
               </p>
             </div>
           </div>
+          <div className={styles.departmentMetricsGrid}>
+            {departmentMetricConfigs.map((metric) => (
+              <Card
+                key={metric.key}
+                className={styles.departmentMetricCard}
+                onClick={() =>
+                  navigate(`${metric.detailRoute}?granularity=${departmentGranularity[metric.key]}`)
+                }
+              >
+                <p className={styles.departmentMetricTitle}>{metric.title}</p>
+                <div
+                  className={styles.metricFilterWrap}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <select
+                    className={styles.metricFilterSelect}
+                    value={departmentGranularity[metric.key]}
+                    onChange={(event) =>
+                      setDepartmentGranularity((current) => ({
+                        ...current,
+                        [metric.key]: event.target.value as TrendGranularity,
+                      }))
+                    }
+                  >
+                    {granularityOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <p className={styles.departmentMetricDescription}>
+                  {granularityLabels[departmentGranularity[metric.key]]} view. {metric.description}
+                </p>
+                <p className={styles.departmentMetricValue}>{departmentTotalsByGranularity[metric.key]}</p>
+              </Card>
+            ))}
+          </div>
           <div className={styles.chartsGrid}>
-            <ChartContainer
-              title="Department-wise OHC"
-              description="OHC visits by department"
-              loading={chartLoading}
-              error={chartError}
-              empty={chartData.departmentComparison.length === 0}
-              className={styles.chartCard}
-            >
-              <DepartmentComparisonChart
-                data={chartData.departmentComparison}
-                dataKey="visits"
-                titleLabel="OHC Visits"
-                color="#0a5f78"
-                height={300}
-              />
-            </ChartContainer>
-
-            <ChartContainer
-              title="Department-wise Preamtive"
-              description="Preamtive check ups by department"
-              loading={chartLoading}
-              error={chartError}
-              empty={chartData.departmentComparison.length === 0}
-              className={styles.chartCard}
-            >
-              <DepartmentComparisonChart
-                data={chartData.departmentComparison}
-                dataKey="preamtiveCheckUps"
-                titleLabel="Preamtive Check Ups"
-                color="#f0b24b"
-                sortBy="preamtiveCheckUps"
-                height={300}
-              />
-            </ChartContainer>
-
-            <ChartContainer
-              title="Department-wise Annual"
-              description="Annual checkup counts by department"
-              loading={chartLoading}
-              error={chartError}
-              empty={chartData.departmentComparison.length === 0}
-              className={styles.chartCard}
-            >
-              <DepartmentComparisonChart
-                data={chartData.departmentComparison}
-                dataKey="annualCheckup"
-                titleLabel="Annual Checkup"
-                color="#5aa488"
-                sortBy="annualCheckup"
-                height={300}
-              />
-            </ChartContainer>
 
             <ChartContainer
               title="Severity Breakdown"
