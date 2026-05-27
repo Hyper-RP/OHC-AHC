@@ -8,6 +8,7 @@ interface ChartContainerProps {
   loading: boolean;
   error: string | null;
   empty: boolean;
+  onClick?: () => void;
   onExport?: (format: 'png' | 'svg') => void;
   exportFormats?: Array<'png' | 'svg'>;
   children: React.ReactNode;
@@ -24,6 +25,7 @@ export const ChartContainer: React.FC<ChartContainerProps> = ({
   loading,
   error,
   empty,
+  onClick,
   onExport,
   exportFormats = ['png', 'svg'],
   children,
@@ -37,7 +39,10 @@ export const ChartContainer: React.FC<ChartContainerProps> = ({
   };
 
   return (
-    <Card className={`${styles.chartContainer} ${className}`}>
+    <Card
+      className={`${styles.chartContainer} ${onClick ? styles.interactive : ''} ${className}`}
+      onClick={onClick}
+    >
       <div className={styles.chartHeader}>
         <div className={styles.chartTitleSection}>
           <h3 className={styles.chartTitle}>{title}</h3>

@@ -4,8 +4,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 import { Header } from '../layout';
 import { FormInput, Button, Card, Alert } from '../ui';
-import { Role, VisitType } from '../../types';
+import { Role, VisitType, FitnessStatus } from '../../types';
 import api from '../../services/api';
+import { FITNESS_STATUS_OPTIONS } from '../../utils/constants';
 import styles from './OHCVisitForm.module.css';
 
 interface DoctorOption {
@@ -19,6 +20,7 @@ interface VisitFormData {
   patient_name: string;
   employee_id: string;
   department: string;
+  fitness_status: FitnessStatus;
   date_of_birth: string;
   gender: string;
   contact_number: string;
@@ -52,6 +54,7 @@ export const NurseVisitForm: React.FC = () => {
     patient_name: '',
     employee_id: '',
     department: '',
+    fitness_status: FitnessStatus.FIT,
     date_of_birth: '',
     gender: '',
     contact_number: '',
@@ -174,6 +177,7 @@ export const NurseVisitForm: React.FC = () => {
         employee: formData.employee_id.trim(),
         employee_name: formData.patient_name,
         employee_department: formData.department,
+        employee_fitness_status: formData.fitness_status,
         patient_name: formData.patient_name,
         patient_age: calculatedAge,
         patient_gender: formData.gender,
@@ -233,7 +237,16 @@ export const NurseVisitForm: React.FC = () => {
                   value={formData.department}
                   onChange={(value) => handleInputChange('department', value)}
                   required
-                  helperText="Department name"
+                  helperText="Department name for the employee record"
+                />
+                <FormInput
+                  label="Fitness Status *"
+                  type="select"
+                  value={formData.fitness_status}
+                  onChange={(value) => handleInputChange('fitness_status', value as FitnessStatus)}
+                  required
+                  options={FITNESS_STATUS_OPTIONS}
+                  helperText="This status will be visible on the receipt"
                 />
                 <FormInput
                   label="DOB *"
