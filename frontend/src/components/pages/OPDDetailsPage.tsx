@@ -27,7 +27,6 @@ interface AnalyticsData {
   open_cases: number;
   completed_cases: number;
   department_distribution: Array<{ department: string; count: number }>;
-  severity_distribution: { LOW: number; MEDIUM: number; HIGH: number; CRITICAL: number };
 }
 
 /**
@@ -76,13 +75,9 @@ export const OPDDetailsPage: React.FC = () => {
 
       // Calculate analytics
       const deptMap: Record<string, number> = {};
-      const severityMap: Record<string, number> = { LOW: 0, MEDIUM: 0, HIGH: 0, CRITICAL: 0 };
-
       data.forEach((visit: any) => {
         const dept = visit.employee?.department || 'Unknown';
         deptMap[dept] = (deptMap[dept] || 0) + 1;
-        const severity = visit.triage_level || 'LOW';
-        severityMap[severity] = (severityMap[severity] || 0) + 1;
       });
 
       setAnalytics({
@@ -90,7 +85,6 @@ export const OPDDetailsPage: React.FC = () => {
         open_cases: data.filter((v: any) => v.visit_status === 'OPEN').length,
         completed_cases: data.filter((v: any) => v.visit_status === 'COMPLETED').length,
         department_distribution: Object.entries(deptMap).map(([department, count]) => ({ department, count })),
-        severity_distribution: severityMap as any,
       });
     } catch (err) {
       handleError(err as Error);
@@ -214,29 +208,6 @@ export const OPDDetailsPage: React.FC = () => {
                 ))}
               </div>
             </Card>
-
-            {/* Severity Distribution */}
-            <Card className={styles.severityCard}>
-              <h3>Severity Distribution</h3>
-              <div className={styles.severityGrid}>
-                <div className={styles.severityItem}>
-                  <span className={styles.severityLabel}>Low</span>
-                  <span className={`${styles.severityValue} ${styles.low}`}>{analytics.severity_distribution.LOW}</span>
-                </div>
-                <div className={styles.severityItem}>
-                  <span className={styles.severityLabel}>Medium</span>
-                  <span className={`${styles.severityValue} ${styles.medium}`}>{analytics.severity_distribution.MEDIUM}</span>
-                </div>
-                <div className={styles.severityItem}>
-                  <span className={styles.severityLabel}>High</span>
-                  <span className={`${styles.severityValue} ${styles.high}`}>{analytics.severity_distribution.HIGH}</span>
-                </div>
-                <div className={styles.severityItem}>
-                  <span className={styles.severityLabel}>Critical</span>
-                  <span className={`${styles.severityValue} ${styles.critical}`}>{analytics.severity_distribution.CRITICAL}</span>
-                </div>
-              </div>
-            </Card>
           </>
         )}
 
@@ -255,7 +226,6 @@ export const OPDDetailsPage: React.FC = () => {
                   <th>Date</th>
                   <th>Time</th>
                   <th>Complaint</th>
-                  <th>Severity</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -268,11 +238,6 @@ export const OPDDetailsPage: React.FC = () => {
                     <td>{new Date(visit.visit_date).toLocaleDateString()}</td>
                     <td>{new Date(visit.visit_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                     <td>{visit.chief_complaint || '-'}</td>
-                    <td>
-                      <span className={`${styles.severityBadge} ${styles[visit.triage_level.toLowerCase()]}`}>
-                        {visit.triage_level}
-                      </span>
-                    </td>
                     <td>
                       <span className={`${styles.statusBadge} ${styles[visit.visit_status.toLowerCase().replace('_', '')]}`}>
                         {visit.visit_status.replace('_', ' ')}

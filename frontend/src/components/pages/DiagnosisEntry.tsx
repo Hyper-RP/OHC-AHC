@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '../layout';
 import { FormInput, Button, Card, Alert } from '../ui';
 import { createDiagnosis } from '../../services/ohc';
-import { SEVERITY_OPTIONS, FITNESS_DECISION_OPTIONS, DOSAGE_FREQUENCY_OPTIONS, PRESCRIPTION_ROUTE_OPTIONS } from '../../utils/constants';
+import { FITNESS_DECISION_OPTIONS, DOSAGE_FREQUENCY_OPTIONS, PRESCRIPTION_ROUTE_OPTIONS } from '../../utils/constants';
 import { useSnackbar } from '../../contexts/SnackbarContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Severity, FitnessDecision } from '../../types';
+import { api } from '../../services/api';
 import styles from './DiagnosisEntry.module.css';
 
 interface PrescriptionFormData {
@@ -25,9 +27,13 @@ interface PrescriptionFormData {
 export const DiagnosisEntry: React.FC = () => {
   const navigate = useNavigate();
   const { show } = useSnackbar();
+  const { user } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [medicineOptions, setMedicineOptions] = useState<Array<{ value: string; label: string }>>([
+    { value: '', label: 'Select medicine' },
+  ]);
 
   const [visitId, setVisitId] = useState('');
 
@@ -55,6 +61,32 @@ export const DiagnosisEntry: React.FC = () => {
       start_date: new Date().toISOString().split('T')[0],
     },
   ]);
+
+  React.useEffect(() => {
+    const fetchMedicines = async () => {
+      try {
+        const response = await api.get('/ohc/medicines/');
+        const data = Array.isArray(response.data) ? response.data : response.data?.results || [];
+        const medicineNames = Array.from(
+          new Set<string>(
+            data
+              .filter((medicine: any) => medicine.stock_quantity > 0)
+              .map((medicine: any) => String(medicine.name || '').trim())
+              .filter((name: string) => Boolean(name)),
+          ),
+        ).sort((left, right) => left.localeCompare(right));
+
+        setMedicineOptions([
+          { value: '', label: 'Select medicine' },
+          ...medicineNames.map((name) => ({ value: name, label: name })),
+        ]);
+      } catch (err) {
+        console.error('Failed to fetch medicines:', err);
+      }
+    };
+
+    fetchMedicines();
+  }, []);
 
   const handleInputChange = (name: string, value: string | number | boolean) => {
     setDiagnosis((prev) => ({ ...prev, [name]: value }));
@@ -111,6 +143,7 @@ export const DiagnosisEntry: React.FC = () => {
         visit: parseInt(visitId, 10),
         diagnosed_by: 0, // Will be filled by backend
         ...diagnosis,
+        fitness_decision: user?.role === 'DOCTOR' ? diagnosis.fitness_decision : FitnessDecision.FIT,
         prescriptions: validPrescriptions,
       });
 
@@ -185,17 +218,8 @@ export const DiagnosisEntry: React.FC = () => {
             </div>
 
             <div className={styles.formSection}>
-              <h3>Severity & Status</h3>
+              <h3>Diagnosis Status</h3>
               <div className={styles.formGrid}>
-                <FormInput
-                  label="Severity *"
-                  name="severity"
-                  type="select"
-                  value={diagnosis.severity}
-                  onChange={(value) => handleInputChange('severity', value)}
-                  options={SEVERITY_OPTIONS}
-                  required
-                />
                 <FormInput
                   label="Primary Diagnosis"
                   name="is_primary"
@@ -224,15 +248,17 @@ export const DiagnosisEntry: React.FC = () => {
             <div className={styles.formSection}>
               <h3>Fitness Assessment</h3>
               <div className={styles.formGrid}>
-                <FormInput
-                  label="Fitness Decision *"
-                  name="fitness_decision"
-                  type="select"
-                  value={diagnosis.fitness_decision}
-                  onChange={(value) => handleInputChange('fitness_decision', value)}
-                  options={FITNESS_DECISION_OPTIONS}
-                  required
-                />
+                {user?.role === 'DOCTOR' && (
+                  <FormInput
+                    label="Fitness Decision *"
+                    name="fitness_decision"
+                    type="select"
+                    value={diagnosis.fitness_decision}
+                    onChange={(value) => handleInputChange('fitness_decision', value)}
+                    options={FITNESS_DECISION_OPTIONS}
+                    required
+                  />
+                )}
                 <FormInput
                   label="Advised Rest Days"
                   name="advised_rest_days"
@@ -250,16 +276,18 @@ export const DiagnosisEntry: React.FC = () => {
                   onChange={(value) => handleInputChange('follow_up_date', value)}
                 />
               </div>
-              <FormInput
-                label="Work Restrictions"
-                name="work_restrictions"
-                type="textarea"
-                value={diagnosis.work_restrictions}
-                onChange={(value) => handleInputChange('work_restrictions', value)}
-                placeholder="Specify any work restrictions or modifications"
-                rows={3}
-                className={styles.fullWidth}
-              />
+              {user?.role === 'DOCTOR' && (
+                <FormInput
+                  label="Work Restrictions"
+                  name="work_restrictions"
+                  type="textarea"
+                  value={diagnosis.work_restrictions}
+                  onChange={(value) => handleInputChange('work_restrictions', value)}
+                  placeholder="Specify any work restrictions or modifications"
+                  rows={3}
+                  className={styles.fullWidth}
+                />
+              )}
             </div>
 
             <div className={styles.formSection}>
@@ -283,10 +311,10 @@ export const DiagnosisEntry: React.FC = () => {
                     <FormInput
                       label="Medicine Name"
                       name={`medicine_name_${index}`}
-                      type="text"
+                      type="select"
                       value={prescription.medicine_name}
                       onChange={(value) => handlePrescriptionChange(index, 'medicine_name', value)}
-                      placeholder="e.g., Paracetamol 500mg"
+                      options={medicineOptions}
                     />
                     <FormInput
                       label="Dosage"

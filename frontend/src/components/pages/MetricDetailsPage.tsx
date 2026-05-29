@@ -11,6 +11,7 @@ type MetricSlug =
   | 'ohc-visits'
   | 'preamtive-check-ups'
   | 'annual-checkup'
+  | 'referral-cases'
   | 'emergency-count'
   | 'incident-count'
   | 'critical-cases'
@@ -36,6 +37,7 @@ interface MetricConfig {
   visitType?: string;
   requiresIncidentFilter?: boolean;
   requiresEmergencyFilter?: boolean;
+  requiresReferralFilter?: boolean;
   requiresCriticalFilter?: boolean;
   requiresPendingFollowUpFilter?: boolean;
 }
@@ -46,22 +48,27 @@ const METRIC_CONFIG: Record<MetricSlug, MetricConfig> = {
     subtitle: 'Detailed employee records for OHC visits',
   },
   'preamtive-check-ups': {
-    title: 'Preamtive Check Ups Details',
-    subtitle: 'Detailed employee records for preamtive check ups',
+    title: 'Pre-employement Check Ups Details',
+    subtitle: 'Detailed employee records for pre-employement check ups',
     visitType: 'PRE_EMPLOYMENT',
   },
   'annual-checkup': {
-    title: 'Annual Checkup Details',
-    subtitle: 'Detailed employee records for annual checkups',
+    title: 'Annual Health Checkup Details',
+    subtitle: 'Detailed employee records for annual health checkups',
     visitType: 'PERIODIC',
   },
+  'referral-cases': {
+    title: 'Referral Cases Details',
+    subtitle: 'Detailed employee records for referral cases',
+    requiresReferralFilter: true,
+  },
   'emergency-count': {
-    title: 'Emergency Details',
+    title: 'Emergency Cases Details',
     subtitle: 'Detailed employee records for emergency cases',
     requiresEmergencyFilter: true,
   },
   'incident-count': {
-    title: 'Incident Details',
+    title: 'Incident Cases Details',
     subtitle: 'Detailed employee records for incident cases',
     requiresIncidentFilter: true,
   },
@@ -126,7 +133,6 @@ export const MetricDetailsPage: React.FC = () => {
     date_to: '',
     department: '',
     status: '',
-    severity: '',
   });
 
   const metricConfig = metricSlug ? METRIC_CONFIG[metricSlug] : null;
@@ -139,6 +145,12 @@ export const MetricDetailsPage: React.FC = () => {
     if (metricConfig.requiresEmergencyFilter) {
       return records.filter((visit) =>
         visit.visitType === 'EMERGENCY' || matchesKeywords(visit.complaint, EMERGENCY_KEYWORDS)
+      );
+    }
+
+    if (metricConfig.requiresReferralFilter) {
+      return records.filter(
+        (visit) => visit.status === 'REFERRED'
       );
     }
 
@@ -187,8 +199,6 @@ export const MetricDetailsPage: React.FC = () => {
       if (filters.date_to) params.date_to = filters.date_to;
       if (filters.department) params.department = filters.department;
       if (filters.status) params.visit_status = filters.status;
-      if (filters.severity) params.triage_level = filters.severity;
-
       const response = await api.get('/ohc/visits/', { params });
       const rawData = Array.isArray(response.data) ? response.data : response.data?.results || [];
       setVisits(applyMetricSpecificFilter(rawData.map(mapVisitRecord)));
@@ -270,19 +280,6 @@ export const MetricDetailsPage: React.FC = () => {
                 { value: 'CLOSED', label: 'Closed' },
               ]}
             />
-            <FormInput
-              type="select"
-              label="Severity"
-              value={filters.severity}
-              onChange={(value) => setFilters((prev) => ({ ...prev, severity: value }))}
-              options={[
-                { value: '', label: 'All Severity' },
-                { value: 'LOW', label: 'Low' },
-                { value: 'MEDIUM', label: 'Medium' },
-                { value: 'HIGH', label: 'High' },
-                { value: 'CRITICAL', label: 'Critical' },
-              ]}
-            />
             <div className={styles.filterActions}>
               <Button type="button" variant="brand" onClick={fetchData} loading={loading}>
                 Apply Filters
@@ -296,7 +293,6 @@ export const MetricDetailsPage: React.FC = () => {
                     date_to: '',
                     department: '',
                     status: '',
-                    severity: '',
                   })
                 }
               >
@@ -346,7 +342,6 @@ export const MetricDetailsPage: React.FC = () => {
                     <th>Time</th>
                     <th>Visit Type</th>
                     <th>Complaint</th>
-                    <th>Severity</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -360,7 +355,6 @@ export const MetricDetailsPage: React.FC = () => {
                       <td>{visit.visitTime || '-'}</td>
                       <td>{visit.visitType}</td>
                       <td>{visit.complaint}</td>
-                      <td>{visit.severity}</td>
                       <td>{visit.status.replace('_', ' ')}</td>
                     </tr>
                   ))}

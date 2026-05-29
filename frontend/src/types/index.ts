@@ -467,6 +467,7 @@ export interface DiagnosisFormData {
   severity: Severity;
   is_primary?: boolean;
   is_referral_required?: boolean;
+  hospital?: number;
   fitness_decision: FitnessDecision;
   work_restrictions?: string;
   advised_rest_days: number;

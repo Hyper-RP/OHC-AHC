@@ -49,8 +49,7 @@
 
 .summaryMetricsCenterRow {
   display: grid;
-  grid-template-columns: repeat(2, minmax(260px, 360px));
-  justify-content: center;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
 }
 
@@ -66,10 +65,61 @@
   line-height: 1;
 }
 
+.metricFilterWrap {
+  display: flex;
+  align-items: center;
+}
+
+.metricFilterSelect {
+  min-width: 108px;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid rgba(34, 81, 108, 0.16);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #11313d;
+  font-size: 0.84rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
 .priorityGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
+}
+
+.departmentMetricsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.departmentMetricCard {
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(244, 251, 252, 0.95), #ffffff 100%);
+  box-shadow: 0 14px 32px rgba(46, 76, 100, 0.08);
+}
+
+.departmentMetricTitle {
+  margin: 0 0 0.45rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #11313d;
+}
+
+.departmentMetricDescription {
+  margin: 0 0 1rem;
+  color: #647984;
+  font-size: 0.92rem;
+}
+
+.departmentMetricValue {
+  margin: 0;
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: #11313d;
+  line-height: 1;
 }
 
 .priorityCard {
@@ -206,7 +256,8 @@
   .analyticsRail,
   .summaryMetricsGrid,
   .summaryMetricsCenterRow,
-  .priorityGrid {
+  .priorityGrid,
+  .departmentMetricsGrid {
     grid-template-columns: 1fr;
   }
 }

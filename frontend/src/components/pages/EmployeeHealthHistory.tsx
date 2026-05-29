@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../layout';
-import { Card, FormInput, Button, Loading } from '../ui';
+import { Alert, Card, FormInput, Button, Loading } from '../ui';
 import {
   exportEmployeeHealthHistoryExcel,
   getEmployeeHealthHistory,
@@ -22,9 +22,11 @@ export const EmployeeHealthHistory: React.FC = () => {
   const [period, setPeriod] = useState(90);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<EmployeeHealthHistoryList | null>(null);
+  const [error, setError] = useState('');
 
   const loadHistory = async (targetEmployeeId?: string) => {
     setLoading(true);
+    setError('');
     try {
       const result = await getEmployeeHealthHistory(targetEmployeeId || undefined);
       if ('records' in result) {
@@ -33,7 +35,7 @@ export const EmployeeHealthHistory: React.FC = () => {
         navigate(`/reports/employee-history/${targetEmployeeId}`);
       }
     } catch {
-      alert('Failed to load employee history');
+      setError('Failed to load employee history');
     } finally {
       setLoading(false);
     }
@@ -54,7 +56,7 @@ export const EmployeeHealthHistory: React.FC = () => {
         : 'all_employee_health_history.csv';
       link.click();
     } catch {
-      alert('Export failed');
+      setError('Export failed');
     }
   };
 
@@ -64,12 +66,49 @@ export const EmployeeHealthHistory: React.FC = () => {
   };
 
   const isListMode = data !== null;
+  const records = data?.records || [];
+  const summary = useMemo(() => {
+    const uniqueEmployees = new Set(records.map((record) => record.employee_code)).size;
+    const fitCases = records.filter((record) => String(record.fitness_decision || '').includes('FIT')).length;
+    const referredCases = records.filter((record) => record.referral_status).length;
+
+    return {
+      totalRecords: records.length,
+      uniqueEmployees,
+      fitCases,
+      referredCases,
+    };
+  }, [records]);
 
   return (
     <div className={styles.healthHistory}>
       <Header title="Employee Health History" subtitle="View complete health records" />
       <main className={styles.healthMain}>
+        {error && <Alert type="danger" onDismiss={() => setError('')}>{error}</Alert>}
+
+        <Card className={styles.heroCard}>
+          <div className={styles.heroContent}>
+            <div>
+              <p className={styles.eyebrow}>History Workspace</p>
+              <h2 className={styles.heroTitle}>Track employee health records in one place</h2>
+              <p className={styles.heroText}>
+                Search by employee ID, review visit history, and export records for reporting.
+              </p>
+            </div>
+            <div className={styles.heroMeta}>
+              <span className={styles.heroMetaLabel}>Selected period</span>
+              <strong className={styles.heroMetaValue}>{period} days</strong>
+            </div>
+          </div>
+        </Card>
+
         <Card className={styles.searchCard}>
+          <div className={styles.searchHeader}>
+            <div>
+              <h3>Find Records</h3>
+              <p>Load a single employee history or review all available records.</p>
+            </div>
+          </div>
           <div className={styles.searchGrid}>
             <FormInput
               label="Employee ID"
@@ -94,46 +133,84 @@ export const EmployeeHealthHistory: React.FC = () => {
         {loading && <Loading />}
 
         {isListMode && data && (
-          <Card className={styles.visitsCard}>
-            <div className={styles.cardHeader}>
-              <h3>Employee Records ({data.records.length})</h3>
-            </div>
-            <div className={styles.tableWrap}>
-              <table className={styles.recordsTable}>
-                <thead>
-                  <tr>
-                    <th>Employee ID</th>
-                    <th>Employee Name</th>
-                    <th>Visit Date</th>
-                    <th>Chief Complaint</th>
-                    <th>Doctor</th>
-                    <th>Fit/Unfit</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.records.map((record) => (
-                    <tr key={record.visit_id}>
-                      <td>{record.employee_code}</td>
-                      <td>{record.employee_name}</td>
-                      <td>{record.visit_date}</td>
-                      <td>{record.chief_complaint}</td>
-                      <td>{record.doctor_name}</td>
-                      <td>{record.fitness_decision || '-'}</td>
-                      <td>
-                        <Button
-                          variant="outline-secondary"
-                          size="sm"
-                          onClick={() => handleViewRecord(record.employee_code)}
-                        >
-                          View
-                        </Button>
-                      </td>
+          <>
+            <section className={styles.summaryCards}>
+              <Card className={styles.metricCard}>
+                <span className={styles.metricLabel}>Total Records</span>
+                <strong className={styles.metricValue}>{summary.totalRecords}</strong>
+              </Card>
+              <Card className={styles.metricCard}>
+                <span className={styles.metricLabel}>Employees</span>
+                <strong className={styles.metricValue}>{summary.uniqueEmployees}</strong>
+              </Card>
+              <Card className={styles.metricCard}>
+                <span className={styles.metricLabel}>Fit Cases</span>
+                <strong className={styles.metricValue}>{summary.fitCases}</strong>
+              </Card>
+              <Card className={styles.metricCard}>
+                <span className={styles.metricLabel}>Referred Cases</span>
+                <strong className={styles.metricValue}>{summary.referredCases}</strong>
+              </Card>
+            </section>
+
+            <Card className={styles.visitsCard}>
+              <div className={styles.cardHeader}>
+                <div>
+                  <h3>Employee Records</h3>
+                  <p className={styles.cardSubtext}>{data.records.length} records loaded</p>
+                </div>
+              </div>
+              <div className={styles.tableWrap}>
+                <table className={styles.recordsTable}>
+                  <thead>
+                    <tr>
+                      <th>Employee</th>
+                      <th>Visit Date</th>
+                      <th>Complaint</th>
+                      <th>Doctor</th>
+                      <th>Fitness</th>
+                      <th>Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {data.records.map((record) => (
+                      <tr key={record.visit_id}>
+                        <td>
+                          <div className={styles.employeeCell}>
+                            <strong>{record.employee_name}</strong>
+                            <span>{record.employee_code}</span>
+                          </div>
+                        </td>
+                        <td>{record.visit_date}</td>
+                        <td className={styles.complaintCell}>{record.chief_complaint}</td>
+                        <td>{record.doctor_name}</td>
+                        <td>
+                          <span className={styles.fitnessBadge}>
+                            {record.fitness_decision || '-'}
+                          </span>
+                        </td>
+                        <td>
+                          <Button
+                            variant="outline-secondary"
+                            size="sm"
+                            onClick={() => handleViewRecord(record.employee_code)}
+                          >
+                            View
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </>
+        )}
+
+        {isListMode && data && data.records.length === 0 && (
+          <Card className={styles.emptyCard}>
+            <h3>No records found</h3>
+            <p>Try another employee ID or load all records without a filter.</p>
           </Card>
         )}
       </main>
