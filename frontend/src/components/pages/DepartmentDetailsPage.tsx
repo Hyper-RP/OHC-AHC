@@ -49,17 +49,17 @@ const METRIC_CONFIG: Record<
     color: '#0a5f78',
   },
   preamtive: {
-    title: 'Department-wise Preamtive Details',
-    subtitle: 'Full preamtive check up counts for each department',
+    title: 'Department-wise Pre-employement Details',
+    subtitle: 'Full pre-employement check up cases for each department',
     dataKey: 'preamtiveCheckUps',
-    titleLabel: 'Preamtive Check Ups',
+    titleLabel: 'Pre-employement Check Ups',
     color: '#f0b24b',
   },
   annual: {
-    title: 'Department-wise Annual Details',
-    subtitle: 'Full annual checkup counts for each department',
+    title: 'Department-wise Annual Health Checkup Details',
+    subtitle: 'Full annual health checkup cases for each department',
     dataKey: 'annualCheckup',
-    titleLabel: 'Annual Checkup',
+    titleLabel: 'Annual Health Checkup',
     color: '#5aa488',
   },
 };
@@ -221,7 +221,7 @@ export const DepartmentDetailsPage: React.FC = () => {
   );
 
   const granularityLabel =
-    granularity === 'daily' ? 'Daily' : granularity === 'monthly' ? 'Monthly' : 'Yearly';
+    granularity === 'daily' ? 'Today' : granularity === 'monthly' ? 'Monthly' : 'Yearly';
 
   if (loading) {
     return <Loading fullScreen text="Loading department details..." />;
@@ -253,7 +253,7 @@ export const DepartmentDetailsPage: React.FC = () => {
               value={granularity}
               onChange={(event) => setGranularity(event.target.value as TrendGranularity)}
             >
-              <option value="daily">Daily</option>
+              <option value="daily">Today</option>
               <option value="monthly">Monthly</option>
               <option value="yearly">Yearly</option>
             </select>

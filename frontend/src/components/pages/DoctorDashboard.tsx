@@ -7,10 +7,13 @@ import { Card, Alert, Button, FormInput } from '../ui';
 import { StatusBadge, LastUpdated } from '../charts';
 import { RefreshControl } from '../charts';
 import { createDiagnosis } from '../../services/ohc';
+import { listHospitals } from '../../services/ahc';
 import { useDashboardData } from '../../hooks/useDashboardData';
-import { Role, VisitStatus } from '../../types';
+import { FitnessDecision, Role, VisitStatus, type Hospital } from '../../types';
+import { FITNESS_DECISION_OPTIONS } from '../../utils/constants';
 import { validatePrescriptions, formatSubmitError } from '../../utils/errorHandling';
-import { api } from '../../services/api';
+import receiptLogo from '../../assets/mediGplus.png';
+import { loadMedicineRecords } from './medicineInventory';
 import styles from './DoctorDashboard.module.css';
 
 interface PrescriptionInput {
@@ -74,6 +77,9 @@ export const DoctorDashboard: React.FC = () => {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [selectedVisit, setSelectedVisit] = useState<any | null>(null);
   const [showDiagnosisForm, setShowDiagnosisForm] = useState(false);
+  const [hospitalOptions, setHospitalOptions] = useState<Array<{ value: string; label: string }>>([
+    { value: '', label: 'Select hospital' },
+  ]);
 
   const getVisitDisplayName = (visit: any) => {
     const explicitVisitName = visit.patient_name?.trim() || visit.employee_name?.trim();
@@ -114,15 +120,19 @@ export const DoctorDashboard: React.FC = () => {
   useEffect(() => {
     const fetchMedicines = async () => {
       try {
-        const response = await api.get('/ohc/medicines/');
-        const data = Array.isArray(response.data) ? response.data : response.data?.results || [];
+        const data = loadMedicineRecords();
+        const medicineNames = Array.from(
+          new Set<string>(
+            data
+              .filter((medicine) => medicine.stock > 0)
+              .map((medicine) => String(medicine.name || '').trim())
+              .filter((name: string) => Boolean(name)),
+          ),
+        ).sort((left, right) => left.localeCompare(right));
         const inStockMedicines = [
           { value: '', label: 'Select medicine' },
-          ...data
-            .filter((m: any) => m.stock_quantity > 0)
-            .map((m: any) => ({ value: m.name, label: m.name })),
+          ...medicineNames.map((name) => ({ value: name, label: name })),
         ];
-        console.log('Medicines fetched:', data, 'In stock:', inStockMedicines);
         setMedicines(inStockMedicines);
       } catch (err) {
         console.error('Failed to fetch medicines:', err);
@@ -131,11 +141,33 @@ export const DoctorDashboard: React.FC = () => {
     fetchMedicines();
   }, []);
 
+  useEffect(() => {
+    const fetchHospitals = async () => {
+      try {
+        const response = await listHospitals({ status: 'ACTIVE', page_size: 100 });
+        const hospitals = (response.results || []) as Hospital[];
+        setHospitalOptions([
+          { value: '', label: 'Select hospital' },
+          ...hospitals.map((hospital) => ({
+            value: String(hospital.id),
+            label: hospital.name,
+          })),
+        ]);
+      } catch (err) {
+        console.error('Failed to fetch hospitals:', err);
+      }
+    };
+
+    fetchHospitals();
+  }, []);
+
   // Diagnosis form state
   const [diagnosisName, setDiagnosisName] = useState('');
-  const [diagnosisNotes, setDiagnosisNotes] = useState('');
+  const [examinationNotes, setExaminationNotes] = useState('');
   const [followUpDate, setFollowUpDate] = useState('');
-  const [doctorRemarks, setDoctorRemarks] = useState('');
+  const [fitnessDecision, setFitnessDecision] = useState<FitnessDecision>(FitnessDecision.FIT);
+  const [requiresReferral, setRequiresReferral] = useState(false);
+  const [selectedHospitalId, setSelectedHospitalId] = useState('');
 
   // Prescriptions state
   const [prescriptions, setPrescriptions] = useState<PrescriptionInput[]>([
@@ -171,9 +203,11 @@ export const DoctorDashboard: React.FC = () => {
 
   const resetForm = () => {
     setDiagnosisName('');
-    setDiagnosisNotes('');
+    setExaminationNotes('');
     setFollowUpDate('');
-    setDoctorRemarks('');
+    setFitnessDecision(FitnessDecision.FIT);
+    setRequiresReferral(false);
+    setSelectedHospitalId('');
     setFieldErrors({});
     setPrescriptions([
       {
@@ -184,6 +218,191 @@ export const DoctorDashboard: React.FC = () => {
         instructions: '',
       },
     ]);
+  };
+
+  const escapeHtml = (value: unknown) =>
+    String(value ?? '-')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+  const formatFieldLabel = (value: string) =>
+    value
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
+  const formatDate = (value?: string) => {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString();
+  };
+
+  const formatTime = (value?: string) => {
+    if (!value) return '-';
+    const time = new Date(`2000-01-01T${value}`);
+    if (Number.isNaN(time.getTime())) return value;
+    return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const handlePrintVisit = () => {
+    if (!selectedVisit) return;
+
+    const employeeName = getVisitDisplayName(selectedVisit);
+    const doctorName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Doctor';
+    const logoUrl = new URL(receiptLogo, window.location.origin).href;
+    const vitalsSummary =
+      selectedVisit.vitals && Object.keys(selectedVisit.vitals).length > 0
+        ? Object.entries(selectedVisit.vitals)
+            .map(
+              ([key, value]) =>
+                `<div class="vital-chip"><strong>${escapeHtml(formatFieldLabel(key))}:</strong> ${escapeHtml(
+                  String(value),
+                )}</div>`,
+            )
+            .join('')
+        : 'No vitals recorded';
+    const prescriptionRows = prescriptions.filter((item) => item.medicine_name.trim() !== '');
+    const prescriptionsMarkup =
+      prescriptionRows.length > 0
+        ? `
+          <table class="medicine-table">
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Medicine</th>
+                <th>Frequency</th>
+                <th>Duration</th>
+                <th>Instructions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${prescriptionRows
+                .map(
+                  (prescription, index) => `
+                    <tr>
+                      <td>${index + 1}</td>
+                      <td>${escapeHtml([prescription.medicine_name, prescription.dosage].filter(Boolean).join(' ') || '-')}</td>
+                      <td>${escapeHtml(prescription.frequency || '-')}</td>
+                      <td>${escapeHtml(
+                        prescription.duration_days ? `${prescription.duration_days} day(s)` : '-',
+                      )}</td>
+                      <td>${escapeHtml(prescription.instructions || '-')}</td>
+                    </tr>
+                  `,
+                )
+                .join('')}
+            </tbody>
+          </table>
+        `
+        : '<div class="plain-line">No medicines added.</div>';
+    const selectedHospitalName =
+      hospitalOptions.find((hospital) => hospital.value === selectedHospitalId)?.label || '-';
+
+    const printHtml = `
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Doctor Visit Print</title>
+          <style>
+            @page { margin: 18mm; }
+            body { margin: 0; padding: 0; font-family: "Times New Roman", Georgia, serif; color: #111111; background: #ffffff; }
+            .sheet { max-width: 760px; margin: 0 auto; padding: 18px 24px 12px; }
+            .header { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; padding-bottom: 8px; border-bottom: 1px solid #111111; }
+            .logo { width: 150px; height: auto; display: block; }
+            .meta { text-align: right; font-size: 12px; line-height: 1.5; }
+            .section { padding: 8px 0 6px; border-bottom: 1px solid #111111; }
+            .section-title { margin: 0; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+            .row { display: flex; justify-content: flex-start; gap: 28px; flex-wrap: wrap; font-size: 12px; line-height: 1.45; margin-top: 4px; }
+            .row div { min-width: 210px; }
+            .single-line { font-size: 12px; line-height: 1.45; margin-top: 4px; }
+            .plain-line { font-size: 12px; line-height: 1.45; margin-top: 4px; }
+            .vitals-grid { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 6px; }
+            .vital-chip { font-size: 12px; line-height: 1.45; min-width: 140px; }
+            .medicine-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12px; }
+            .medicine-table th, .medicine-table td { border: 1px solid #111111; padding: 6px 8px; text-align: left; vertical-align: top; line-height: 1.35; }
+            .medicine-table th { font-weight: 700; background: #f4f4f4; }
+            .signature-wrap { display: flex; justify-content: flex-end; margin-top: 34px; }
+            .signature-box { width: 220px; text-align: center; }
+            .signature-mark { font-family: "Brush Script MT", "Segoe Script", cursive; font-size: 28px; line-height: 1; margin-bottom: 6px; }
+            .signature-name { font-size: 12px; margin-top: 4px; }
+          </style>
+        </head>
+        <body>
+          <div class="sheet">
+            <div class="header">
+              <img class="logo" src="${logoUrl}" alt="MediGPlus Healthcare logo" />
+              <div class="meta">
+                <div><strong>Date:</strong> ${escapeHtml(formatDate(selectedVisit.visit_date))}</div>
+                <div><strong>Time:</strong> ${escapeHtml(formatTime(selectedVisit.visit_time))}</div>
+                <div><strong>Visit No:</strong> ${escapeHtml(selectedVisit.id)}</div>
+              </div>
+            </div>
+
+            <section class="section">
+              <h2 class="section-title">Employee Details</h2>
+              <div class="single-line"><strong>Employee Name:</strong> ${escapeHtml(employeeName)}</div>
+              <div class="row">
+                <div><strong>Employee Code:</strong> ${escapeHtml(getVisitDisplayCode(selectedVisit))}</div>
+                <div><strong>Department:</strong> ${escapeHtml(getVisitDisplayDepartment(selectedVisit))}</div>
+              </div>
+            </section>
+
+            <section class="section">
+              <h2 class="section-title">Visit Notes</h2>
+              <div class="plain-line"><strong>Chief Complaint:</strong> ${escapeHtml(selectedVisit.chief_complaint || '-')}</div>
+              <div class="plain-line"><strong>Symptoms:</strong> ${escapeHtml(selectedVisit.symptoms || '-')}</div>
+              <div class="plain-line"><strong>Examination:</strong> ${escapeHtml(examinationNotes || '-')}</div>
+              <div class="plain-line"><strong>Diagnosis:</strong> ${escapeHtml(diagnosisName || '-')}</div>
+            </section>
+
+            <section class="section">
+              <h2 class="section-title">Vitals</h2>
+              <div class="vitals-grid">${vitalsSummary}</div>
+            </section>
+
+            <section class="section">
+              <h2 class="section-title">Referral</h2>
+              <div class="plain-line"><strong>Fitness Decision:</strong> ${escapeHtml(formatFieldLabel(fitnessDecision))}</div>
+              <div class="plain-line"><strong>Referral Required:</strong> ${escapeHtml(requiresReferral ? 'Yes' : 'No')}</div>
+              <div class="plain-line"><strong>Hospital:</strong> ${escapeHtml(requiresReferral ? selectedHospitalName : '-')}</div>
+              <div class="plain-line"><strong>Follow-up Date:</strong> ${escapeHtml(formatDate(followUpDate))}</div>
+            </section>
+
+            <section class="section">
+              <h2 class="section-title">Medicines</h2>
+              ${prescriptionsMarkup}
+            </section>
+
+            <div class="signature-wrap">
+              <div class="signature-box">
+                <div class="signature-mark">${escapeHtml(doctorName)}</div>
+                <div class="signature-name">${escapeHtml(doctorName)}</div>
+              </div>
+            </div>
+
+            <script>
+              window.onload = function () {
+                window.print();
+              };
+            </script>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank', 'width=960,height=900');
+    if (!printWindow) {
+      show('Unable to open print window. Please allow pop-ups and try again.', 'error');
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(printHtml);
+    printWindow.document.close();
   };
 
   const handleAddPrescription = () => {
@@ -230,6 +449,12 @@ export const DoctorDashboard: React.FC = () => {
       return;
     }
 
+    if (requiresReferral && !selectedHospitalId) {
+      setFieldErrors({ selectedHospitalId: 'Please select hospital' });
+      show('Please select a hospital for the referral', 'error');
+      return;
+    }
+
     const prescriptionValidation = validatePrescriptions(prescriptions);
     if (!prescriptionValidation.isValid) {
       const errorsMap = prescriptionValidation.errors.reduce((acc, err) => {
@@ -249,11 +474,12 @@ export const DoctorDashboard: React.FC = () => {
         visit: selectedVisit.id,
         diagnosis_code: '',
         diagnosis_name: diagnosisName,
-        diagnosis_notes: diagnosisNotes || '',
+        diagnosis_notes: examinationNotes || '',
         severity: 'MILD' as const,
         is_primary: true,
-        is_referral_required: false,
-        fitness_decision: 'FIT' as const,
+        is_referral_required: requiresReferral,
+        hospital: requiresReferral ? Number(selectedHospitalId) : undefined,
+        fitness_decision: fitnessDecision,
         work_restrictions: '',
         advised_rest_days: 0,
         follow_up_date: followUpDate || undefined,
@@ -380,13 +606,22 @@ export const DoctorDashboard: React.FC = () => {
         <Card className={styles.visitDetailCard}>
           <div className={styles.detailHeader}>
             <h3>Visit Details</h3>
-            <Button
-              type="button"
-              variant="outline-secondary"
-              onClick={handleCloseDetail}
-            >
-              Close
-            </Button>
+            <div className={styles.detailActions}>
+              <Button
+                type="button"
+                variant="outline-brand"
+                onClick={handlePrintVisit}
+              >
+                Print
+              </Button>
+              <Button
+                type="button"
+                variant="outline-secondary"
+                onClick={handleCloseDetail}
+              >
+                Close
+              </Button>
+            </div>
           </div>
 
           <div className={styles.detailContent}>
@@ -494,12 +729,12 @@ export const DoctorDashboard: React.FC = () => {
                           error={fieldErrors.diagnosisName}
                         />
                         <FormInput
-                          label="Doctor Remarks"
-                          value={doctorRemarks}
-                          onChange={(value) => { setDoctorRemarks(value); setFieldErrors(prev => ({ ...prev, doctorRemarks: '' })); }}
+                          label="Examination"
+                          value={examinationNotes}
+                          onChange={(value) => { setExaminationNotes(value); setFieldErrors(prev => ({ ...prev, examinationNotes: '' })); }}
                           type="textarea"
                           rows={3}
-                          placeholder="Additional remarks from doctor"
+                          placeholder="Enter examination findings"
                         />
                         <FormInput
                           label="Follow-up Date (Optional)"
@@ -507,6 +742,47 @@ export const DoctorDashboard: React.FC = () => {
                           value={followUpDate}
                           onChange={(value) => { setFollowUpDate(value); setFieldErrors(prev => ({ ...prev, followUpDate: '' })); }}
                         />
+                        <FormInput
+                          label="Fit / Unfit *"
+                          type="select"
+                          value={fitnessDecision}
+                          onChange={(value) => setFitnessDecision(value as FitnessDecision)}
+                          options={FITNESS_DECISION_OPTIONS}
+                          required
+                        />
+                      </div>
+
+                      <div className={styles.referralSection}>
+                        <label className={styles.checkboxRow}>
+                          <input
+                            type="checkbox"
+                            checked={requiresReferral}
+                            onChange={(event) => {
+                              const checked = event.target.checked;
+                              setRequiresReferral(checked);
+                              setFieldErrors((prev) => ({ ...prev, selectedHospitalId: '' }));
+                              if (!checked) {
+                                setSelectedHospitalId('');
+                              }
+                            }}
+                          />
+                          <span>Referral required</span>
+                        </label>
+
+                        {requiresReferral && (
+                          <FormInput
+                            label="Hospital Name *"
+                            type="select"
+                            value={selectedHospitalId}
+                            onChange={(value) => {
+                              setSelectedHospitalId(value);
+                              setFieldErrors((prev) => ({ ...prev, selectedHospitalId: '' }));
+                            }}
+                            options={hospitalOptions}
+                            required
+                            error={fieldErrors.selectedHospitalId}
+                          />
+                        )}
                       </div>
 
                       <h4>Medicine Given to Employee</h4>
@@ -518,7 +794,7 @@ export const DoctorDashboard: React.FC = () => {
                               className={styles.removePrescriptionBtn}
                               onClick={() => handleRemovePrescription(index)}
                             >
-                              ×
+                              Ã—
                             </button>
                           )}
                           <div className={styles.prescriptionForm}>
@@ -578,6 +854,13 @@ export const DoctorDashboard: React.FC = () => {
                     </div>
 
                     <div className={styles.formActions}>
+                      <Button
+                        type="button"
+                        variant="outline-brand"
+                        onClick={handlePrintVisit}
+                      >
+                        Print
+                      </Button>
                       <Button
                         type="button"
                         variant="outline-secondary"

@@ -16,7 +16,7 @@ export const AHCStatisticsCard: React.FC<AHCStatisticsCardProps> = ({
     return (
       <Card className={styles.card}>
         <div className={styles.header}>
-          <h3>📅 Annual Health Checkup</h3>
+          <h3>Annual Health Checkup</h3>
         </div>
         <div className={styles.loadingState}>
           <div className={styles.skeleton}></div>
@@ -33,8 +33,8 @@ export const AHCStatisticsCard: React.FC<AHCStatisticsCardProps> = ({
   return (
     <Card className={styles.card}>
       <div className={styles.header}>
-        <h3>📅 Annual Health Checkup</h3>
-        <span className={styles.todayBadge}>Today: {statistics.today_count}</span>
+        <h3>Annual Health Checkup</h3>
+        <span className={styles.todayBadge}>Today: {statistics.today_count} cases</span>
       </div>
 
       <div className={styles.completionSection}>
@@ -50,8 +50,8 @@ export const AHCStatisticsCard: React.FC<AHCStatisticsCardProps> = ({
               background: statistics.completion_percentage >= 80
                 ? '#10b981'
                 : statistics.completion_percentage >= 60
-                ? '#f59e0b'
-                : '#dc2626',
+                  ? '#f59e0b'
+                  : '#dc2626',
             }}
           />
         </div>

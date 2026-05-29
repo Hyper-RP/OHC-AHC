@@ -9,7 +9,6 @@ import { listMedicines } from '../../services/medicine';
 import {
   ChartContainer,
   DashboardMetricsChart,
-  SeverityPieChart,
   DiagnosisTrendLineChart,
   OperationalBarChart,
 } from '../charts';
@@ -37,6 +36,7 @@ type SummaryTrendPoint = {
   ohcVisits: number;
   preamtiveCheckUps: number;
   annualCheckup: number;
+  referralCases: number;
   emergencyCount: number;
   incidentCount: number;
 };
@@ -47,6 +47,7 @@ type MetricKey =
   | 'ohcVisits'
   | 'preamtiveCheckUps'
   | 'annualCheckup'
+  | 'referralCases'
   | 'emergencyCount'
   | 'incidentCount';
 
@@ -60,12 +61,6 @@ type DepartmentPoint = {
 };
 
 type DepartmentMetricKey = 'visits' | 'preamtiveCheckUps' | 'annualCheckup';
-
-type SeverityPoint = {
-  severity: 'MILD' | 'MODERATE' | 'SEVERE' | 'CRITICAL';
-  count: number;
-  color: string;
-};
 
 type DiagnosisTrendPoint = {
   diagnosis: string;
@@ -88,7 +83,6 @@ type OperationalBarPoint = {
 type ChartState = {
   summaryTrends: Record<TrendGranularity, SummaryTrendPoint[]>;
   departmentComparison: DepartmentPoint[];
-  severityBreakdown: SeverityPoint[];
   diagnosisTrends: DiagnosisTrendPoint[];
   medicineUsageBreakdown: OperationalBarPoint[];
   bioWasteBreakdown: OperationalBarPoint[];
@@ -120,25 +114,9 @@ const emptyCharts: ChartState = {
     yearly: [],
   },
   departmentComparison: [],
-  severityBreakdown: [],
   diagnosisTrends: [],
   medicineUsageBreakdown: [],
   bioWasteBreakdown: [],
-};
-
-const getSeverityColor = (severity: string) => {
-  switch (severity) {
-    case 'MILD':
-      return '#10b981';
-    case 'MODERATE':
-      return '#f59e0b';
-    case 'SEVERE':
-      return '#f97316';
-    case 'CRITICAL':
-      return '#ef4444';
-    default:
-      return '#6b7280';
-  }
 };
 
 const formatRelativeTime = (dateValue?: string) => {
@@ -260,6 +238,7 @@ const buildSummaryTrends = (visits: DashboardVisit[], granularity: TrendGranular
         ohcVisits: 0,
         preamtiveCheckUps: 0,
         annualCheckup: 0,
+        referralCases: 0,
         emergencyCount: 0,
         incidentCount: 0,
       });
@@ -274,6 +253,10 @@ const buildSummaryTrends = (visits: DashboardVisit[], granularity: TrendGranular
 
     if (visit.visit_type === 'PERIODIC') {
       bucket.annualCheckup += 1;
+    }
+
+    if (visit.requires_referral || visit.visit_status === 'REFERRED') {
+      bucket.referralCases += 1;
     }
 
     if (isEmergencyVisit(visit)) {
@@ -409,10 +392,10 @@ const buildActivityFeed = (visits: DashboardVisit[]): ActivityItem[] =>
       title = 'Emergency Case';
       tag = 'Emergency';
     } else if (visit.visit_type === 'PRE_EMPLOYMENT') {
-      title = 'Preamtive Check Up';
+      title = 'Pre-employement Check Up';
       tag = 'Preventive';
     } else if (visit.visit_type === 'PERIODIC') {
-      title = 'Annual Checkup';
+      title = 'Annual Health Checkup';
       tag = 'Annual';
     }
 
@@ -485,6 +468,7 @@ export const Dashboard: React.FC = () => {
     ohcVisits: 'monthly',
     preamtiveCheckUps: 'monthly',
     annualCheckup: 'monthly',
+    referralCases: 'monthly',
     emergencyCount: 'monthly',
     incidentCount: 'monthly',
   });
@@ -557,14 +541,6 @@ export const Dashboard: React.FC = () => {
             yearly: buildSummaryTrends(visits, 'yearly'),
           },
           departmentComparison: buildDepartmentComparison(visits),
-          severityBreakdown: analytics
-            ? [
-              { severity: 'MILD', count: analytics.severity_wise.LOW, color: getSeverityColor('MILD') },
-              { severity: 'MODERATE', count: analytics.severity_wise.MEDIUM, color: getSeverityColor('MODERATE') },
-              { severity: 'SEVERE', count: analytics.severity_wise.HIGH, color: getSeverityColor('SEVERE') },
-              { severity: 'CRITICAL', count: analytics.severity_wise.CRITICAL, color: getSeverityColor('CRITICAL') },
-            ]
-            : [],
           diagnosisTrends: buildDiagnosisTrends(visits),
           medicineUsageBreakdown: buildMedicineUsageBreakdown(medicines, medicineSummary),
           bioWasteBreakdown: buildBioWasteBreakdown(visits),
@@ -573,14 +549,6 @@ export const Dashboard: React.FC = () => {
       } else {
         setChartData((current) => ({
           ...current,
-          severityBreakdown: analytics
-            ? [
-              { severity: 'MILD', count: analytics.severity_wise.LOW, color: getSeverityColor('MILD') },
-              { severity: 'MODERATE', count: analytics.severity_wise.MEDIUM, color: getSeverityColor('MODERATE') },
-              { severity: 'SEVERE', count: analytics.severity_wise.HIGH, color: getSeverityColor('SEVERE') },
-              { severity: 'CRITICAL', count: analytics.severity_wise.CRITICAL, color: getSeverityColor('CRITICAL') },
-            ]
-            : [],
           medicineUsageBreakdown: buildMedicineUsageBreakdown(medicines, medicineSummary),
           bioWasteBreakdown: [],
         }));
@@ -668,28 +636,35 @@ export const Dashboard: React.FC = () => {
     },
     {
       key: 'preamtiveCheckUps',
-      title: 'Preamtive Check Ups',
-      description: 'Monthly trend for preamtive health checks.',
+      title: 'Pre-employement Check Ups',
+      description: 'Monthly trend for pre-employement health checks.',
       color: '#f0b24b',
       detailRoute: '/dashboard/metric-details/preamtive-check-ups',
     },
     {
       key: 'annualCheckup',
-      title: 'Annual Checkup',
-      description: 'Monthly trend for annual checkup cases.',
+      title: 'Annual Health Checkup',
+      description: 'Monthly trend for annual health checkup cases.',
       color: '#5aa488',
       detailRoute: '/dashboard/metric-details/annual-checkup',
     },
     {
+      key: 'referralCases',
+      title: 'Referral Cases',
+      description: 'Monthly trend for referral cases.',
+      color: '#2563eb',
+      detailRoute: '/dashboard/metric-details/referral-cases',
+    },
+    {
       key: 'emergencyCount',
-      title: 'Emergency Count',
+      title: 'Emergency Cases',
       description: 'Monthly trend for emergency cases.',
       color: '#d95f5f',
       detailRoute: '/dashboard/metric-details/emergency-count',
     },
     {
       key: 'incidentCount',
-      title: 'Incident Count',
+      title: 'Incident Cases',
       description: 'Monthly trend for incident cases.',
       color: '#7b6fd6',
       detailRoute: '/dashboard/metric-details/incident-count',
@@ -710,14 +685,14 @@ export const Dashboard: React.FC = () => {
     },
     {
       key: 'preamtiveCheckUps',
-      title: 'Department-wise Preamtive',
-      description: 'Preamtive check ups by department',
+      title: 'Department-wise Pre-employement',
+      description: 'Pre-employement check ups by department',
       detailRoute: '/dashboard/department-details/preamtive',
     },
     {
       key: 'annualCheckup',
-      title: 'Department-wise Annual',
-      description: 'Annual checkup counts by department',
+      title: 'Department-wise Annual Health Checkup',
+      description: 'Annual health checkup cases by department',
       detailRoute: '/dashboard/department-details/annual',
     },
   ];
@@ -735,13 +710,13 @@ export const Dashboard: React.FC = () => {
   );
 
   const granularityOptions: Array<{ value: TrendGranularity; label: string }> = [
-    { value: 'daily', label: 'Daily' },
+    { value: 'daily', label: 'Today' },
     { value: 'monthly', label: 'Monthly' },
     { value: 'yearly', label: 'Yearly' },
   ];
 
   const granularityLabels: Record<TrendGranularity, string> = {
-    daily: 'Daily',
+    daily: 'Today',
     monthly: 'Monthly',
     yearly: 'Yearly',
   };
@@ -951,18 +926,6 @@ export const Dashboard: React.FC = () => {
             ))}
           </div>
           <div className={styles.chartsGrid}>
-
-            <ChartContainer
-              title="Severity Breakdown"
-              description="Case severity distribution"
-              loading={chartLoading}
-              error={chartError}
-              empty={chartData.severityBreakdown.length === 0}
-              className={styles.chartCard}
-            >
-              <SeverityPieChart data={chartData.severityBreakdown} height={300} />
-            </ChartContainer>
-
             <ChartContainer
               title="Medicine Usage"
               description="Top used medicines from live stock records"

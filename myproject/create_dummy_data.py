@@ -1,282 +1,468 @@
 """
-Script to create dummy data for testing the OHC workflow:
-Nurse → Doctor → Pharmacist → EHS/Management reports
+Script to create large dummy data for testing the OHC workflow:
+Nurse -> Doctor -> Pharmacist -> EHS/Management reports
+
+Examples:
+  python create_dummy_data.py
+  python create_dummy_data.py --records 1500 --employees 320
 """
 
+import argparse
 import os
+import random
+from datetime import timedelta
+
 import django
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myproject.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myproject.settings")
 django.setup()
 
+from django.db import transaction
 from django.utils import timezone
-from datetime import datetime, timedelta
 
-from accounts.models import User, EmployeeProfile, DoctorProfile
-from ohc.models import OHCVisit, Diagnosis, Prescription, MedicineStock, MedicineDispense
+from accounts.models import DoctorProfile, EmployeeProfile, User
+from ahc.models import Hospital, Referral
+from ohc.models import Diagnosis, MedicineDispense, MedicineStock, OHCVisit, Prescription
 
-def create_dummy_data():
-    print("=" * 60)
-    print("Creating Dummy Data for OHC Workflow")
-    print("=" * 60)
 
-    # Step 1: Create a test employee (for patient)
-    print("\n1. Creating test employee...")
+DEPARTMENTS = [
+    "Engineering",
+    "Manufacturing",
+    "Quality",
+    "Safety",
+    "Operations",
+    "HR",
+    "Finance",
+    "Administration",
+    "Maintenance",
+    "Logistics",
+]
+
+DESIGNATIONS = [
+    "Operator",
+    "Engineer",
+    "Supervisor",
+    "Executive",
+    "Manager",
+    "Technician",
+    "Coordinator",
+]
+
+COMPLAINTS = [
+    ("Fever and body pain", "fever, headache, weakness"),
+    ("Back pain", "lower back pain after long shift"),
+    ("Cough and cold", "cough, throat irritation, sneezing"),
+    ("Headache", "persistent headache and eye strain"),
+    ("Minor cut injury", "cut on hand while operating equipment"),
+    ("Stomach upset", "acidity, nausea, stomach discomfort"),
+    ("Dizziness", "lightheadedness and fatigue"),
+    ("Knee pain", "pain while walking and climbing stairs"),
+    ("Chest discomfort", "mild chest pain and breathing discomfort"),
+    ("Skin irritation", "itching and redness on forearm"),
+]
+
+DIAGNOSES = [
+    "Viral Fever",
+    "Muscle Strain",
+    "Upper Respiratory Infection",
+    "Migraine",
+    "Minor Laceration",
+    "Gastritis",
+    "Fatigue",
+    "Joint Pain",
+    "Observation Required",
+    "Dermatitis",
+]
+
+MEDICINE_CATALOG = [
+    {
+        "medicine_id": "MED001",
+        "name": "Paracetamol",
+        "unit": "Tablet",
+        "stock_quantity": 4000,
+        "initial_stock": 4000,
+        "supplier": "PharmaCorp",
+        "batch_number": "B001",
+        "reorder_level": 200,
+    },
+    {
+        "medicine_id": "MED002",
+        "name": "Amoxicillin",
+        "unit": "Capsule",
+        "stock_quantity": 2400,
+        "initial_stock": 2400,
+        "supplier": "MediHealth",
+        "batch_number": "B002",
+        "reorder_level": 150,
+    },
+    {
+        "medicine_id": "MED003",
+        "name": "Ibuprofen",
+        "unit": "Tablet",
+        "stock_quantity": 3000,
+        "initial_stock": 3000,
+        "supplier": "PharmaCorp",
+        "batch_number": "B003",
+        "reorder_level": 180,
+    },
+    {
+        "medicine_id": "MED004",
+        "name": "Cetirizine",
+        "unit": "Tablet",
+        "stock_quantity": 1800,
+        "initial_stock": 1800,
+        "supplier": "LifeCare",
+        "batch_number": "B004",
+        "reorder_level": 120,
+    },
+    {
+        "medicine_id": "MED005",
+        "name": "Pantoprazole",
+        "unit": "Tablet",
+        "stock_quantity": 2200,
+        "initial_stock": 2200,
+        "supplier": "HealthPlus",
+        "batch_number": "B005",
+        "reorder_level": 140,
+    },
+]
+
+HOSPITALS = [
+    {
+        "code": "HSP001",
+        "name": "City Care Hospital",
+        "address_line_1": "101 Main Road",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "specialties": ["General Medicine", "Orthopedics"],
+    },
+    {
+        "code": "HSP002",
+        "name": "Sunrise Multispeciality",
+        "address_line_1": "22 Lake View",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "specialties": ["Cardiology", "Pulmonology"],
+    },
+    {
+        "code": "HSP003",
+        "name": "Metro Health Center",
+        "address_line_1": "78 Industrial Belt",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "specialties": ["Emergency", "Trauma"],
+    },
+]
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Create bulk dummy OHC data.")
+    parser.add_argument("--records", type=int, default=1500, help="Number of dummy visits to create.")
+    parser.add_argument("--employees", type=int, default=320, help="Number of dummy employees to create.")
+    return parser.parse_args()
+
+
+def ensure_doctor_profile():
     try:
-        employee_user = User.objects.get(username='john_doe')
-        print(f"  Employee already exists: {employee_user.username}")
-    except User.DoesNotExist:
-        employee_user = User.objects.create_user(
-            username='john_doe',
-            email='john.doe@example.com',
-            password='Test@12345',
-            first_name='John',
-            last_name='Doe',
-            role=User.Role.EMPLOYEE,
-            is_verified=True,
-            phone_number='9876543210'
-        )
-        employee_profile = EmployeeProfile.objects.create(
-            user=employee_user,
-            employee_code='EMP-001',
-            department='Engineering',
-            designation='Software Engineer',
-            gender='MALE'
-        )
-        print(f"  Created employee: {employee_user.first_name} {employee_user.last_name} ({employee_profile.employee_code})")
-
-    # Step 2: Create some medicine stock
-    print("\n2. Creating medicine stock...")
-    medicines = [
-        {
-            'medicine_id': 'MED001',
-            'name': 'Paracetamol',
-            'unit': 'Tablet',
-            'stock_quantity': 100,
-            'initial_stock': 100,
-            'supplier': 'PharmaCorp',
-            'batch_number': 'B001',
-            'reorder_level': 10
-        },
-        {
-            'medicine_id': 'MED002',
-            'name': 'Amoxicillin',
-            'unit': 'Capsule',
-            'stock_quantity': 50,
-            'initial_stock': 50,
-            'supplier': 'MediHealth',
-            'batch_number': 'B002',
-            'reorder_level': 15
-        },
-        {
-            'medicine_id': 'MED003',
-            'name': 'Ibuprofen',
-            'unit': 'Tablet',
-            'stock_quantity': 75,
-            'initial_stock': 75,
-            'supplier': 'PharmaCorp',
-            'batch_number': 'B003',
-            'reorder_level': 20
-        },
-    ]
-
-    created_medicines = []
-    for med_data in medicines:
-        medicine, created = MedicineStock.objects.get_or_create(
-            medicine_id=med_data['medicine_id'],
-            defaults=med_data
-        )
-        if created:
-            print(f"  Created: {medicine.name} (Stock: {medicine.stock_quantity} {medicine.unit})")
-        else:
-            print(f"  Exists: {medicine.name}")
-        created_medicines.append(medicine)
-
-    # Step 3: Get doctor and employee profiles
-    print("\n3. Getting profiles...")
-    try:
-        doctor_profile = DoctorProfile.objects.get(user__username='doctor_test')
-        print(f"  Doctor: {doctor_profile.user.first_name} {doctor_profile.user.last_name}")
+        return DoctorProfile.objects.get(user__username="doctor_test")
     except DoctorProfile.DoesNotExist:
-        print("  Error: doctor_test profile not found. Please ensure doctor_test exists.")
-        return
+        raise RuntimeError("doctor_test profile not found. Please seed test users first.")
 
-    try:
-        employee_profile = EmployeeProfile.objects.get(employee_code='EMP-001')
-        print(f"  Employee: {employee_profile.user.first_name} {employee_profile.user.last_name}")
-    except EmployeeProfile.DoesNotExist:
-        employee_profile = EmployeeProfile.objects.filter(user__role=User.Role.EMPLOYEE).first()
-        if not employee_profile:
-            print("  Error: No employee profile found.")
-            return
-        print(f"  Employee: {employee_profile.user.first_name} {employee_profile.user.last_name}")
 
-    # Step 4: Create an OPEN visit (simulating Nurse submission)
-    print("\n4. Creating OPEN visit (Nurse submitted)...")
-    visit, created = OHCVisit.objects.get_or_create(
-        employee=employee_profile,
-        consulted_doctor=doctor_profile,
-        visit_date=timezone.now().date(),
-        defaults={
-            'visit_type': OHCVisit.VisitType.WALK_IN,
-            'visit_status': OHCVisit.VisitStatus.OPEN,
-            'triage_level': OHCVisit.TriageLevel.MEDIUM,
-            'visit_time': timezone.now().time(),
-            'patient_name': f'{employee_profile.user.first_name} {employee_profile.user.last_name}',
-            'patient_age': 30,
-            'patient_gender': 'MALE',
-            'patient_contact': employee_profile.user.phone_number or '9876543210',
-            'vitals': {
-                'temperature': '99.2',
-                'blood_pressure': '125/82',
-                'pulse': '78',
-                'spo2': '98',
-                'weight': '70',
-                'height': '172'
-            }
-        }
-    )
+def ensure_pharmacist_user():
+    return User.objects.filter(username="pharmacist_test").first()
 
-    if created:
-        print(f"  Created Visit ID: {visit.id}")
-        print(f"  Status: {visit.visit_status}")
-        print(f"  Assigned to: {visit.consulted_doctor.user.username}")
-    else:
-        print(f"  Visit already exists: {visit.id}")
 
-    # Step 5: Create diagnosis with prescriptions (simulating Doctor submission)
-    print("\n5. Creating diagnosis with prescriptions (Doctor submitted)...")
-    diagnosis, created = Diagnosis.objects.get_or_create(
-        visit=visit,
-        diagnosed_by=doctor_profile,
-        diagnosis_name='Upper Respiratory Tract Infection',
-        defaults={
-            'diagnosis_code': 'J06.9',
-            'diagnosis_notes': 'Patient presents with symptoms of common cold. Vital signs are within normal range.',
-            'severity': Diagnosis.Severity.MILD,
-            'fitness_decision': Diagnosis.FitnessDecision.FIT,
-            'is_primary': True,
-            'is_referral_required': False,
-            'follow_up_date': timezone.now().date() + timedelta(days=7)
-        }
-    )
-
-    if created:
-        print(f"  Created Diagnosis ID: {diagnosis.id}")
-    else:
-        print(f"  Diagnosis already exists: {diagnosis.id}")
-
-    # Create prescriptions
-    prescriptions_data = [
-        {
-            'medicine_name': 'Paracetamol',
-            'dosage': '500mg',
-            'frequency': 'Twice daily',
-            'duration_days': 5,
-            'instructions': 'Take after meals',
-            'start_date': timezone.now().date(),
-            'status': Prescription.PrescriptionStatus.ACTIVE
-        },
-        {
-            'medicine_name': 'Ibuprofen',
-            'dosage': '400mg',
-            'frequency': 'Three times daily',
-            'duration_days': 3,
-            'instructions': 'Take with food',
-            'start_date': timezone.now().date(),
-            'status': Prescription.PrescriptionStatus.ACTIVE
-        }
-    ]
-
-    created_prescriptions = []
-    for presc_data in prescriptions_data:
-        prescription, created = Prescription.objects.get_or_create(
-            visit=visit,
-            diagnosis=diagnosis,
-            medicine_name=presc_data['medicine_name'],
-            prescribed_by=doctor_profile,
-            defaults=presc_data
+def ensure_medicines():
+    medicines = []
+    for med_data in MEDICINE_CATALOG:
+        medicine, _ = MedicineStock.objects.get_or_create(
+            medicine_id=med_data["medicine_id"],
+            defaults=med_data,
         )
-        if created:
-            print(f"  Created Prescription: {prescription.medicine_name}")
-        created_prescriptions.append(prescription)
+        medicines.append(medicine)
+    return medicines
 
-    # Step 6: Update visit status (Doctor submitted to Pharmacist)
-    visit.visit_status = OHCVisit.VisitStatus.IN_PROGRESS
-    visit.save()
-    print(f"  Visit status updated to: {visit.visit_status}")
 
-    # Get pharmacist user for dispense record
-    try:
-        pharmacist_user = User.objects.get(username='pharmacist_test')
-        print(f"  Pharmacist: {pharmacist_user.first_name} {pharmacist_user.last_name}")
-    except User.DoesNotExist:
-        print("  Warning: pharmacist_test user not found")
-        pharmacist_user = None
+def ensure_hospitals():
+    hospitals = []
+    for hospital_data in HOSPITALS:
+        hospital, _ = Hospital.objects.get_or_create(
+            code=hospital_data["code"],
+            defaults={
+                **hospital_data,
+                "hospital_status": Hospital.HospitalStatus.ACTIVE,
+                "supports_cashless": True,
+                "is_available_for_video": False,
+            },
+        )
+        hospitals.append(hospital)
+    return hospitals
 
-    # Step 7: Simulate Pharmacist dispensing one medicine
-    print("\n6. Simulating Pharmacist dispensing medicine...")
-    paracetamol = created_medicines[0]  # Paracetamol
-    first_prescription = created_prescriptions[0]  # Paracetamol prescription
 
-    dispense_data = {
-        'medicine': paracetamol,
-        'visit': visit,
-        'prescription': first_prescription,
-        'dispensed_by': pharmacist_user,
-        'quantity_dispensed': 10,  # 10 tablets (5 days * 2 per day)
-        'quantity_remaining': paracetamol.stock_quantity - 10,
-        'issue_date': timezone.now().date(),
-        'remarks': 'Dispensed as per doctor prescription'
-    }
+def ensure_employees(total_employees):
+    employees = []
 
-    dispense, created = MedicineDispense.objects.get_or_create(
-        visit=visit,
-        prescription=first_prescription,
-        medicine=paracetamol,
-        defaults=dispense_data
-    )
+    for index in range(1, total_employees + 1):
+        employee_code = f"DUMMY-EMP-{index:04d}"
+        username = f"dummy_emp_{index:04d}"
 
-    if created:
-        # Update medicine stock
-        paracetamol.used_quantity += dispense.quantity_dispensed
-        paracetamol.stock_quantity = paracetamol.initial_stock - paracetamol.used_quantity
-        paracetamol.last_dispensed_at = timezone.now()
-        paracetamol.save()
-        print(f"  Dispensed: {paracetamol.name} ({dispense.quantity_dispensed} units)")
-        print(f"  Stock updated: {paracetamol.stock_quantity} remaining")
-    else:
-        print(f"  Dispense record already exists")
+        user, user_created = User.objects.get_or_create(
+            username=username,
+            defaults={
+                "email": f"{username}@example.com",
+                "first_name": f"Emp{index:04d}",
+                "last_name": random.choice(["Patil", "Sharma", "Khan", "Iyer", "Das", "Joshi"]),
+                "role": User.Role.EMPLOYEE,
+                "is_verified": True,
+                "phone_number": f"98{index:08d}"[-10:],
+            },
+        )
+        if user_created:
+            user.set_password("Test@12345")
+            user.save(update_fields=["password"])
 
-    # Step 7: Update visit to COMPLETED (Pharmacist finished)
-    visit.visit_status = OHCVisit.VisitStatus.COMPLETED
-    visit.closed_at = timezone.now()
-    visit.save()
-    print(f"  Visit status updated to: {visit.visit_status}")
+        employee, _ = EmployeeProfile.objects.get_or_create(
+            user=user,
+            defaults={
+                "employee_code": employee_code,
+                "department": random.choice(DEPARTMENTS),
+                "designation": random.choice(DESIGNATIONS),
+                "gender": random.choice(["MALE", "FEMALE"]),
+            },
+        )
+
+        if not employee.employee_code:
+            employee.employee_code = employee_code
+            employee.save(update_fields=["employee_code"])
+
+        employees.append(employee)
+
+    return employees
+
+
+def pick_visit_type(index):
+    if index % 15 == 0:
+        return OHCVisit.VisitType.PRE_EMPLOYMENT
+    if index % 10 == 0:
+        return OHCVisit.VisitType.PERIODIC
+    if index % 9 == 0:
+        return OHCVisit.VisitType.EMERGENCY
+    if index % 6 == 0:
+        return OHCVisit.VisitType.FOLLOW_UP
+    return OHCVisit.VisitType.WALK_IN
+
+
+def pick_triage(visit_type, complaint):
+    complaint_lower = complaint.lower()
+    if visit_type == OHCVisit.VisitType.EMERGENCY or "chest" in complaint_lower:
+        return random.choice([OHCVisit.TriageLevel.HIGH, OHCVisit.TriageLevel.CRITICAL])
+    if "injury" in complaint_lower or "cut" in complaint_lower:
+        return random.choice([OHCVisit.TriageLevel.MEDIUM, OHCVisit.TriageLevel.HIGH])
+    return random.choice([OHCVisit.TriageLevel.LOW, OHCVisit.TriageLevel.MEDIUM])
+
+
+def pick_fitness_decision(visit_type, triage_level):
+    if visit_type == OHCVisit.VisitType.PRE_EMPLOYMENT:
+        return random.choices(
+            [
+                Diagnosis.FitnessDecision.FIT,
+                Diagnosis.FitnessDecision.FIT_WITH_RESTRICTION,
+                Diagnosis.FitnessDecision.TEMPORARY_UNFIT,
+                Diagnosis.FitnessDecision.UNFIT,
+            ],
+            weights=[70, 15, 10, 5],
+            k=1,
+        )[0]
+
+    if triage_level == OHCVisit.TriageLevel.CRITICAL:
+        return Diagnosis.FitnessDecision.TEMPORARY_UNFIT
+    if triage_level == OHCVisit.TriageLevel.HIGH:
+        return random.choice(
+            [Diagnosis.FitnessDecision.FIT_WITH_RESTRICTION, Diagnosis.FitnessDecision.TEMPORARY_UNFIT]
+        )
+    return Diagnosis.FitnessDecision.FIT
+
+
+@transaction.atomic
+def create_dummy_data(total_records=1500, total_employees=320):
+    print("=" * 60)
+    print("Creating Bulk Dummy Data for OHC Workflow")
+    print("=" * 60)
+    print(f"Target visits: {total_records}")
+    print(f"Target employees: {total_employees}")
+
+    doctor_profile = ensure_doctor_profile()
+    pharmacist_user = ensure_pharmacist_user()
+    medicines = ensure_medicines()
+    hospitals = ensure_hospitals()
+    employees = ensure_employees(total_employees)
+
+    created_visits = 0
+    created_diagnoses = 0
+    created_prescriptions = 0
+    created_referrals = 0
+    created_dispenses = 0
+
+    today = timezone.now()
+
+    print("\nCreating visits, diagnoses, prescriptions, and referrals...")
+
+    for index in range(1, total_records + 1):
+        employee = random.choice(employees)
+        complaint, symptoms = random.choice(COMPLAINTS)
+        diagnosis_name = random.choice(DIAGNOSES)
+        visit_type = pick_visit_type(index)
+        visit_date = (today - timedelta(days=random.randint(0, 365))).date()
+        visit_time = (today - timedelta(minutes=random.randint(0, 720))).time().replace(microsecond=0)
+        triage_level = pick_triage(visit_type, complaint)
+        fitness_decision = pick_fitness_decision(visit_type, triage_level)
+        severity = (
+            Diagnosis.Severity.CRITICAL
+            if triage_level == OHCVisit.TriageLevel.CRITICAL
+            else Diagnosis.Severity.SERIOUS
+            if triage_level == OHCVisit.TriageLevel.HIGH
+            else Diagnosis.Severity.MODERATE
+            if triage_level == OHCVisit.TriageLevel.MEDIUM
+            else Diagnosis.Severity.MILD
+        )
+        requires_referral = triage_level in {OHCVisit.TriageLevel.HIGH, OHCVisit.TriageLevel.CRITICAL} or index % 8 == 0
+
+        visit = OHCVisit.objects.create(
+            employee=employee,
+            consulted_doctor=doctor_profile,
+            visit_type=visit_type,
+            visit_status=(
+                OHCVisit.VisitStatus.REFERRED
+                if requires_referral
+                else random.choice(
+                    [
+                        OHCVisit.VisitStatus.OPEN,
+                        OHCVisit.VisitStatus.IN_PROGRESS,
+                        OHCVisit.VisitStatus.COMPLETED,
+                    ]
+                )
+            ),
+            triage_level=triage_level,
+            visit_date=visit_date,
+            visit_time=visit_time,
+            patient_name=f"{employee.user.first_name} {employee.user.last_name}",
+            patient_age=random.randint(20, 58),
+            patient_gender=employee.gender or random.choice(["MALE", "FEMALE"]),
+            patient_contact=employee.user.phone_number or "9876543210",
+            chief_complaint=complaint,
+            symptoms=symptoms,
+            preliminary_notes=f"Auto-generated dummy visit #{index}",
+            requires_referral=requires_referral,
+            follow_up_date=(visit_date + timedelta(days=7)) if index % 5 == 0 else None,
+            next_action="FOLLOW_UP" if index % 5 == 0 else ("REFER_TO_AHC" if requires_referral else ""),
+            vitals={
+                "temperature": f"{98 + random.randint(0, 3)}.{random.randint(0, 9)}",
+                "blood_pressure": f"{110 + random.randint(0, 25)}/{70 + random.randint(0, 18)}",
+                "pulse": str(70 + random.randint(0, 25)),
+                "spo2": str(95 + random.randint(0, 4)),
+                "weight": str(52 + random.randint(0, 28)),
+                "height": str(150 + random.randint(0, 25)),
+            },
+        )
+        created_visits += 1
+
+        diagnosis = Diagnosis.objects.create(
+            visit=visit,
+            diagnosed_by=doctor_profile,
+            diagnosis_code=f"DX-{index:05d}",
+            diagnosis_name=diagnosis_name,
+            diagnosis_notes=f"Auto-generated diagnosis for {complaint.lower()}",
+            severity=severity,
+            fitness_decision=fitness_decision,
+            is_primary=True,
+            is_referral_required=requires_referral,
+            follow_up_date=visit.follow_up_date,
+            advised_rest_days=random.choice([0, 2, 3, 5]) if fitness_decision != Diagnosis.FitnessDecision.FIT else 0,
+            work_restrictions="" if fitness_decision == Diagnosis.FitnessDecision.FIT else "Restricted duty",
+        )
+        created_diagnoses += 1
+
+        prescription_count = 1 if visit_type == OHCVisit.VisitType.PRE_EMPLOYMENT else random.randint(1, 2)
+        selected_medicines = random.sample(medicines, k=min(prescription_count, len(medicines)))
+
+        for medicine in selected_medicines:
+            prescription = Prescription.objects.create(
+                visit=visit,
+                diagnosis=diagnosis,
+                prescribed_by=doctor_profile,
+                medicine_name=medicine.name,
+                dosage=random.choice(["250mg", "400mg", "500mg", "1 tablet"]),
+                frequency=random.choice(["Once daily", "Twice daily", "Three times daily"]),
+                duration_days=random.randint(3, 7),
+                instructions=random.choice(["Take after meals", "Take with water", "Use as directed"]),
+                start_date=visit_date,
+                status=Prescription.PrescriptionStatus.ACTIVE,
+            )
+            created_prescriptions += 1
+
+            if pharmacist_user and visit.visit_status == OHCVisit.VisitStatus.COMPLETED:
+                quantity_dispensed = random.randint(4, 12)
+                MedicineDispense.objects.create(
+                    medicine=medicine,
+                    visit=visit,
+                    prescription=prescription,
+                    dispensed_by=pharmacist_user,
+                    quantity_dispensed=quantity_dispensed,
+                    quantity_remaining=max(medicine.stock_quantity - quantity_dispensed, 0),
+                    issue_date=visit_date,
+                    remarks="Auto-generated dispense entry",
+                )
+                medicine.used_quantity += quantity_dispensed
+                medicine.stock_quantity = max(medicine.stock_quantity - quantity_dispensed, 0)
+                medicine.last_dispensed_at = timezone.now()
+                medicine.save(update_fields=["used_quantity", "stock_quantity", "last_dispensed_at", "updated_at"])
+                created_dispenses += 1
+
+        if requires_referral:
+            Referral.objects.create(
+                visit=visit,
+                diagnosis=diagnosis,
+                employee=employee,
+                referred_by=doctor_profile,
+                hospital=random.choice(hospitals),
+                referral_reason=diagnosis.diagnosis_notes,
+                specialist_department=diagnosis_name,
+                priority=(
+                    Referral.ReferralPriority.EMERGENCY
+                    if triage_level == OHCVisit.TriageLevel.CRITICAL
+                    else Referral.ReferralPriority.URGENT
+                ),
+                referral_status=random.choice(
+                    [
+                        Referral.ReferralStatus.SENT,
+                        Referral.ReferralStatus.ACCEPTED,
+                        Referral.ReferralStatus.IN_TREATMENT,
+                    ]
+                ),
+            )
+            created_referrals += 1
+
+        if index % 250 == 0:
+            print(f"  Created {index} / {total_records} visits...")
 
     print("\n" + "=" * 60)
-    print("Dummy Data Creation Complete!")
+    print("Bulk Dummy Data Creation Complete")
     print("=" * 60)
-
-    # Summary
-    print("\nWorkflow Summary:")
-    print(f"  Patient: {employee_profile.user.first_name} {employee_profile.user.last_name}")
-    print(f"  Visit ID: {visit.id} (Status: {visit.visit_status})")
-    print(f"  Doctor: {doctor_profile.user.first_name} {doctor_profile.user.last_name}")
-    print(f"  Diagnosis: {diagnosis.diagnosis_name}")
-    print(f"  Prescriptions: {len(created_prescriptions)} medicines")
-    print(f"  Medicine Stock:")
-    for med in created_medicines:
-        print(f"    - {med.name}: {med.stock_quantity}/{med.initial_stock} {med.unit}")
-
-    print("\n" + "=" * 60)
-    print("Test Credentials:")
-    print("=" * 60)
+    print(f"Employees available: {len(employees)}")
+    print(f"Visits created: {created_visits}")
+    print(f"Diagnoses created: {created_diagnoses}")
+    print(f"Prescriptions created: {created_prescriptions}")
+    print(f"Referrals created: {created_referrals}")
+    print(f"Dispense records created: {created_dispenses}")
+    print("\nTest Credentials:")
     print("  Nurse: nurse_test / Test@12345")
     print("  Doctor: doctor_test / Test@12345")
     print("  Pharmacist: pharmacist_test / Test@12345")
     print("  EHS: ehs_test / Test@12345")
     print("  Management: management_test / Test@12345")
 
-if __name__ == '__main__':
-    create_dummy_data()
+
+if __name__ == "__main__":
+    arguments = parse_args()
+    create_dummy_data(total_records=arguments.records, total_employees=arguments.employees)

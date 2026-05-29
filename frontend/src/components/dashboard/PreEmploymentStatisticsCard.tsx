@@ -23,7 +23,7 @@ export const PreEmploymentStatisticsCard: React.FC<PreEmploymentStatisticsCardPr
     return (
       <Card className={styles.card}>
         <div className={styles.header}>
-          <h3>🩺 Pre-Employment Checkups</h3>
+          <h3>Pre-employement Check Ups</h3>
         </div>
         <div className={styles.loadingState}>
           <div className={styles.skeleton}></div>
@@ -40,18 +40,17 @@ export const PreEmploymentStatisticsCard: React.FC<PreEmploymentStatisticsCardPr
   return (
     <Card className={styles.card} onClick={handleClick}>
       <div className={styles.header}>
-        <h3>🩺 Pre-Employment Checkups</h3>
-        <span className={styles.todayBadge}>Today: {statistics.today_count}</span>
+        <h3>Pre-employement Check Ups</h3>
+        <span className={styles.todayBadge}>Today: {statistics.today_count} cases</span>
       </div>
 
       <div className={styles.totalSection}>
-        <span className={styles.totalLabel}>Total Checks</span>
+        <span className={styles.totalLabel}>Total Cases</span>
         <span className={styles.totalValue}>{statistics.total_checks}</span>
       </div>
 
       <div className={styles.statsGrid}>
         <div className={styles.statItem}>
-          <div className={styles.statIcon}>✅</div>
           <div className={styles.statContent}>
             <span className={styles.statLabel}>Fit</span>
             <span className={styles.statValue} style={{ color: '#10b981' }}>
@@ -60,7 +59,6 @@ export const PreEmploymentStatisticsCard: React.FC<PreEmploymentStatisticsCardPr
           </div>
         </div>
         <div className={styles.statItem}>
-          <div className={styles.statIcon}>❌</div>
           <div className={styles.statContent}>
             <span className={styles.statLabel}>Unfit</span>
             <span className={styles.statValue} style={{ color: '#dc2626' }}>
@@ -81,8 +79,8 @@ export const PreEmploymentStatisticsCard: React.FC<PreEmploymentStatisticsCardPr
                 background: statistics.fit_rate >= 80
                   ? '#10b981'
                   : statistics.fit_rate >= 60
-                  ? '#f59e0b'
-                  : '#dc2626',
+                    ? '#f59e0b'
+                    : '#dc2626',
               }}
             />
           </div>

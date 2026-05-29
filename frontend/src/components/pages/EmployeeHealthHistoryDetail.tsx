@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Header } from '../layout';
-import { Button, Card, Loading } from '../ui';
+import { Alert, Button, Card, Loading } from '../ui';
 import { exportEmployeeHealthHistory, getEmployeeHealthHistory } from '../../services/reports';
 import type { EmployeeHealthHistory } from '../../types';
 import styles from './EmployeeHealthHistory.module.css';
@@ -11,22 +11,25 @@ import styles from './EmployeeHealthHistory.module.css';
  * Shows the complete history for one employee on a dedicated screen
  */
 export const EmployeeHealthHistoryDetail: React.FC = () => {
+  const navigate = useNavigate();
   const { employeeId = '' } = useParams();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<EmployeeHealthHistory | null>(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const loadHistory = async () => {
       setLoading(true);
+      setError('');
       try {
         const result = await getEmployeeHealthHistory(employeeId);
         if ('employee' in result) {
           setData(result);
         } else {
-          alert('Failed to load employee history');
+          setError('Failed to load employee history');
         }
       } catch {
-        alert('Failed to load employee history');
+        setError('Failed to load employee history');
       } finally {
         setLoading(false);
       }
@@ -45,30 +48,63 @@ export const EmployeeHealthHistoryDetail: React.FC = () => {
       link.download = `employee_${data.employee.employee_code}_health_receipt.pdf`;
       link.click();
     } catch {
-      alert('Export failed');
+      setError('Export failed');
     }
   };
 
   return (
     <div className={styles.healthHistory}>
-      <Header title="Employee Health History" subtitle="View complete health records" />
+      <Header
+        title="Employee Health History"
+        subtitle="View complete health records"
+        actions={(
+          <Button type="button" variant="outline-secondary" onClick={() => navigate('/reports/employee-history')}>
+            Back
+          </Button>
+        )}
+      />
       <main className={styles.healthMain}>
+        {error && <Alert type="danger" onDismiss={() => setError('')}>{error}</Alert>}
         {loading && <Loading />}
 
         {!loading && data && (
           <>
             <Card className={styles.summaryCard}>
-              <h3>Employee Summary</h3>
-              <p><strong>Name:</strong> {data.employee.user.first_name} {data.employee.user.last_name}</p>
-              <p><strong>Employee ID:</strong> {data.employee.employee_code}</p>
-              <p><strong>Department:</strong> {data.employee.department}</p>
-              <p><strong>Designation:</strong> {data.employee.designation}</p>
-              <p><strong>Fitness Status:</strong> {data.employee.fitness_status}</p>
+              <div className={styles.summaryTop}>
+                <div>
+                  <p className={styles.eyebrow}>Employee Summary</p>
+                  <h2 className={styles.summaryName}>
+                    {data.employee.user.first_name} {data.employee.user.last_name}
+                  </h2>
+                </div>
+                <span className={styles.fitnessBadge}>{data.employee.fitness_status}</span>
+              </div>
+              <div className={styles.summaryMetaGrid}>
+                <div className={styles.metaBlock}>
+                  <span className={styles.metaLabel}>Employee ID</span>
+                  <strong>{data.employee.employee_code}</strong>
+                </div>
+                <div className={styles.metaBlock}>
+                  <span className={styles.metaLabel}>Department</span>
+                  <strong>{data.employee.department}</strong>
+                </div>
+                <div className={styles.metaBlock}>
+                  <span className={styles.metaLabel}>Designation</span>
+                  <strong>{data.employee.designation}</strong>
+                </div>
+                <div className={styles.metaBlock}>
+                  <span className={styles.metaLabel}>Visits</span>
+                  <strong>{data.visits.length}</strong>
+                </div>
+              </div>
             </Card>
 
             <Card className={styles.visitsCard}>
               <div className={styles.cardHeader}>
-                <h3>Visits ({data.visits.length})</h3>
+                <div>
+                  <h3>Visit Timeline</h3>
+                  <p className={styles.cardSubtext}>{data.visits.length} visits recorded</p>
+                </div>
                 <Button variant="outline-secondary" size="sm" onClick={handleExport}>
                   Export PDF Receipt
                 </Button>
@@ -76,53 +112,90 @@ export const EmployeeHealthHistoryDetail: React.FC = () => {
               <div className={styles.visitsList}>
                 {data.visits.map((visit) => (
                   <div key={visit.id} className={styles.visitItem}>
-                    <p><strong>Date:</strong> {visit.visit_date}</p>
-                    <p><strong>Type:</strong> {visit.visit_type}</p>
-                    <p><strong>Triage Level:</strong> {visit.triage_level}</p>
-                    <p><strong>Visit Status:</strong> {visit.visit_status}</p>
-                    <p><strong>Doctor:</strong> {visit.doctor_name}</p>
-                    <p><strong>Complaint:</strong> {visit.chief_complaint}</p>
-                    <p><strong>Symptoms:</strong> {visit.symptoms}</p>
+                    <div className={styles.visitHeader}>
+                      <div>
+                        <h4>{visit.chief_complaint || 'Visit Record'}</h4>
+                        <p className={styles.visitMetaLine}>
+                          {visit.visit_date} • {visit.visit_type} • {visit.visit_status}
+                        </p>
+                      </div>
+                      <span className={styles.visitStatusBadge}>{visit.visit_status}</span>
+                    </div>
+
+                    <div className={styles.visitGrid}>
+                      <div className={styles.metaBlock}>
+                        <span className={styles.metaLabel}>Doctor</span>
+                        <strong>{visit.doctor_name || '-'}</strong>
+                      </div>
+                      <div className={styles.metaBlock}>
+                        <span className={styles.metaLabel}>Triage Level</span>
+                        <strong>{visit.triage_level || '-'}</strong>
+                      </div>
+                      <div className={styles.metaBlock}>
+                        <span className={styles.metaLabel}>Referral</span>
+                        <strong>{visit.requires_referral ? 'Yes' : 'No'}</strong>
+                      </div>
+                      {visit.follow_up_date && (
+                        <div className={styles.metaBlock}>
+                          <span className={styles.metaLabel}>Follow-up</span>
+                          <strong>{visit.follow_up_date}</strong>
+                        </div>
+                      )}
+                    </div>
+
+                    {visit.symptoms && (
+                      <div className={styles.detailBlock}>
+                        <p className={styles.blockTitle}>Symptoms</p>
+                        <p className={styles.bodyText}>{visit.symptoms}</p>
+                      </div>
+                    )}
                     {visit.vitals && Object.keys(visit.vitals).length > 0 && (
                       <div className={styles.detailBlock}>
-                        <p><strong>Vitals:</strong></p>
-                        <div className={styles.detailList}>
+                        <p className={styles.blockTitle}>Vitals</p>
+                        <div className={styles.vitalsChipGrid}>
                           {Object.entries(visit.vitals).map(([key, value]) => (
-                            <p key={key}><strong>{key}:</strong> {String(value)}</p>
+                            <span key={key} className={styles.vitalChip}>
+                              <strong>{key}:</strong> {String(value)}
+                            </span>
                           ))}
                         </div>
                       </div>
                     )}
                     {visit.preliminary_notes && (
-                      <p><strong>Preliminary Notes:</strong> {visit.preliminary_notes}</p>
-                    )}
-                    <p><strong>Requires Referral:</strong> {visit.requires_referral ? 'Yes' : 'No'}</p>
-                    {visit.follow_up_date && (
-                      <p><strong>Follow-up Date:</strong> {visit.follow_up_date}</p>
+                      <div className={styles.detailBlock}>
+                        <p className={styles.blockTitle}>Preliminary Notes</p>
+                        <p className={styles.bodyText}>{visit.preliminary_notes}</p>
+                      </div>
                     )}
                     {visit.next_action && (
-                      <p><strong>Next Action:</strong> {visit.next_action}</p>
+                      <div className={styles.detailBlock}>
+                        <p className={styles.blockTitle}>Next Action</p>
+                        <p className={styles.bodyText}>{visit.next_action}</p>
+                      </div>
                     )}
                     {visit.diagnoses && visit.diagnoses.length > 0 && (
                       <div className={styles.detailBlock}>
-                        <p><strong>Diagnoses:</strong></p>
+                        <p className={styles.blockTitle}>Diagnoses</p>
                         <div className={styles.detailList}>
                           {visit.diagnoses.map((diagnosis: any) => (
-                            <p key={`${visit.id}-${diagnosis.diagnosis_name}-${diagnosis.diagnosed_at}`}>
-                              <strong>{diagnosis.diagnosis_name}</strong> | {diagnosis.severity} | {diagnosis.fitness_decision}
-                            </p>
+                            <div key={`${visit.id}-${diagnosis.diagnosis_name}-${diagnosis.diagnosed_at}`} className={styles.inlineRecord}>
+                              <strong>{diagnosis.diagnosis_name}</strong>
+                              <span>{diagnosis.fitness_decision}</span>
+                            </div>
                           ))}
                         </div>
                       </div>
                     )}
                     {visit.prescriptions && visit.prescriptions.length > 0 && (
                       <div className={styles.detailBlock}>
-                        <p><strong>Prescriptions:</strong></p>
+                        <p className={styles.blockTitle}>Prescriptions</p>
                         <div className={styles.detailList}>
                           {visit.prescriptions.map((prescription: any) => (
-                            <p key={`${visit.id}-${prescription.medicine_name}-${prescription.start_date}`}>
-                              <strong>{prescription.medicine_name}</strong> | {prescription.dosage} | Start {prescription.start_date}
-                            </p>
+                            <div key={`${visit.id}-${prescription.medicine_name}-${prescription.start_date}`} className={styles.inlineRecord}>
+                              <strong>{prescription.medicine_name}</strong>
+                              <span>{prescription.dosage}</span>
+                              <span>Start {prescription.start_date}</span>
+                            </div>
                           ))}
                         </div>
                       </div>
