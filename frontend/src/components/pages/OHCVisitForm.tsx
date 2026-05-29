@@ -6,6 +6,7 @@ import { createVisit } from '../../services/ohc';
 import { VISIT_TYPE_OPTIONS, TRIAGE_LEVEL_OPTIONS, FITNESS_STATUS_OPTIONS } from '../../utils/constants';
 import { aggregateVitals, validateVitals } from '../../services/vitals';
 import { useSnackbar } from '../../contexts/SnackbarContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { VisitType, TriageLevel, FitnessStatus } from '../../types';
 import { loadMedicineRecords, type MedicineRecord } from './medicineInventory';
 import styles from './OHCVisitForm.module.css';
@@ -23,6 +24,7 @@ interface DispensedMedicineForm {
 export const OHCVisitForm: React.FC = () => {
   const navigate = useNavigate();
   const { show } = useSnackbar();
+  const { user } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -230,15 +232,17 @@ export const OHCVisitForm: React.FC = () => {
                   placeholder="Manufacturing"
                   helperText="Used for new employees and can update an existing employee department"
                 />
-                <FormInput
-                  label="Fitness Status"
-                  name="employee_fitness_status"
-                  type="select"
-                  value={formData.employee_fitness_status}
-                  onChange={(value) => handleInputChange('employee_fitness_status', value)}
-                  options={FITNESS_STATUS_OPTIONS}
-                  helperText="This selection will appear on the receipt"
-                />
+                {user?.role === 'DOCTOR' && (
+                  <FormInput
+                    label="Fitness Status"
+                    name="employee_fitness_status"
+                    type="select"
+                    value={formData.employee_fitness_status}
+                    onChange={(value) => handleInputChange('employee_fitness_status', value)}
+                    options={FITNESS_STATUS_OPTIONS}
+                    helperText="Only doctors can update fitness status"
+                  />
+                )}
                 <FormInput
                   label="Visit Type *"
                   name="visit_type"
