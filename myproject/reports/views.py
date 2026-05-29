@@ -164,7 +164,7 @@ def build_employee_health_history_detail(employee):
         },
         "visits": [
             {
-                "uuid": str(v.id),
+                "id": v.id,
                 "visit_date": str(v.visit_date.date()) if hasattr(v.visit_date, "date") else str(v.visit_date),
                 "visit_type": v.visit_type,
                 "triage_level": v.triage_level,

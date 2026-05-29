@@ -91,7 +91,7 @@ export const OPDStatisticsCard: React.FC<OPDStatisticsCardProps> = ({
       )}
 
       <div className={styles.footer}>
-        <span className={styles.totalLabel}>Total OPD visits (till date)</span>
+        <span className={styles.totalLabel}>Total OPD Cases</span>
         <span className={styles.totalValue}>{statistics.till_date_count}</span>
       </div>
     </Card>

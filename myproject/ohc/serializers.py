@@ -2,6 +2,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from accounts.models import DoctorProfile, EmployeeProfile, User
+from ahc.models import Hospital
 from ohc.models import Diagnosis, MedicalTest, OHCVisit, Prescription, MedicineStock, MedicineDispense
 from ohc.services import process_diagnosis_outcome
 
@@ -92,6 +93,11 @@ class DiagnosisWithPrescriptionsSerializer(serializers.Serializer):
     condition_status = serializers.CharField(max_length=15, required=False, default="ACTIVE")
     is_primary = serializers.BooleanField(default=True)
     is_referral_required = serializers.BooleanField(default=False)
+    hospital = serializers.PrimaryKeyRelatedField(
+        queryset=Hospital.objects.filter(hospital_status=Hospital.HospitalStatus.ACTIVE),
+        required=False,
+        allow_null=True,
+    )
     fitness_decision = serializers.CharField(max_length=30)
     work_restrictions = serializers.CharField(required=False, allow_blank=True)
     advised_rest_days = serializers.IntegerField(default=0)
@@ -104,10 +110,18 @@ class DiagnosisWithPrescriptionsSerializer(serializers.Serializer):
         except OHCVisit.DoesNotExist:
             raise serializers.ValidationError("Visit not found")
 
+    def validate(self, attrs):
+        request = self.context["request"]
+        if request.user.role != request.user.Role.DOCTOR:
+            attrs["fitness_decision"] = Diagnosis.FitnessDecision.FIT
+            attrs["work_restrictions"] = ""
+        return attrs
+
     @transaction.atomic
     def create(self, validated_data):
         request = self.context["request"]
         prescriptions_data = validated_data.pop("prescriptions", [])
+        selected_hospital = validated_data.pop("hospital", None)
 
         diagnosed_by = None
         if request.user.role in {request.user.Role.DOCTOR, request.user.Role.NURSE}:
@@ -128,6 +142,10 @@ class DiagnosisWithPrescriptionsSerializer(serializers.Serializer):
                 },
             )
         referral = process_diagnosis_outcome(diagnosis)
+        if referral and selected_hospital:
+            referral.hospital = selected_hospital
+            referral.referral_status = referral.ReferralStatus.SENT
+            referral.save(update_fields=["hospital", "referral_status", "updated_at"])
         diagnosis._generated_referral = referral
         return diagnosis
 
@@ -179,6 +197,9 @@ class OHCVisitCreateSerializer(OHCVisitSerializer):
         emp_name = attrs.pop("employee_name", "")
         emp_dept = attrs.pop("employee_department", "Unassigned")
         emp_fitness_status = attrs.pop("employee_fitness_status", None)
+
+        if request.user.role != request.user.Role.DOCTOR:
+            emp_fitness_status = None
 
         # If department was left empty, fallback to Unassigned
         if not emp_dept:

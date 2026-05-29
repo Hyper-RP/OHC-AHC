@@ -16,6 +16,7 @@ export interface DashboardMetricsPoint {
   ohcVisits: number;
   preamtiveCheckUps: number;
   annualCheckup: number;
+  referralCases: number;
   emergencyCount: number;
   incidentCount: number;
 }
@@ -26,6 +27,7 @@ interface DashboardMetricsChartProps {
     | 'ohcVisits'
     | 'preamtiveCheckUps'
     | 'annualCheckup'
+    | 'referralCases'
     | 'emergencyCount'
     | 'incidentCount';
   color: string;

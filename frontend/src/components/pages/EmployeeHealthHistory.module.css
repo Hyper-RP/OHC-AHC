@@ -2,161 +2,192 @@
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 72px);
+  background:
+    radial-gradient(circle at top left, rgba(10, 95, 120, 0.08), transparent 30%),
+    linear-gradient(180deg, #f4fbfc 0%, #f8f6ef 100%);
 }
 
 .healthMain {
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
-  background: #f9fafb;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-/* Search Card */
-.searchCard {
-  margin-bottom: 2rem;
+.heroCard,
+.searchCard,
+.summaryCard,
+.visitsCard,
+.emptyCard {
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 24px;
+  box-shadow: 0 16px 36px rgba(36, 67, 86, 0.08);
+}
+
+.heroCard {
+  overflow: hidden;
+}
+
+.heroContent {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.eyebrow {
+  margin: 0 0 0.55rem;
+  color: #0a5f78;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.heroTitle {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.1;
+  color: #11313d;
+}
+
+.heroText {
+  margin: 0.85rem 0 0;
+  max-width: 650px;
+  color: #5f7380;
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.heroMeta {
+  min-width: 180px;
+  padding: 1rem 1.15rem;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #eff8fb 0%, #ffffff 100%);
+  border: 1px solid rgba(10, 95, 120, 0.12);
+}
+
+.heroMetaLabel {
+  display: block;
+  color: #647984;
+  font-size: 0.82rem;
+  margin-bottom: 0.35rem;
+}
+
+.heroMetaValue {
+  color: #11313d;
+  font-size: 1.6rem;
+}
+
+.searchHeader {
+  margin-bottom: 1rem;
+}
+
+.searchHeader h3,
+.cardHeader h3 {
+  margin: 0;
+  color: #11313d;
+}
+
+.searchHeader p,
+.cardSubtext {
+  margin: 0.35rem 0 0;
+  color: #647984;
+  font-size: 0.92rem;
 }
 
 .searchGrid {
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: minmax(260px, 1.2fr) minmax(180px, 0.8fr) auto auto;
   gap: 1rem;
   align-items: end;
 }
 
-@media (max-width: 768px) {
-  .searchGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Summary Section */
-.summarySection {
-  margin-bottom: 2rem;
-}
-
-.sectionTitle {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 1.5rem;
-}
-
-.summaryGrid {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr 1.5fr;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-@media (max-width: 1024px) {
-  .summaryGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.summaryCard {
-  background: #ffffff;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.summaryCard h3 {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #11313d;
-  margin: 0 0 1rem;
-}
-
-.summaryCard p {
-  margin: 0.5rem 0;
-  font-size: 0.95rem;
-  color: #5f7380;
-}
-
-.summaryHeader {
+.summaryTop {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 1rem;
 }
 
 .summaryName {
-  font-size: 1.125rem;
-  font-weight: 600;
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 700;
   color: #111827;
-  flex: 1;
 }
 
-.summaryDetails {
+.summaryMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.metaBlock {
+  padding: 1rem;
+  border-radius: 16px;
+  background: rgba(10, 95, 120, 0.05);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.3rem;
 }
 
-.summaryLabel {
-  font-weight: 600;
-  color: #6b7280;
+.metaLabel {
+  color: #647984;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-.statsCardWrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Toggle Section */
-.toggleSection {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 1.5rem;
-}
-
-/* Charts Section */
-.chartsSection {
-  margin-bottom: 2rem;
-}
-
-.chartsGrid {
+.summaryCards {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
 }
 
-@media (max-width: 1024px) {
-  .chartsGrid {
-    grid-template-columns: 1fr;
-  }
+.metricCard {
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(244, 251, 252, 0.95), #ffffff 100%);
 }
 
-.chartCard {
-  background: #ffffff;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+.metricLabel {
+  display: block;
+  color: #647984;
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-.chartTitle {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 1rem;
+.metricValue {
+  display: block;
+  margin-top: 0.55rem;
+  color: #11313d;
+  font-size: 2rem;
+  line-height: 1;
 }
 
-.chartSection {
-  margin-bottom: 2rem;
-}
-
-/* Visits Section */
-.visitsCard {
-  margin-bottom: 2rem;
+.fitnessBadge,
+.visitStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(10, 95, 120, 0.08);
+  color: #0a5f78;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .visitsCard h3 {
   font-size: 1.2rem;
   font-weight: 600;
   color: #11313d;
-  margin: 0 0 1rem;
+  margin: 0;
 }
 
 .cardHeader {
@@ -171,9 +202,7 @@
 .visitsList {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  max-height: 500px;
-  overflow-y: auto;
+  gap: 1.1rem;
 }
 
 .tableWrap {
@@ -216,63 +245,161 @@
   background: rgba(10, 95, 120, 0.03);
 }
 
+.employeeCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.employeeCell strong {
+  color: #11313d;
+}
+
+.employeeCell span {
+  color: #647984;
+  font-size: 0.82rem;
+}
+
+.complaintCell {
+  min-width: 220px;
+}
+
 .visitItem {
   display: flex;
+  flex-direction: column;
   gap: 1rem;
-  padding: 1rem;
-  background: rgba(10, 95, 120, 0.03);
-  border-radius: 0.75rem;
-  border-left: 3px solid #0a5f78;
-  transition: background-color 0.2s ease;
+  padding: 1.25rem;
+  background: linear-gradient(180deg, rgba(244, 251, 252, 0.9), rgba(255, 255, 255, 0.98));
+  border-radius: 20px;
+  border: 1px solid rgba(34, 81, 108, 0.12);
+  box-shadow: 0 10px 24px rgba(36, 67, 86, 0.06);
 }
 
 .visitItem:hover {
   background-color: rgba(10, 95, 120, 0.06);
 }
 
-.visitDate {
-  flex-shrink: 0;
-  font-weight: 600;
-  color: #3b82f6;
-  min-width: 100px;
-}
-
-.visitDetails {
-  flex: 1;
+.visitHeader {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
 }
 
-.visitType {
-  font-size: 0.875rem;
-  color: #6b7280;
-  text-transform: capitalize;
+.visitHeader h4 {
+  margin: 0;
+  color: #11313d;
+  font-size: 1.05rem;
 }
 
-.visitComplaint {
-  font-size: 0.875rem;
-  color: #374151;
+.visitMetaLine {
+  margin: 0.35rem 0 0;
+  color: #647984;
+  font-size: 0.9rem;
 }
 
-.visitDiagnosis {
-  font-size: 0.875rem;
-  color: #111827;
+.visitGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.blockTitle {
+  margin: 0 0 0.45rem;
+  color: #11313d;
+  font-size: 0.92rem;
+  font-weight: 700;
 }
 
 .detailBlock {
-  margin-top: 0.75rem;
+  margin-top: 0.2rem;
+}
+
+.bodyText {
+  margin: 0;
+  color: #4f6472;
+  line-height: 1.6;
 }
 
 .detailList {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inlineRecord {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.7rem 0.85rem;
+  border-radius: 14px;
+  background: rgba(10, 95, 120, 0.05);
+  color: #4f6472;
+}
+
+.inlineRecord strong {
+  color: #11313d;
+}
+
+.vitalsChipGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.vitalChip {
+  display: inline-flex;
   gap: 0.35rem;
-  padding-left: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(10, 95, 120, 0.08);
+  color: #11313d;
+  font-size: 0.86rem;
+}
+
+.emptyCard {
+  text-align: center;
+}
+
+.emptyCard h3 {
+  margin: 0 0 0.5rem;
+  color: #11313d;
+}
+
+.emptyCard p {
+  margin: 0;
+  color: #647984;
+}
+
+@media (max-width: 1100px) {
+  .searchGrid,
+  .summaryCards,
+  .summaryMetaGrid,
+  .visitGrid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 @media (max-width: 768px) {
+  .heroContent,
+  .visitHeader,
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .searchGrid {
     grid-template-columns: 1fr;
+  }
+
+  .summaryCards,
+  .summaryMetaGrid,
+  .visitGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .heroTitle {
+    font-size: 1.55rem;
   }
 }
