@@ -69,34 +69,34 @@ export const NAV_ITEMS: NavItem[] = [
     icon: 'Rx',
     roles: [Role.ADMIN, Role.NURSE, Role.DOCTOR],
   },
-  {
-    label: 'Medical Reports',
-    url: '/reports/medical',
-    urlName: 'medical_reports',
-    icon: '📋',
-    roles: [Role.ADMIN, Role.NURSE, Role.EHS, Role.HR, Role.KAM, Role.DOCTOR],
-  },
+  // {
+  //   label: 'Medical Reports',
+  //   url: '/reports/medical',
+  //   urlName: 'medical_reports',
+  //   icon: '📋',
+  //   roles: [Role.ADMIN, Role.NURSE, Role.EHS, Role.HR, Role.KAM, Role.DOCTOR],
+  // },
   {
     label: 'Employee History',
     url: '/reports/employee-history',
     urlName: 'employee_history',
     icon: '📜',
-    roles: [Role.ADMIN, Role.HR, Role.EHS],
+    roles: [Role.ADMIN, Role.HR, Role.EHS,Role.NURSE],
   },
-  {
-    label: 'Disease Trends',
-    url: '/reports/disease-trends',
-    urlName: 'disease_trends',
-    icon: '📈',
-    roles: [Role.ADMIN, Role.HR, Role.EHS],
-  },
-  {
-    label: 'Department Stats',
-    url: '/reports/department-stats',
-    urlName: 'department_stats',
-    icon: '🏢',
-    roles: [Role.ADMIN, Role.HR, Role.EHS],
-  },
+  // {
+  //   label: 'Disease Trends',
+  //   url: '/reports/disease-trends',
+  //   urlName: 'disease_trends',
+  //   icon: '📈',
+  //   roles: [Role.ADMIN, Role.HR, Role.EHS],
+  // },
+  // {
+  //   label: 'Department Stats',
+  //   url: '/reports/department-stats',
+  //   urlName: 'department_stats',
+  //   icon: '🏢',
+  //   roles: [Role.ADMIN, Role.HR, Role.EHS],
+  // },
 ];
 
 /**

@@ -85,6 +85,7 @@ class Diagnosis(BaseModel):
     diagnosis_code = models.CharField(max_length=50, blank=True)
     diagnosis_name = models.CharField(max_length=255)
     diagnosis_notes = models.TextField(blank=True)
+    examination_notes = models.TextField(blank=True, null=True)
     severity = models.CharField(max_length=15, choices=Severity.choices, default=Severity.MILD)
     condition_status = models.CharField(max_length=15, choices=ConditionStatus.choices, default=ConditionStatus.ACTIVE)
     is_primary = models.BooleanField(default=True)
