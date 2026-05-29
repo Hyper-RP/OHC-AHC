@@ -46,6 +46,7 @@ export const OPDDetailsPage: React.FC = () => {
     date_from: '',
     date_to: '',
     department: '',
+    visit_type: '',
     status: '',
   });
 
@@ -60,13 +61,21 @@ export const OPDDetailsPage: React.FC = () => {
       setLoading(true);
       setError('');
 
-      const params: Record<string, string> = {
-        visit_type: 'OPD',
-      };
+      const params: Record<string, string> = {};
+
+      // Filter by OPD visit types (WALK_IN, FOLLOW_UP, PERIODIC - exclude PRE_EMPLOYMENT and EMERGENCY)
+      const opdTypes = ['WALK_IN', 'FOLLOW_UP', 'PERIODIC'];
+
+      if (filters.visit_type) {
+        params.visit_type = filters.visit_type;
+      } else {
+        // Default to OPD visits only
+        params.visit_type__in = opdTypes.join(',');
+      }
 
       if (filters.date_from) params.date_from = filters.date_from;
       if (filters.date_to) params.date_to = filters.date_to;
-      if (filters.department) params.department = filters.department;
+      if (filters.department) params.employee__department__icontains = filters.department;
       if (filters.status) params.visit_status = filters.status;
 
       const response = await api.get('/ohc/visits/', { params });
@@ -144,7 +153,21 @@ export const OPDDetailsPage: React.FC = () => {
             />
             <FormInput
               type="select"
-              label="Status"
+              label="Visit Type"
+              value={filters.visit_type || ''}
+              onChange={(value) => handleFilterChange('visit_type', value)}
+              options={[
+                { value: '', label: 'All Types' },
+                { value: 'WALK_IN', label: 'Walk In' },
+                { value: 'PERIODIC', label: 'Periodic Checkup' },
+                { value: 'PRE_EMPLOYMENT', label: 'Pre-Employment' },
+                { value: 'FOLLOW_UP', label: 'Follow Up' },
+                { value: 'EMERGENCY', label: 'Emergency' },
+              ]}
+            />
+            <FormInput
+              type="select"
+              label="Visit Status"
               value={filters.status}
               onChange={(value) => handleFilterChange('status', value)}
               options={[
@@ -153,12 +176,13 @@ export const OPDDetailsPage: React.FC = () => {
                 { value: 'IN_PROGRESS', label: 'In Progress' },
                 { value: 'COMPLETED', label: 'Completed' },
                 { value: 'REFERRED', label: 'Referred' },
+                { value: 'CANCELLED', label: 'Cancelled' },
               ]}
             />
             <Button type="button" variant="brand" onClick={fetchData} loading={loading}>
               Apply Filters
             </Button>
-            <Button type="button" variant="outline-secondary" onClick={() => setFilters({ date_from: '', date_to: '', department: '', status: '' })}>
+            <Button type="button" variant="outline-secondary" onClick={() => setFilters({ date_from: '', date_to: '', department: '', visit_type: '', status: '' })}>
               Clear
             </Button>
           </div>
@@ -230,13 +254,13 @@ export const OPDDetailsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {visits.map((visit) => (
+                {visits.map((visit: any) => (
                   <tr key={visit.id}>
-                    <td>{visit.employee_name}</td>
-                    <td>{visit.employee_code}</td>
-                    <td>{visit.department}</td>
-                    <td>{new Date(visit.visit_date).toLocaleDateString()}</td>
-                    <td>{new Date(visit.visit_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                    <td>{visit.employee?.user ? `${visit.employee.user.first_name} ${visit.employee.user.last_name}` : '-'}</td>
+                    <td>{visit.employee?.employee_code || '-'}</td>
+                    <td>{visit.employee?.department || '-'}</td>
+                    <td>{visit.visit_date ? new Date(visit.visit_date).toLocaleDateString() : '-'}</td>
+                    <td>{visit.visit_time ? new Date(visit.visit_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
                     <td>{visit.chief_complaint || '-'}</td>
                     <td>
                       <span className={`${styles.statusBadge} ${styles[visit.visit_status.toLowerCase().replace('_', '')]}`}>

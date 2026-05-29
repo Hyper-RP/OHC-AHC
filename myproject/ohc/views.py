@@ -287,8 +287,8 @@ class AnalyticsViewSet(viewsets.GenericViewSet):
             follow_up_date__lt=timezone.now().date()
         ).count()
 
-        # Department-wise visits
-        department_wise = list(visits.values("employee__department").annotate(
+        # Department-wise visits (clear order_by to enable proper aggregation)
+        department_wise = list(visits.order_by().values("employee__department").annotate(
             visit_count=Count("id")
         ))
 
@@ -303,7 +303,7 @@ class AnalyticsViewSet(viewsets.GenericViewSet):
         # Common diagnoses
         from ohc.models import Diagnosis
         diagnoses = Diagnosis.objects.filter(visit__in=visits)
-        common_diagnoses = list(diagnoses.values("diagnosis_name").annotate(
+        common_diagnoses = list(diagnoses.order_by().values("diagnosis_name").annotate(
             count=Count("id")
         ).order_by("-count")[:5])
 
@@ -580,6 +580,64 @@ class AnalyticsViewSet(viewsets.GenericViewSet):
             },
             status=status.HTTP_200_OK,
         )
+
+    @action(detail=False, methods=["get"], url_path="follow-up-details", permission_classes=[permissions.IsAuthenticated, HasHealthPortalAccess])
+    def follow_up_details(self, request):
+        """Get detailed information for a specific follow-up (visit)."""
+        from django.utils import timezone
+        from ohc.models import Diagnosis
+
+        visit_id = request.query_params.get("id")
+        if not visit_id:
+            return Response(
+                {"error": "Visit ID is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        accessible_visits = get_accessible_ohc_visits(request.user)
+
+        try:
+            visit = accessible_visits.select_related(
+                "employee__user",
+                "consulted_doctor__user",
+            ).get(id=visit_id)
+        except OHCVisit.DoesNotExist:
+            return Response(
+                {"error": "Follow-up not found or access denied"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Get primary diagnosis for this visit
+        primary_diagnosis = Diagnosis.objects.filter(
+            visit=visit,
+            is_primary=True
+        ).first()
+
+        # Calculate days overdue
+        days_overdue = 0
+        if visit.follow_up_date:
+            days_overdue = (timezone.now().date() - visit.follow_up_date).days
+            if days_overdue < 0:
+                days_overdue = 0
+
+        return Response({
+            "id": visit.id,
+            "patient_name": f"{visit.employee.user.first_name} {visit.employee.user.last_name}",
+            "employee_code": visit.employee.employee_code,
+            "department": visit.employee.department or "N/A",
+            "employee_contact": visit.employee.user.email or visit.patient_contact or "N/A",
+            "employee_phone": visit.patient_contact or "N/A",
+            "original_visit_date": visit.visit_date.date().isoformat(),
+            "follow_up_date": visit.follow_up_date.isoformat() if visit.follow_up_date else None,
+            "days_overdue": days_overdue,
+            "chief_complaint": visit.chief_complaint or "",
+            "diagnosis": primary_diagnosis.diagnosis_name if primary_diagnosis else "No diagnosis recorded",
+            "doctor_notes": visit.preliminary_notes or visit.symptoms or "No notes",
+            "follow_up_instructions": visit.next_action or "No specific instructions",
+            "visit_status": visit.visit_status,
+            "triage_level": visit.triage_level,
+            "consulted_doctor": f"{visit.consulted_doctor.user.first_name} {visit.consulted_doctor.user.last_name}" if visit.consulted_doctor else "N/A",
+        }, status=status.HTTP_200_OK)
 
 
 class MedicineSummaryViewSet(viewsets.GenericViewSet):

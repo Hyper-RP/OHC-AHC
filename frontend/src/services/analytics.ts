@@ -1,5 +1,5 @@
 import api, { handleApiError } from './api';
-import type { DashboardAnalytics, MedicineSummary, AnalyticsFilters, DateRangeParams, EHSStatistics } from '../types';
+import type { DashboardAnalytics, MedicineSummary, AnalyticsFilters, DateRangeParams, EHSStatistics, FollowUpDetail } from '../types';
 
 export const getDashboard = async (params?: AnalyticsFilters): Promise<DashboardAnalytics> => {
   try {
@@ -34,6 +34,15 @@ export const exportAnalytics = async (filters: AnalyticsFilters, format: 'csv' |
       params: { ...filters, format },
       responseType: 'blob',
     });
+    return response.data;
+  } catch (error) {
+    throw new Error(handleApiError(error), { cause: error });
+  }
+};
+
+export const getFollowUpDetail = async (id: number): Promise<FollowUpDetail> => {
+  try {
+    const response = await api.get<FollowUpDetail>('/ohc/analytics/follow-up-details/', { params: { id } });
     return response.data;
   } catch (error) {
     throw new Error(handleApiError(error), { cause: error });
