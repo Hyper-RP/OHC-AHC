@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../ui';
 import type { AHCStatistics } from '../../types';
 import styles from './AHCStatisticsCard.module.css';
@@ -12,6 +13,12 @@ export const AHCStatisticsCard: React.FC<AHCStatisticsCardProps> = ({
   statistics,
   loading,
 }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate('/ehs/ahc-details');
+  };
+
   if (loading) {
     return (
       <Card className={styles.card}>
@@ -31,7 +38,7 @@ export const AHCStatisticsCard: React.FC<AHCStatisticsCardProps> = ({
   }
 
   return (
-    <Card className={styles.card}>
+    <Card className={styles.card} onClick={handleClick}>
       <div className={styles.header}>
         <h3>Annual Health Checkup</h3>
         <span className={styles.todayBadge}>Today: {statistics.today_count} cases</span>

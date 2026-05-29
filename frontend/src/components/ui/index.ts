@@ -6,3 +6,4 @@ export { Alert } from './Alert';
 export { Loading } from './Loading';
 export { Snackbar } from './Snackbar';
 export { Switch } from './Switch';
+export { Modal } from './Modal';

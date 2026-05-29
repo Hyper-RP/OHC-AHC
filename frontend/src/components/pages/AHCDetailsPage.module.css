@@ -1,0 +1,186 @@
+.ahcDetailsPage {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.main {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.filterCard {
+  padding: 16px;
+}
+
+.filterRow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.summaryCard {
+  padding: 20px;
+  text-align: center;
+}
+
+.summaryValue {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.summaryLabel {
+  font-size: 14px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.completedCard {
+  border-bottom: 4px solid #10b981;
+}
+
+.pendingCard {
+  border-bottom: 4px solid #f59e0b;
+}
+
+.rateCard {
+  border-bottom: 4px solid #3b82f6;
+}
+
+.chartCard {
+  padding: 20px;
+}
+
+.chartCard h3 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.barContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.barRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.barLabel {
+  min-width: 120px;
+  font-size: 14px;
+  color: #6b7280;
+  text-align: right;
+}
+
+.barTrack {
+  flex: 1;
+  height: 24px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: #10b981;
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+.barValue {
+  min-width: 40px;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.listCard {
+  padding: 20px;
+}
+
+.listCard h3 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.employeesTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.employeesTable th {
+  text-align: left;
+  padding: 12px;
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  font-size: 13px;
+}
+
+.employeesTable td {
+  padding: 12px;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 14px;
+}
+
+.employeesTable tr:hover {
+  background: #f9fafb;
+}
+
+.healthIndex {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.healthIndex.good {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.healthIndex.fair {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.healthIndex.poor {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.completedBadge {
+  background: #d1fae5;
+  color: #047857;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 48px;
+  color: #6b7280;
+}

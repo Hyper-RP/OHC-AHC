@@ -24,6 +24,10 @@ export { ManagementDashboard } from './ManagementDashboard';
 // EHS Detail Pages
 export { OPDDetailsPage } from './OPDDetailsPage';
 export { PreEmploymentDetailsPage } from './PreEmploymentDetailsPage';
+export { AHCDetailsPage } from './AHCDetailsPage';
+export { IncidentDetailsPage } from './IncidentDetailsPage';
+export { EmergencyDetailsPage } from './EmergencyDetailsPage';
+export { ReferredDetailsPage } from './ReferredDetailsPage';
 export { MetricDetailsPage } from './MetricDetailsPage';
 export { DepartmentDetailsPage } from './DepartmentDetailsPage';
 // Charts

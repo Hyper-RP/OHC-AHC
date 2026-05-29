@@ -28,6 +28,10 @@ import {
   ManagementDashboard,
   OPDDetailsPage,
   PreEmploymentDetailsPage,
+  AHCDetailsPage,
+  IncidentDetailsPage,
+  EmergencyDetailsPage,
+  ReferredDetailsPage,
   MetricDetailsPage,
   DepartmentDetailsPage,
 } from './components/pages';
@@ -78,6 +82,10 @@ function App() {
               <Route path="ehs/dashboard" element={<EHSDashboard />} />
               <Route path="ehs/opd-details" element={<OPDDetailsPage />} />
               <Route path="ehs/pre-employment-details" element={<PreEmploymentDetailsPage />} />
+              <Route path="ehs/ahc-details" element={<AHCDetailsPage />} />
+              <Route path="ehs/incident-details" element={<IncidentDetailsPage />} />
+              <Route path="ehs/emergency-details" element={<EmergencyDetailsPage />} />
+              <Route path="ehs/referred-details" element={<ReferredDetailsPage />} />
               <Route path="dashboard/metric-details/:metricSlug" element={<MetricDetailsPage />} />
               <Route path="dashboard/department-details/:departmentMetricSlug" element={<DepartmentDetailsPage />} />
               <Route path="management/dashboard" element={<ManagementDashboard />} />

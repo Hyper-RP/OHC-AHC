@@ -1,0 +1,247 @@
+.incidentDetailsPage {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.main {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.filterCard {
+  padding: 16px;
+}
+
+.filterRow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.summaryCard {
+  padding: 20px;
+  text-align: center;
+}
+
+.summaryValue {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.summaryLabel {
+  font-size: 14px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.todayCard {
+  border-bottom: 4px solid #f59e0b;
+}
+
+.highCard {
+  border-bottom: 4px solid #dc2626;
+}
+
+.rateCard {
+  border-bottom: 4px solid #f59e0b;
+}
+
+.severityCard {
+  padding: 20px;
+}
+
+.severityCard h3 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.severityGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.severityItem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.severityBadge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.severityBadge.low {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.severityBadge.medium {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.severityBadge.high {
+  background: #f97316;
+  color: white;
+}
+
+.severityBadge.critical {
+  background: #dc2626;
+  color: white;
+}
+
+.severityValue {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.chartCard {
+  padding: 20px;
+}
+
+.chartCard h3 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.barContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.barRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.barLabel {
+  min-width: 120px;
+  font-size: 14px;
+  color: #6b7280;
+  text-align: right;
+}
+
+.barTrack {
+  flex: 1;
+  height: 24px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: #dc2626;
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+.barValue {
+  min-width: 40px;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.listCard {
+  padding: 20px;
+}
+
+.listCard h3 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.incidentsTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.incidentsTable th {
+  text-align: left;
+  padding: 12px;
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  font-size: 13px;
+}
+
+.incidentsTable td {
+  padding: 12px;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 14px;
+}
+
+.incidentsTable tr:hover {
+  background: #fef2f2;
+}
+
+.complaintCell {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusBadge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.statusBadge.open {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.statusBadge.inprogress {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.statusBadge.completed {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.statusBadge.referred {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 48px;
+  color: #6b7280;
+}

@@ -54,6 +54,25 @@ export interface PendingFollowUp {
   days_overdue: number;
 }
 
+export interface FollowUpDetail {
+  id: number;
+  patient_name: string;
+  employee_code: string;
+  department: string;
+  employee_contact: string;
+  employee_phone: string;
+  original_visit_date: string;
+  follow_up_date: string;
+  days_overdue: number;
+  chief_complaint: string;
+  diagnosis: string;
+  doctor_notes: string;
+  follow_up_instructions: string;
+  visit_status: string;
+  triage_level: string;
+  consulted_doctor: string;
+}
+
 export interface MedicineSummary {
   summary: {
     total_ohc_visits: number;

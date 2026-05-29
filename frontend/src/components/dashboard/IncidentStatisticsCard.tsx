@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../ui';
 import type { IncidentStatistics } from '../../types';
 import styles from './IncidentStatisticsCard.module.css';
@@ -12,6 +13,12 @@ export const IncidentStatisticsCard: React.FC<IncidentStatisticsCardProps> = ({
   statistics,
   loading,
 }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate('/ehs/incident-details');
+  };
+
   if (loading) {
     return (
       <Card className={styles.card}>
@@ -31,7 +38,7 @@ export const IncidentStatisticsCard: React.FC<IncidentStatisticsCardProps> = ({
   }
 
   return (
-    <Card className={`${styles.card} ${statistics.attention_required ? styles.attentionRequired : ''}`}>
+    <Card className={`${styles.card} ${statistics.attention_required ? styles.attentionRequired : ''}`} onClick={handleClick}>
       <div className={styles.header}>
         <h3>âš ï¸ Incident Cases</h3>
         {statistics.attention_required && (
