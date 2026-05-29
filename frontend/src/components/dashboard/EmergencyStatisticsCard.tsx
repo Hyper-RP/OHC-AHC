@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../ui';
 import type { EmergencyStatistics } from '../../types';
 import styles from './EmergencyStatisticsCard.module.css';
@@ -12,6 +13,12 @@ export const EmergencyStatisticsCard: React.FC<EmergencyStatisticsCardProps> = (
   statistics,
   loading,
 }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate('/ehs/emergency-details');
+  };
+
   if (loading) {
     return (
       <Card className={styles.card}>
@@ -31,7 +38,7 @@ export const EmergencyStatisticsCard: React.FC<EmergencyStatisticsCardProps> = (
   }
 
   return (
-    <Card className={`${styles.card} ${statistics.critical_alert ? styles.criticalAlert : ''}`}>
+    <Card className={`${styles.card} ${statistics.critical_alert ? styles.criticalAlert : ''}`} onClick={handleClick}>
       <div className={styles.header}>
         <h3>ðŸš¨ Emergency Cases</h3>
         {statistics.critical_alert && (

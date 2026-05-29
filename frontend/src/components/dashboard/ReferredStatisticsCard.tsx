@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../ui';
 import type { ReferredStatistics } from '../../types';
 import styles from './ReferredStatisticsCard.module.css';
@@ -17,6 +18,11 @@ export const ReferredStatisticsCard: React.FC<ReferredStatisticsCardProps> = ({
     (highest, hospital) => Math.max(highest, hospital.referral_count),
     0,
   );
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate('/ehs/referred-details');
+  };
 
   if (loading) {
     return (
@@ -37,7 +43,7 @@ export const ReferredStatisticsCard: React.FC<ReferredStatisticsCardProps> = ({
   }
 
   return (
-    <Card className={styles.card}>
+    <Card className={styles.card} onClick={handleClick}>
       <div className={styles.header}>
         <h3>ðŸ¥ Referred Cases</h3>
       </div>

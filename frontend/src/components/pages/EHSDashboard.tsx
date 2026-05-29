@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSnackbar } from '../../contexts/SnackbarContext';
-import type { DashboardAnalytics, AnalyticsFilters, EHSStatistics } from '../../types';
+import type { DashboardAnalytics, AnalyticsFilters, EHSStatistics, FollowUpDetail } from '../../types';
 import { Header } from '../layout';
-import { Card, Alert, Button } from '../ui';
-import { getDashboard, getEHSStatistics, exportAnalytics } from '../../services/analytics';
+import { Card, Alert, Button, Modal, Loading } from '../ui';
+import { getDashboard, getEHSStatistics, exportAnalytics, getFollowUpDetail } from '../../services/analytics';
 import { Role } from '../../types';
 import {
   OPDStatisticsCard,
@@ -30,6 +30,9 @@ export const EHSDashboard: React.FC = () => {
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null);
   const [ehsStatistics, setEhsStatistics] = useState<EHSStatistics | null>(null);
   const [filters, setFilters] = useState<AnalyticsFilters>({});
+  const [selectedFollowUp, setSelectedFollowUp] = useState<FollowUpDetail | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [followUpLoading, setFollowUpLoading] = useState(false);
 
   useEffect(() => {
     if (!user || (user.role !== Role.EHS && user.role !== Role.MANAGEMENT)) {
@@ -96,6 +99,26 @@ export const EHSDashboard: React.FC = () => {
 
   const handleFilterChange = (key: keyof AnalyticsFilters, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value || undefined }));
+  };
+
+  const handleFollowUpClick = async (id: number) => {
+    try {
+      setFollowUpLoading(true);
+      setIsModalOpen(true);
+      const detail = await getFollowUpDetail(id);
+      setSelectedFollowUp(detail);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch follow-up details';
+      show(errorMessage, 'error');
+      setIsModalOpen(false);
+    } finally {
+      setFollowUpLoading(false);
+    }
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedFollowUp(null);
   };
 
   const isManagement = user?.role === Role.MANAGEMENT;
@@ -257,7 +280,11 @@ export const EHSDashboard: React.FC = () => {
                 <h3>Pending Follow-ups</h3>
                 <div className={styles.listContainer}>
                   {analytics.pending_follow_ups.map((item) => (
-                    <div key={item.id} className={styles.listItem}>
+                    <div
+                      key={item.id}
+                      className={`${styles.listItem} ${styles.clickable}`}
+                      onClick={() => handleFollowUpClick(item.id)}
+                    >
                       <div>
                         <span className={styles.itemName}>{item.patient_name}</span>
                         <span className={styles.itemCode}>{item.employee_code}</span>
@@ -276,6 +303,116 @@ export const EHSDashboard: React.FC = () => {
           </>
         )}
       </main>
+
+      {/* Follow-up Detail Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        title="Follow-up Details"
+        size="medium"
+      >
+        {followUpLoading ? (
+          <Loading text="Loading details..." />
+        ) : selectedFollowUp ? (
+          <div className={styles.followUpDetail}>
+            <div className={styles.detailSection}>
+              <h4>Patient Information</h4>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Name:</span>
+                <span className={styles.detailValue}>{selectedFollowUp.patient_name}</span>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Employee Code:</span>
+                <span className={styles.detailValue}>{selectedFollowUp.employee_code}</span>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Department:</span>
+                <span className={styles.detailValue}>{selectedFollowUp.department}</span>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Email:</span>
+                <span className={styles.detailValue}>{selectedFollowUp.employee_contact}</span>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Phone:</span>
+                <span className={styles.detailValue}>{selectedFollowUp.employee_phone}</span>
+              </div>
+            </div>
+
+            <div className={styles.detailSection}>
+              <h4>Visit Information</h4>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Original Visit Date:</span>
+                <span className={styles.detailValue}>
+                  {selectedFollowUp.original_visit_date
+                    ? new Date(selectedFollowUp.original_visit_date).toLocaleDateString()
+                    : 'N/A'}
+                </span>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Follow-up Date:</span>
+                <span className={styles.detailValue}>
+                  {selectedFollowUp.follow_up_date
+                    ? new Date(selectedFollowUp.follow_up_date).toLocaleDateString()
+                    : 'Not scheduled'}
+                </span>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Visit Status:</span>
+                <span className={styles.detailValue}>
+                  {selectedFollowUp.visit_status?.replace(/_/g, ' ') || 'Unknown'}
+                </span>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Triage Level:</span>
+                <span className={styles.detailValue}>
+                  {selectedFollowUp.triage_level || 'N/A'}
+                </span>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Follow-up Status:</span>
+                <span
+                  className={`${styles.detailValue} ${
+                    selectedFollowUp.days_overdue > 0 ? styles.overdueText : styles.scheduledText
+                  }`}
+                >
+                  {selectedFollowUp.days_overdue > 0
+                    ? `${selectedFollowUp.days_overdue} day${selectedFollowUp.days_overdue > 1 ? 's' : ''} overdue`
+                    : 'On schedule'}
+                </span>
+              </div>
+            </div>
+
+            <div className={styles.detailSection}>
+              <h4>Clinical Information</h4>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Chief Complaint:</span>
+                <span className={styles.detailValue}>{selectedFollowUp.chief_complaint || 'N/A'}</span>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Diagnosis:</span>
+                <span className={styles.detailValue}>{selectedFollowUp.diagnosis || 'No diagnosis recorded'}</span>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Consulted By:</span>
+                <span className={styles.detailValue}>{selectedFollowUp.consulted_doctor || 'N/A'}</span>
+              </div>
+            </div>
+
+            <div className={styles.detailSection}>
+              <h4>Notes</h4>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Doctor Notes:</span>
+                <p className={styles.detailNotes}>{selectedFollowUp.doctor_notes}</p>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Follow-up Instructions:</span>
+                <p className={styles.detailNotes}>{selectedFollowUp.follow_up_instructions}</p>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 };
