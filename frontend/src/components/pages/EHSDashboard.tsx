@@ -192,7 +192,7 @@ export const EHSDashboard: React.FC = () => {
             </div>
 
             {/* Summary Cards */}
-            <div className={styles.summaryCards}>
+            {/* <div className={styles.summaryCards}>
               <Card className={styles.summaryCard}>
                 <h3>Total Visits</h3>
                 <p className={styles.summaryValue}>{analytics.summary.total_visits}</p>
@@ -209,7 +209,7 @@ export const EHSDashboard: React.FC = () => {
                 <h3>Pending Follow-ups</h3>
                 <p className={styles.summaryValue}>{analytics.summary.follow_up_pending}</p>
               </Card>
-            </div>
+            </div> */}
 
             {/* Department-wise Visits */}
             <Card className={styles.chartCard}>
@@ -231,7 +231,7 @@ export const EHSDashboard: React.FC = () => {
             </Card>
 
             {/* Severity Distribution */}
-            <Card className={styles.chartCard}>
+            {/* <Card className={styles.chartCard}>
               <h3>Severity Distribution</h3>
               <div className={styles.severityGrid}>
                 <div className={styles.severityItem}>
@@ -251,7 +251,7 @@ export const EHSDashboard: React.FC = () => {
                   <span className={styles.severityValue}>{analytics.severity_wise.CRITICAL}</span>
                 </div>
               </div>
-            </Card>
+            </Card> */}
 
             {/* Critical Cases */}
             {analytics.critical_cases.length > 0 && (

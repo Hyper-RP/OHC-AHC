@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ArrowUpRight } from 'lucide-react';
 import { Card } from '../ui';
 import type { ReferredStatistics } from '../../types';
 import styles from './ReferredStatisticsCard.module.css';
@@ -28,7 +29,7 @@ export const ReferredStatisticsCard: React.FC<ReferredStatisticsCardProps> = ({
     return (
       <Card className={styles.card}>
         <div className={styles.header}>
-          <h3>ðŸ¥ Referred Cases</h3>
+          <h3><ArrowUpRight size={18} className={styles.headerIcon} /> Referred Cases</h3>
         </div>
         <div className={styles.loadingState}>
           <div className={styles.skeleton}></div>
@@ -45,7 +46,7 @@ export const ReferredStatisticsCard: React.FC<ReferredStatisticsCardProps> = ({
   return (
     <Card className={styles.card} onClick={handleClick}>
       <div className={styles.header}>
-        <h3>ðŸ¥ Referred Cases</h3>
+        <h3><ArrowUpRight size={18} className={styles.headerIcon} /> Referred Cases</h3>
       </div>
 
       <div className={styles.countsSection}>
