@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Ambulance } from 'lucide-react';
 import { Card } from '../ui';
 import type { EmergencyStatistics } from '../../types';
 import styles from './EmergencyStatisticsCard.module.css';
@@ -23,7 +24,7 @@ export const EmergencyStatisticsCard: React.FC<EmergencyStatisticsCardProps> = (
     return (
       <Card className={styles.card}>
         <div className={styles.header}>
-          <h3>ðŸš¨ Emergency Cases</h3>
+          <h3><Ambulance size={18} className={styles.headerIcon} /> Emergency Cases</h3>
         </div>
         <div className={styles.loadingState}>
           <div className={styles.skeleton}></div>
@@ -40,9 +41,9 @@ export const EmergencyStatisticsCard: React.FC<EmergencyStatisticsCardProps> = (
   return (
     <Card className={`${styles.card} ${statistics.critical_alert ? styles.criticalAlert : ''}`} onClick={handleClick}>
       <div className={styles.header}>
-        <h3>ðŸš¨ Emergency Cases</h3>
+        <h3><Ambulance size={18} className={styles.headerIcon} /> Emergency Cases</h3>
         {statistics.critical_alert && (
-          <span className={styles.criticalBadge}>âš ï¸ CRITICAL ALERT</span>
+          <span className={styles.criticalBadge}>CRITICAL ALERT</span>
         )}
       </div>
 
