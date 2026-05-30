@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '../layout';
 import { Alert, Card, FormInput, Button, Loading } from '../ui';
 import {
-  exportEmployeeHealthHistoryExcel,
+  exportEmployeeHealthHistory,
   getEmployeeHealthHistory,
 } from '../../services/reports';
 import { REPORT_PERIOD_OPTIONS } from '../../utils/constants';
@@ -47,13 +47,13 @@ export const EmployeeHealthHistory: React.FC = () => {
 
   const handleExportAll = async () => {
     try {
-      const blob = await exportEmployeeHealthHistoryExcel(employeeId || undefined);
+      const blob = await exportEmployeeHealthHistory(employeeId || undefined);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = employeeId
-        ? `employee_${employeeId}_health_history.csv`
-        : 'all_employee_health_history.csv';
+        ? `employee_${employeeId}_health_history.pdf`
+        : 'all_employee_health_history.pdf';
       link.click();
     } catch {
       setError('Export failed');
@@ -124,7 +124,7 @@ export const EmployeeHealthHistory: React.FC = () => {
               options={REPORT_PERIOD_OPTIONS}
             />
             <Button variant="outline-secondary" onClick={handleExportAll}>
-              Export Excel
+              Export PDF
             </Button>
             <Button onClick={handleLoad}>Load</Button>
           </div>

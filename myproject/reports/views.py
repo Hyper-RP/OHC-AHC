@@ -33,11 +33,19 @@ from reports.services import run_automated_health_alerts
 try:
     from reportlab.lib.pagesizes import A4
     from reportlab.lib import colors
+    from reportlab.lib.units import inch
     from reportlab.pdfgen import canvas
+    from reportlab.platypus import Image as RLImage
+    from PIL import Image as PILImage
+    import os
 except ImportError:  # pragma: no cover - optional dependency
     canvas = None
     A4 = None
     colors = None
+    inch = None
+    RLImage = None
+    PILImage = None
+    os = None
 
 
 def build_employee_health_history(employee_queryset=None):
@@ -263,33 +271,74 @@ def _draw_wrapped_lines(pdf, text, x, y, width=88, line_height=14, font_name="He
     return y
 
 
-def _draw_receipt_logo(pdf, x, y):
+def _draw_receipt_logo(pdf, x, y, page_width=None):
+    """
+    Draw centered logo at the top of the page.
+    If page_width is provided, centers the logo horizontally.
+    Returns the y-coordinate below the logo.
+    """
+    # Try to use the actual logo image
+    logo_path = os.path.join(settings.BASE_DIR, 'static', 'react', 'assets', 'mediGplus-CFZGf1el.png')
+
+    if os.path.exists(logo_path) and PILImage is not None:
+        try:
+            # Get image dimensions and calculate aspect ratio
+            with PILImage.open(logo_path) as img:
+                width, height = img.size
+                aspect_ratio = width / height
+
+            # Set logo size
+            logo_height = 50
+            logo_width = logo_height * aspect_ratio
+
+            # Calculate center position if page_width is provided
+            if page_width:
+                x = (page_width - logo_width) / 2
+
+            # Draw the image
+            pdf.drawImage(logo_path, x, y - logo_height,
+                        width=logo_width, height=logo_height,
+                        preserveAspectRatio=True, mask='auto')
+            return y - logo_height - 10
+        except Exception:
+            pass  # Fall through to text-based logo if image fails
+
+    # Fallback to text-based logo
     if colors is None:
         pdf.setFont("Helvetica-Bold", 18)
+        if page_width:
+            text_width = pdf.stringWidth("MedigPlus", "Helvetica-Bold", 18)
+            x = (page_width - text_width) / 2
         pdf.drawString(x, y, "MedigPlus")
         pdf.setFont("Helvetica", 10)
+        if page_width:
+            text_width = pdf.stringWidth("HEALTHCARE", "Helvetica", 10)
+            x = (page_width - text_width) / 2
         pdf.drawString(x, y - 14, "HEALTHCARE")
-        return
+        return y - 40
 
+    # Colored text-based logo
     pdf.saveState()
-    pdf.setFillColor(colors.HexColor("#1499B4"))
-    pdf.roundRect(x, y - 34, 38, 38, 8, fill=1, stroke=0)
-    pdf.setFillColor(colors.white)
-    pdf.roundRect(x + 15, y - 28, 8, 26, 3, fill=1, stroke=0)
-    pdf.roundRect(x + 6, y - 19, 26, 8, 3, fill=1, stroke=0)
-    pdf.setFillColor(colors.HexColor("#0A3D66"))
+    if colors is not None:
+        pdf.setFillColor(colors.HexColor("#1499B4"))
+        pdf.roundRect(x, y - 34, 38, 38, 8, fill=1, stroke=0)
+        pdf.setFillColor(colors.white)
+        pdf.roundRect(x + 15, y - 28, 8, 26, 3, fill=1, stroke=0)
+        pdf.roundRect(x + 6, y - 19, 26, 8, 3, fill=1, stroke=0)
+        pdf.setFillColor(colors.HexColor("#0A3D66"))
     pdf.setFont("Helvetica-Bold", 24)
     pdf.drawString(x + 48, y - 12, "MedigPlus")
-    pdf.setFillColor(colors.HexColor("#1499B4"))
+    if colors is not None:
+        pdf.setFillColor(colors.HexColor("#1499B4"))
     pdf.setFont("Helvetica-Bold", 12)
     pdf.drawString(x + 49, y - 28, "HEALTHCARE")
     pdf.restoreState()
+    return y - 40
 
 
 def _draw_section_band(pdf, x, y, width, title):
+    """Draw section band without border."""
     if colors is not None:
-        pdf.setFillColor(colors.HexColor("#EAF6FB"))
-        pdf.roundRect(x, y - 16, width, 20, 6, fill=1, stroke=0)
         pdf.setFillColor(colors.HexColor("#0A3D66"))
     pdf.setFont("Helvetica-Bold", 11)
     pdf.drawString(x + 8, y - 3, title)
@@ -299,11 +348,7 @@ def _draw_section_band(pdf, x, y, width, title):
 
 
 def _draw_info_box(pdf, x, y, width, height, rows):
-    fill_box = 1 if colors is not None else 0
-    if colors is not None:
-        pdf.setStrokeColor(colors.HexColor("#C8DAE8"))
-        pdf.setFillColor(colors.white)
-    pdf.roundRect(x, y - height, width, height, 10, fill=fill_box, stroke=1)
+    """Draw info box without border."""
     if colors is not None:
         pdf.setFillColor(colors.black)
 
@@ -317,35 +362,85 @@ def _draw_info_box(pdf, x, y, width, height, rows):
     return y - height - 12
 
 
-def _draw_table(pdf, x, y, width, headers, rows, col_widths, row_height=16):
-    fill_header = 1 if colors is not None else 0
-    if colors is not None:
-        pdf.setStrokeColor(colors.HexColor("#C8DAE8"))
-        pdf.setFillColor(colors.HexColor("#F2F8FC"))
-    pdf.roundRect(x, y - row_height, width, row_height, 6, fill=fill_header, stroke=1)
+def _draw_table(pdf, x, y, width, headers, rows, col_widths, row_height=20):
+    """Draw a table with proper text wrapping and dynamic row heights - NO BORDERS."""
+
+    # Calculate wrapped text for each cell
+    def get_wrapped_lines(text, max_width):
+        lines = []
+        words = str(text or "-").split()
+        current_line = ""
+        for word in words:
+            test_line = f"{current_line} {word}".strip() if current_line else word
+            if pdf.stringWidth(test_line, "Helvetica", 8) <= max_width - 10:
+                current_line = test_line
+            else:
+                if current_line:
+                    lines.append(current_line)
+                current_line = word
+        if current_line:
+            lines.append(current_line)
+        return lines if lines else ["-"]
+
+    # Calculate max lines per row for proper height
+    max_lines_per_cell = {}
+    for row_idx, row in enumerate(rows):
+        for col_idx, value in enumerate(row):
+            lines = get_wrapped_lines(value, col_widths[col_idx])
+            max_lines_per_cell[(row_idx, col_idx)] = max(len(lines), 1)
+
+    # Draw header (no border, just text)
     if colors is not None:
         pdf.setFillColor(colors.black)
 
     current_x = x
     pdf.setFont("Helvetica-Bold", 8)
     for index, header in enumerate(headers):
-        pdf.drawString(current_x + 5, y - 11, header)
+        pdf.drawString(current_x + 5, y - 14, header)
         current_x += col_widths[index]
 
+    # Draw rows with dynamic height
     current_y = y - row_height
-    pdf.setFont("Helvetica", 8)
-    for row in rows:
-        current_y -= row_height
-        if colors is not None:
-            pdf.setFillColor(colors.white)
-        pdf.roundRect(x, current_y, width, row_height, 4, fill=fill_header, stroke=1)
+    for row_idx, row in enumerate(rows):
+        # Calculate needed height for this row based on wrapped content
+        max_lines = max(max_lines_per_cell.get((row_idx, i), 1) for i in range(len(row)))
+        needed_height = max_lines * 12 + 8
+
+        # Check if we need a new page
+        if current_y - needed_height < 50:
+            pdf.showPage()
+            current_y = pdf._pagesize[1] - 50
+            # Redraw header on new page (no border)
+            if colors is not None:
+                pdf.setFillColor(colors.black)
+            current_x = x
+            pdf.setFont("Helvetica-Bold", 8)
+            for index, header in enumerate(headers):
+                pdf.drawString(current_x + 5, current_y - 14, header)
+                current_x += col_widths[index]
+            current_y = current_y - row_height
+
+        actual_height = max(needed_height, 20)
+        current_y -= actual_height
+
+        # No border, just text
         if colors is not None:
             pdf.setFillColor(colors.black)
+
+        # Draw cell contents with wrapping
+        pdf.setFont("Helvetica", 8)
         current_x = x
-        for index, value in enumerate(row):
-            pdf.drawString(current_x + 5, current_y + 5, str(value or "-")[:24])
-            current_x += col_widths[index]
-    return current_y - 10
+        for col_idx, value in enumerate(row):
+            lines = get_wrapped_lines(value, col_widths[col_idx])
+            cell_y = current_y + actual_height - 6
+            for line in lines:
+                if cell_y > current_y + 4:
+                    pdf.drawString(current_x + 5, cell_y, line)
+                    cell_y -= 12
+            current_x += col_widths[col_idx]
+
+        current_y -= 8
+    return current_y
 
 
 class EmployeeHealthHistoryAPIView(APIView):
@@ -470,54 +565,118 @@ class EmployeeHealthHistoryPDFExportView(APIView):
             buffer = BytesIO()
             pdf = canvas.Canvas(buffer, pagesize=A4)
             width, height = A4
-            y = height - 50
 
-            pdf.setFont("Helvetica-Bold", 16)
-            pdf.drawString(40, y, "Employee Health History Report")
-            y -= 24
-            pdf.setFont("Helvetica", 10)
-            pdf.drawString(40, y, f"Total Records: {len(rows)}")
-            y -= 24
+            # Draw centered logo
+            logo_bottom = _draw_receipt_logo(pdf, 0, height - 40, page_width=width)
+            y = logo_bottom - 10
 
+            # Draw centered title
+            if colors is not None:
+                pdf.setFillColor(colors.HexColor("#0A3D66"))
+            pdf.setFont("Helvetica-Bold", 18)
+            title = "Employee Health History Report"
+            title_width = pdf.stringWidth(title, "Helvetica-Bold", 18)
+            pdf.drawString((width - title_width) / 2, y, title)
+            y -= 25
+            if colors is not None:
+                pdf.setFillColor(colors.black)
+            pdf.setFont("Helvetica", 11)
+            subtitle = f"Total Records: {len(rows)}"
+            subtitle_width = pdf.stringWidth(subtitle, "Helvetica", 11)
+            pdf.drawString((width - subtitle_width) / 2, y, subtitle)
+            y -= 40
+
+            # Table configuration with better column widths
             headers = [
                 "Emp ID",
-                "Name",
+                "Employee Name",
                 "Visit Date",
                 "Complaint",
                 "Doctor",
                 "Diagnosis",
-                "Fit/Unfit",
+                "Fitness",
             ]
-            x_positions = [40, 95, 220, 300, 390, 470, 540]
+            col_widths = [70, 100, 85, 95, 85, 85, 65]  # Total: ~585 width (fits in A4 with margins)
 
             def draw_headers(current_y):
+                """Draw table headers without borders."""
+                row_height = 25
+                if colors is not None:
+                    pdf.setFillColor(colors.black)
                 pdf.setFont("Helvetica-Bold", 9)
-                for header, x_pos in zip(headers, x_positions):
-                    pdf.drawString(x_pos, current_y, header)
-                return current_y - 14
+                current_x = 40
+                for header, col_width in zip(headers, col_widths):
+                    pdf.drawString(current_x, current_y - 8, header)
+                    current_x += col_width + 5
+                return current_y - row_height - 5
 
+            def draw_row(current_y, row_data):
+                """Draw a single row with text wrapping, no borders."""
+                row_height = 20
+                if colors is not None:
+                    pdf.setFillColor(colors.black)
+
+                pdf.setFont("Helvetica", 8)
+                current_x = 40
+
+                for value, col_width in zip(row_data, col_widths):
+                    # Truncate or wrap text based on column width
+                    text = str(value or "-")
+                    max_chars = int(col_width / 3.5)  # Approximate chars that fit
+                    if len(text) > max_chars:
+                        text = text[:max_chars - 3] + "..."
+                    pdf.drawString(current_x, current_y - 6, text)
+                    current_x += col_width + 5
+
+                return current_y - row_height - 3
+
+            # Draw headers
             y = draw_headers(y)
-            pdf.setFont("Helvetica", 8)
 
+            # Draw data rows
             for row in rows:
-                if y < 60:
+                if y < 80:  # Need new page
                     pdf.showPage()
                     y = height - 50
+                    # Redraw centered logo and headers on new page
+                    logo_bottom = _draw_receipt_logo(pdf, 0, height - 40, page_width=width)
+                    y = logo_bottom - 10
+                    if colors is not None:
+                        pdf.setFillColor(colors.HexColor("#0A3D66"))
+                    pdf.setFont("Helvetica-Bold", 18)
+                    continued_title = "Employee Health History Report (continued)"
+                    title_width = pdf.stringWidth(continued_title, "Helvetica-Bold", 18)
+                    pdf.drawString((width - title_width) / 2, y, continued_title)
+                    y -= 30
                     y = draw_headers(y)
-                    pdf.setFont("Helvetica", 8)
 
                 values = [
                     row["employee_code"],
-                    row["employee_name"][:20],
+                    row["employee_name"],
                     str(row["visit_date"].date()) if hasattr(row["visit_date"], "date") else str(row["visit_date"]),
-                    row["chief_complaint"][:16],
-                    row["doctor_name"][:14],
-                    (row["diagnosis_name"] or "-")[:14],
+                    row["chief_complaint"],
+                    row["doctor_name"],
+                    row["diagnosis_name"] or "-",
                     row["fitness_decision"] or "-",
                 ]
-                for value, x_pos in zip(values, x_positions):
-                    pdf.drawString(x_pos, y, str(value))
+                y = draw_row(y, values)
+
+            # Add centered footer
+            y -= 20
+            if y > 100:
+                if colors is not None:
+                    pdf.setStrokeColor(colors.HexColor("#C8DAE8"))
+                pdf.line(50, y, width - 50, y)
+                y -= 20
+                pdf.setFont("Helvetica", 9)
+                footer_text = "Generated by MedigPlus Healthcare System"
+                footer_width = pdf.stringWidth(footer_text, "Helvetica", 9)
+                pdf.drawString((width - footer_width) / 2, y, footer_text)
                 y -= 12
+                pdf.setFont("Helvetica", 8)
+                timestamp = f"Generated on: {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M')}"
+                timestamp_width = pdf.stringWidth(timestamp, "Helvetica", 8)
+                pdf.drawString((width - timestamp_width) / 2, y, timestamp)
 
             pdf.save()
             buffer.seek(0)
@@ -548,26 +707,29 @@ class EmployeeHealthHistoryPDFExportView(APIView):
                 pdf.setFillColor(colors.HexColor("#F8FBFE"))
                 pdf.rect(0, 0, width, height, fill=1, stroke=0)
                 pdf.setFillColor(colors.HexColor("#0A3D66"))
-                pdf.rect(0, height - 70, width, 70, fill=1, stroke=0)
+                pdf.rect(0, height - 80, width, 80, fill=1, stroke=0)
                 pdf.setFillColor(colors.black)
 
-            _draw_receipt_logo(pdf, 40, height - 24)
-            if colors is not None:
-                pdf.setFillColor(colors.white)
+            # Draw centered logo
+            logo_bottom = _draw_receipt_logo(pdf, 0, height - 30, page_width=width)
 
-            receipt_x = width - 195
-            receipt_y = height - 18
+            # Draw receipt info box on the right
             if colors is not None:
                 pdf.setFillColor(colors.white)
-                pdf.roundRect(receipt_x, receipt_y - 48, 155, 42, 8, fill=1, stroke=0)
+            receipt_x = width - 170
+            receipt_y = logo_bottom + 10
+            if colors is not None:
+                pdf.roundRect(receipt_x, receipt_y - 38, 130, 34, 6, fill=1, stroke=0)
                 pdf.setFillColor(colors.black)
             pdf.setFont("Helvetica-Bold", 8)
-            pdf.drawString(receipt_x + 10, receipt_y - 16, "Receipt No.")
-            pdf.drawString(receipt_x + 10, receipt_y - 30, "Employee ID")
+            pdf.drawString(receipt_x + 10, receipt_y - 12, "Receipt No.")
+            pdf.drawString(receipt_x + 10, receipt_y - 26, "Employee ID")
             pdf.setFont("Helvetica", 8)
-            pdf.drawString(receipt_x + 62, receipt_y - 16, f"RCP-{employee_info['employee_code']}")
-            pdf.drawString(receipt_x + 62, receipt_y - 30, employee_info["employee_code"])
-            return height - 96
+            pdf.drawString(receipt_x + 55, receipt_y - 12, f"RCP-{employee_info['employee_code']}")
+            pdf.drawString(receipt_x + 55, receipt_y - 26, employee_info["employee_code"])
+
+            # Return position below logo
+            return logo_bottom - 10
 
         def ensure_space(y, needed=70):
             if y < needed:
