@@ -4,6 +4,8 @@ import { Header } from '../layout';
 import { Alert, Button, Card, FormInput } from '../ui';
 import { parseMedicineCsv } from './medicineImport';
 import {
+  getTomorrowDateString,
+  isFutureDate,
   loadMedicineActivity,
   loadMedicineRecords,
   saveMedicineActivity,
@@ -58,6 +60,11 @@ export const AddMedicine: React.FC = () => {
     const currentMedicines = loadMedicineRecords();
     if (currentMedicines.some((medicine) => medicine.id.toLowerCase() === newMedicine.id.trim().toLowerCase())) {
       setBanner('This medicine ID already exists. Please use a unique ID.');
+      return;
+    }
+
+    if (newMedicine.expiry && !isFutureDate(newMedicine.expiry.trim())) {
+      setBanner('Expiry date must be after today.');
       return;
     }
 
@@ -275,6 +282,7 @@ export const AddMedicine: React.FC = () => {
               type="date"
               value={newMedicine.expiry}
               onChange={(value) => handleChange('expiry', value)}
+              min={getTomorrowDateString()}
             />
             <FormInput
               label="Supplier"
