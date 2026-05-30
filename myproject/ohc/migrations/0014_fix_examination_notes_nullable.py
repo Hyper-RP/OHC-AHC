@@ -20,12 +20,9 @@ def alter_examination_notes_nullable(apps, schema_editor):
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     created_at TIMESTAMP NOT NULL,
                     updated_at TIMESTAMP NOT NULL,
-                    visit_id INTEGER NOT NULL REFERENCES ohc_ohcvisit(id),
-                    diagnosed_by_id INTEGER NOT NULL REFERENCES accounts_doctorprofile(id),
                     diagnosis_code VARCHAR(50),
                     diagnosis_name VARCHAR(255) NOT NULL,
                     diagnosis_notes TEXT,
-                    examination_notes TEXT,
                     severity VARCHAR(15) NOT NULL,
                     condition_status VARCHAR(15) NOT NULL,
                     is_primary BOOL NOT NULL,
@@ -33,7 +30,11 @@ def alter_examination_notes_nullable(apps, schema_editor):
                     fitness_decision VARCHAR(30) NOT NULL,
                     work_restrictions TEXT,
                     advised_rest_days UNSIGNED INT NOT NULL,
-                    follow_up_date DATE
+                    follow_up_date DATE,
+                    diagnosed_by_id INTEGER NOT NULL REFERENCES accounts_doctorprofile(id),
+                    visit_id INTEGER NOT NULL REFERENCES ohc_ohcvisit(id),
+                    examination_notes TEXT,
+                    referred_hospital_id INTEGER
                 );
             """)
             cursor.execute("""

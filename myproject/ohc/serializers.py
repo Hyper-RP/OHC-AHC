@@ -62,6 +62,8 @@ class OHCVisitSerializer(serializers.ModelSerializer):
         ]
 
 class DiagnosisSerializer(serializers.ModelSerializer):
+    examination_notes = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+
     class Meta:
         model = Diagnosis
         fields = "__all__"
@@ -89,6 +91,7 @@ class DiagnosisWithPrescriptionsSerializer(serializers.Serializer):
     diagnosis_code = serializers.CharField(max_length=50, required=False, allow_blank=True)
     diagnosis_name = serializers.CharField(max_length=255)
     diagnosis_notes = serializers.CharField(required=False, allow_blank=True)
+    examination_notes = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     severity = serializers.CharField(max_length=15)
     condition_status = serializers.CharField(max_length=15, required=False, default="ACTIVE")
     is_primary = serializers.BooleanField(default=True)
@@ -271,6 +274,7 @@ class CompleteOHCIntakeSerializer(serializers.Serializer):
     diagnosis_name = serializers.CharField(max_length=255)
     diagnosis_code = serializers.CharField(max_length=50, required=False, allow_blank=True)
     diagnosis_notes = serializers.CharField()
+    examination_notes = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     diagnosis_severity = serializers.CharField(max_length=15)
     diagnosis_condition_status = serializers.CharField(max_length=15)
     fitness_decision = serializers.CharField(max_length=30)
@@ -316,6 +320,7 @@ class CompleteOHCIntakeSerializer(serializers.Serializer):
             diagnosis_code=validated_data.get("diagnosis_code", ""),
             diagnosis_name=validated_data["diagnosis_name"],
             diagnosis_notes=validated_data["diagnosis_notes"],
+            examination_notes=validated_data.get("examination_notes", ""),
             severity=validated_data["diagnosis_severity"],
             condition_status=validated_data["diagnosis_condition_status"],
             fitness_decision=validated_data["fitness_decision"],

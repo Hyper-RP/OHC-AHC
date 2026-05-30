@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AlertTriangle } from 'lucide-react';
 import { Card } from '../ui';
 import type { IncidentStatistics } from '../../types';
 import styles from './IncidentStatisticsCard.module.css';
@@ -23,7 +24,7 @@ export const IncidentStatisticsCard: React.FC<IncidentStatisticsCardProps> = ({
     return (
       <Card className={styles.card}>
         <div className={styles.header}>
-          <h3>âš ï¸ Incident Cases</h3>
+          <h3><AlertTriangle size={18} className={styles.headerIcon} /> Incident Cases</h3>
         </div>
         <div className={styles.loadingState}>
           <div className={styles.skeleton}></div>
@@ -40,7 +41,7 @@ export const IncidentStatisticsCard: React.FC<IncidentStatisticsCardProps> = ({
   return (
     <Card className={`${styles.card} ${statistics.attention_required ? styles.attentionRequired : ''}`} onClick={handleClick}>
       <div className={styles.header}>
-        <h3>âš ï¸ Incident Cases</h3>
+        <h3><AlertTriangle size={18} className={styles.headerIcon} /> Incident Cases</h3>
         {statistics.attention_required && (
           <span className={styles.attentionBadge}>Attention Required</span>
         )}

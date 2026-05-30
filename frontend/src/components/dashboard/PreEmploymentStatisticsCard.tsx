@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { UserCheck, CheckCircle2, XCircle } from 'lucide-react';
 import { Card } from '../ui';
 import type { PreEmploymentStatistics } from '../../types';
 import styles from './PreEmploymentStatisticsCard.module.css';
@@ -23,7 +24,7 @@ export const PreEmploymentStatisticsCard: React.FC<PreEmploymentStatisticsCardPr
     return (
       <Card className={styles.card}>
         <div className={styles.header}>
-          <h3>Pre-employement Check Ups</h3>
+          <h3><UserCheck size={18} className={styles.headerIcon} /> Pre-employement Check Ups</h3>
         </div>
         <div className={styles.loadingState}>
           <div className={styles.skeleton}></div>
@@ -40,7 +41,7 @@ export const PreEmploymentStatisticsCard: React.FC<PreEmploymentStatisticsCardPr
   return (
     <Card className={styles.card} onClick={handleClick}>
       <div className={styles.header}>
-        <h3>Pre-employement Check Ups</h3>
+        <h3><UserCheck size={18} className={styles.headerIcon} /> Pre-employement Check Ups</h3>
         <span className={styles.todayBadge}>Today: {statistics.today_count} cases</span>
       </div>
 
@@ -51,6 +52,7 @@ export const PreEmploymentStatisticsCard: React.FC<PreEmploymentStatisticsCardPr
 
       <div className={styles.statsGrid}>
         <div className={styles.statItem}>
+          <CheckCircle2 size={20} className={styles.statIcon} style={{ color: '#10b981' }} />
           <div className={styles.statContent}>
             <span className={styles.statLabel}>Fit</span>
             <span className={styles.statValue} style={{ color: '#10b981' }}>
@@ -59,6 +61,7 @@ export const PreEmploymentStatisticsCard: React.FC<PreEmploymentStatisticsCardPr
           </div>
         </div>
         <div className={styles.statItem}>
+          <XCircle size={20} className={styles.statIcon} style={{ color: '#dc2626' }} />
           <div className={styles.statContent}>
             <span className={styles.statLabel}>Unfit</span>
             <span className={styles.statValue} style={{ color: '#dc2626' }}>

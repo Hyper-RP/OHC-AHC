@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ClipboardList } from 'lucide-react';
 import { Card } from '../ui';
 import type { OPDStatistics } from '../../types';
 import styles from './OPDStatisticsCard.module.css';
@@ -22,7 +23,7 @@ export const OPDStatisticsCard: React.FC<OPDStatisticsCardProps> = ({
     return (
       <Card className={styles.card}>
         <div className={styles.header}>
-          <h3>📋 OPD Visits Today</h3>
+          <h3><ClipboardList size={18} className={styles.headerIcon} /> OPD Visits Today</h3>
         </div>
         <div className={styles.loadingState}>
           <div className={styles.skeleton}></div>
@@ -41,7 +42,7 @@ export const OPDStatisticsCard: React.FC<OPDStatisticsCardProps> = ({
   return (
     <Card className={styles.card} onClick={handleClick}>
       <div className={styles.header}>
-        <h3>📋 OPD Visits Today</h3>
+        <h3><ClipboardList size={18} className={styles.headerIcon} /> OPD Visits Today</h3>
         <div className={styles.todayBadge}>{statistics.today_count}</div>
       </div>
 
@@ -84,7 +85,7 @@ export const OPDStatisticsCard: React.FC<OPDStatisticsCardProps> = ({
         </div>
       ) : (
         <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>📋</div>
+          <div className={styles.emptyIcon}><ClipboardList size={48} /></div>
           <p>No OPD visits recorded today</p>
           <span className={styles.emptyHint}>Visit activity will appear here when employees check in</span>
         </div>
