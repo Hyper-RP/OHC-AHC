@@ -1,0 +1,44 @@
+.switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background-color: #e5e7eb;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  padding: 0;
+}
+
+.switch:hover:not(.disabled) {
+  background-color: #d1d5db;
+}
+
+.switch.checked {
+  background-color: #3b82f6;
+}
+
+.switch.checked:hover {
+  background-color: #2563eb;
+}
+
+.switch.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.switch.checked .thumb {
+  transform: translateX(20px);
+}

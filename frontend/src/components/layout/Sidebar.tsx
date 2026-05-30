@@ -1,0 +1,77 @@
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { getNavItemsForRole } from '../../utils/navigation';
+import { NavDropdown } from '../navigation';
+import styles from './Sidebar.module.css';
+import logo from '../../assets/mediGplus.png';
+
+interface SidebarProps {
+  className?: string;
+}
+
+/**
+ * Sidebar component for main navigation
+ * Displays navigation items based on user role
+ */
+export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
+  const { user, logout } = useAuth();
+
+  if (!user) {
+    return null;
+  }
+
+  const userDisplayName = `${user.first_name} ${user.last_name}`;
+  const navItems = getNavItemsForRole(user.role);
+
+  return (
+    <aside className={`${styles.sidebar} ${className}`}>
+      <div className={styles.sidebarTop}>
+        <div className={styles.brandSection}>
+          <div className={styles.logoContainer}>
+            <img src={logo} alt="MediGplus Logo" className={styles.logoImage} />
+          </div>
+          <h1 className={styles.brandTitle}>Health Portal</h1>
+          <p className={styles.brandSubtitle}>Occupational Health Center</p>
+        </div>
+
+        <nav className={styles.portalNav}>
+          {navItems.map((item) => (
+            item.children ? (
+              <NavDropdown
+                key={item.urlName}
+                label={item.label}
+                icon={item.icon}
+                url={item.url}
+              >
+                {item.children}
+              </NavDropdown>
+            ) : (
+              <NavLink
+                key={item.urlName}
+                to={item.url}
+                className={({ isActive }) =>
+                  `${styles.navLinkCard} ${isActive ? styles.active : ''}`
+                }
+                end
+              >
+                <span className={styles.navIcon}>{item.icon}</span>
+                <span>{item.label}</span>
+              </NavLink>
+            )
+          ))}
+        </nav>
+      </div>
+
+      <div className={styles.sidebarFooter}>
+        <div className={styles.userSection}>
+          <div className={styles.roleChip}>{user.role}</div>
+          <p className={styles.userName}>{userDisplayName}</p>
+        </div>
+        <button type="button" className={styles.logoutButton} onClick={logout}>
+          Logout
+        </button>
+      </div>
+    </aside>
+  );
+};

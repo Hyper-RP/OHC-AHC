@@ -1,0 +1,60 @@
+.gaugeContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gauge {
+  display: block;
+}
+
+.scoreLabel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+.scoreValue {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.scoreMax {
+  font-size: 0.875rem;
+  opacity: 0.6;
+  margin-left: 0.25rem;
+}
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 10;
+}
+
+.tooltipText {
+  background: #1f2937;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.gaugeContainer:hover .tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

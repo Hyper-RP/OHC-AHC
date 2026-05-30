@@ -1,0 +1,51 @@
+.severityBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.severityBadge.small {
+  font-size: 10px;
+  padding: 2px 8px;
+}
+
+.severityBadge.medium {
+  font-size: 12px;
+  padding: 4px 12px;
+}
+
+.severityBadge.large {
+  font-size: 14px;
+  padding: 6px 16px;
+}
+
+.low {
+  background-color: #10b981;
+  color: white;
+}
+
+.medium {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.high {
+  background-color: #f97316;
+  color: white;
+}
+
+.critical {
+  background-color: #ef4444;
+  color: white;
+}
+
+.default {
+  background-color: #6b7280;
+  color: white;
+}

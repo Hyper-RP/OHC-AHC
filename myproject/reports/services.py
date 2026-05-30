@@ -16,7 +16,7 @@ def create_notification(
     notification_type=Notification.NotificationType.GENERAL,
     channel=Notification.Channel.IN_APP,
     related_model="",
-    related_object_uuid="",
+    related_object_id=None,
     scheduled_for=None,
 ):
     defaults = {
@@ -30,7 +30,7 @@ def create_notification(
         recipient=recipient,
         title=title,
         related_model=related_model,
-        related_object_uuid=related_object_uuid,
+        related_object_id=related_object_id,
         defaults=defaults,
     )
     if not _:
@@ -67,7 +67,7 @@ def notify_employee_health_status(employee_profile, diagnosis):
         message=message,
         notification_type=Notification.NotificationType.FITNESS_ALERT,
         related_model="Diagnosis",
-        related_object_uuid=str(diagnosis.uuid),
+        related_object_id=diagnosis.id,
     )
 
 
@@ -84,7 +84,7 @@ def notify_follow_up(employee_profile, visit):
         ),
         notification_type=Notification.NotificationType.APPOINTMENT,
         related_model="OHCVisit",
-        related_object_uuid=str(visit.uuid),
+        related_object_id=visit.id,
     )
 
 
@@ -101,7 +101,7 @@ def notify_referral(employee_profile, referral):
         ),
         notification_type=Notification.NotificationType.REFERRAL,
         related_model="Referral",
-        related_object_uuid=str(referral.uuid),
+        related_object_id=referral.id,
     )
 
 
@@ -123,7 +123,7 @@ def generate_expired_certificate_alerts():
                 ),
                 notification_type=Notification.NotificationType.FITNESS_ALERT,
                 related_model="EmployeeProfile",
-                related_object_uuid=str(profile.uuid),
+                related_object_id=profile.id,
             )
         )
     return alerts
@@ -147,7 +147,7 @@ def generate_upcoming_checkup_alerts(days_ahead=7):
                 ),
                 notification_type=Notification.NotificationType.APPOINTMENT,
                 related_model="OHCVisit",
-                related_object_uuid=str(visit.uuid),
+                related_object_id=visit.id,
                 scheduled_for=timezone.now(),
             )
         )
@@ -201,7 +201,7 @@ def log_audit_event(
     module,
     action,
     target_model,
-    target_object_uuid="",
+    target_object_id=None,
     object_snapshot=None,
     ip_address=None,
     user_agent="",
@@ -212,7 +212,7 @@ def log_audit_event(
         module=module,
         action=action,
         target_model=target_model,
-        target_object_uuid=target_object_uuid or "",
+        target_object_id=target_object_id,
         object_snapshot=object_snapshot or {},
         ip_address=ip_address,
         user_agent=user_agent[:1000],

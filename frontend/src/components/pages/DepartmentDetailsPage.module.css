@@ -1,0 +1,102 @@
+.page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(19, 114, 137, 0.12), transparent 30%),
+    linear-gradient(180deg, #f4fbfc 0%, #f8f5ef 100%);
+}
+
+.main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.controlsRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.metricFilterWrap {
+  display: flex;
+  align-items: center;
+}
+
+.metricFilterSelect {
+  min-width: 108px;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid rgba(34, 81, 108, 0.16);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #11313d;
+  font-size: 0.84rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.summaryCard,
+.chartCard,
+.tableCard {
+  border-radius: 22px;
+}
+
+.summaryLabel {
+  margin: 0 0 0.6rem;
+  color: #647984;
+  font-size: 0.92rem;
+}
+
+.summaryValue {
+  margin: 0;
+  color: #11313d;
+  font-size: 2.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 0.95rem 1rem;
+  border-bottom: 1px solid rgba(17, 49, 61, 0.08);
+  text-align: left;
+}
+
+.table th {
+  color: #5f7380;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table td {
+  color: #11313d;
+}
+
+@media (max-width: 768px) {
+  .main {
+    padding: 1rem;
+  }
+
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+}
