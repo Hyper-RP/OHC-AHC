@@ -24,6 +24,26 @@ interface PrescriptionInput {
   instructions?: string;
 }
 
+const formatLocalDateString = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getTodayDateString = () => formatLocalDateString(new Date());
+
+const getTomorrowDateString = () => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return formatLocalDateString(tomorrow);
+};
+
+const FITNESS_STATUS_OPTIONS = [
+  { value: '', label: 'Select fitness status' },
+  ...FITNESS_DECISION_OPTIONS,
+];
+
 /**
  * Doctor Dashboard component
  * Shows visits assigned to the current doctor
@@ -165,7 +185,7 @@ export const DoctorDashboard: React.FC = () => {
   const [diagnosisName, setDiagnosisName] = useState('');
   const [examinationNotes, setExaminationNotes] = useState('');
   const [followUpDate, setFollowUpDate] = useState('');
-  const [fitnessDecision, setFitnessDecision] = useState<FitnessDecision>(FitnessDecision.FIT);
+  const [fitnessDecision, setFitnessDecision] = useState<FitnessDecision | ''>('');
   const [requiresReferral, setRequiresReferral] = useState(false);
   const [selectedHospitalId, setSelectedHospitalId] = useState('');
 
@@ -179,6 +199,7 @@ export const DoctorDashboard: React.FC = () => {
       instructions: '',
     },
   ]);
+  const minimumFollowUpDate = getTomorrowDateString();
 
   useEffect(() => {
     if (!user || user.role !== Role.DOCTOR) {
@@ -205,7 +226,7 @@ export const DoctorDashboard: React.FC = () => {
     setDiagnosisName('');
     setExaminationNotes('');
     setFollowUpDate('');
-    setFitnessDecision(FitnessDecision.FIT);
+    setFitnessDecision('');
     setRequiresReferral(false);
     setSelectedHospitalId('');
     setFieldErrors({});
@@ -348,6 +369,9 @@ export const DoctorDashboard: React.FC = () => {
               <div class="row">
                 <div><strong>Employee Code:</strong> ${escapeHtml(getVisitDisplayCode(selectedVisit))}</div>
                 <div><strong>Department:</strong> ${escapeHtml(getVisitDisplayDepartment(selectedVisit))}</div>
+                ${fitnessDecision
+                  ? `<div><strong>Fitness Status:</strong> ${escapeHtml(formatFieldLabel(fitnessDecision))}</div>`
+                  : ''}
               </div>
             </section>
 
@@ -365,17 +389,23 @@ export const DoctorDashboard: React.FC = () => {
             </section>
 
             <section class="section">
-              <h2 class="section-title">Referral</h2>
-              <div class="plain-line"><strong>Fitness Decision:</strong> ${escapeHtml(formatFieldLabel(fitnessDecision))}</div>
-              <div class="plain-line"><strong>Referral Required:</strong> ${escapeHtml(requiresReferral ? 'Yes' : 'No')}</div>
-              <div class="plain-line"><strong>Hospital:</strong> ${escapeHtml(requiresReferral ? selectedHospitalName : '-')}</div>
-              <div class="plain-line"><strong>Follow-up Date:</strong> ${escapeHtml(formatDate(followUpDate))}</div>
-            </section>
-
-            <section class="section">
               <h2 class="section-title">Medicines</h2>
               ${prescriptionsMarkup}
             </section>
+
+            ${requiresReferral
+              ? `
+            <section class="section">
+              <h2 class="section-title">Referral</h2>
+              <div class="plain-line"><strong>Referral Required:</strong> Yes</div>
+              ${selectedHospitalId
+                ? `<div class="plain-line"><strong>Hospital:</strong> ${escapeHtml(selectedHospitalName)}</div>`
+                : ''}
+              ${followUpDate
+                ? `<div class="plain-line"><strong>Follow-up Date:</strong> ${escapeHtml(formatDate(followUpDate))}</div>`
+                : ''}
+            </section>`
+              : ''}
 
             <div class="signature-wrap">
               <div class="signature-box">
@@ -455,6 +485,18 @@ export const DoctorDashboard: React.FC = () => {
       return;
     }
 
+    if (!fitnessDecision) {
+      setFieldErrors({ fitnessDecision: 'Please select fitness status' });
+      show('Please select fitness status', 'error');
+      return;
+    }
+
+    if (followUpDate && followUpDate <= getTodayDateString()) {
+      setFieldErrors({ followUpDate: 'Follow-up date must be after today' });
+      show('Please select a follow-up date after today', 'error');
+      return;
+    }
+
     const prescriptionValidation = validatePrescriptions(prescriptions);
     if (!prescriptionValidation.isValid) {
       const errorsMap = prescriptionValidation.errors.reduce((acc, err) => {
@@ -479,7 +521,7 @@ export const DoctorDashboard: React.FC = () => {
         is_primary: true,
         is_referral_required: requiresReferral,
         hospital: requiresReferral ? Number(selectedHospitalId) : undefined,
-        fitness_decision: fitnessDecision,
+        fitness_decision: fitnessDecision as FitnessDecision,
         work_restrictions: '',
         advised_rest_days: 0,
         follow_up_date: followUpDate || undefined,
@@ -720,6 +762,14 @@ export const DoctorDashboard: React.FC = () => {
                       <h4>Diagnosis / Observation</h4>
                       <div className={styles.formGrid}>
                         <FormInput
+                          label="Examination"
+                          value={examinationNotes}
+                          onChange={(value) => { setExaminationNotes(value); setFieldErrors(prev => ({ ...prev, examinationNotes: '' })); }}
+                          type="textarea"
+                          rows={3}
+                          placeholder="Enter examination findings"
+                        />
+                        <FormInput
                           label="Diagnosis / Observation *"
                           value={diagnosisName}
                           onChange={(value) => { setDiagnosisName(value); setFieldErrors(prev => ({ ...prev, diagnosisName: '' })); }}
@@ -729,26 +779,24 @@ export const DoctorDashboard: React.FC = () => {
                           error={fieldErrors.diagnosisName}
                         />
                         <FormInput
-                          label="Examination"
-                          value={examinationNotes}
-                          onChange={(value) => { setExaminationNotes(value); setFieldErrors(prev => ({ ...prev, examinationNotes: '' })); }}
-                          type="textarea"
-                          rows={3}
-                          placeholder="Enter examination findings"
-                        />
-                        <FormInput
                           label="Follow-up Date (Optional)"
                           type="date"
                           value={followUpDate}
                           onChange={(value) => { setFollowUpDate(value); setFieldErrors(prev => ({ ...prev, followUpDate: '' })); }}
+                          min={minimumFollowUpDate}
+                          error={fieldErrors.followUpDate}
                         />
                         <FormInput
-                          label="Fit / Unfit *"
+                          label="Fitness Status *"
                           type="select"
                           value={fitnessDecision}
-                          onChange={(value) => setFitnessDecision(value as FitnessDecision)}
-                          options={FITNESS_DECISION_OPTIONS}
+                          onChange={(value) => {
+                            setFitnessDecision(value as FitnessDecision | '');
+                            setFieldErrors((prev) => ({ ...prev, fitnessDecision: '' }));
+                          }}
+                          options={FITNESS_STATUS_OPTIONS}
                           required
+                          error={fieldErrors.fitnessDecision}
                         />
                       </div>
 
