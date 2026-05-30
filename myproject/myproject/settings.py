@@ -53,6 +53,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',  # Add CORS middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
