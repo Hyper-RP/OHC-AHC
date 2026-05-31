@@ -21,6 +21,23 @@ export interface ActivityRecord {
 const MEDICINES_STORAGE_KEY = 'medicine_inventory_records';
 const ACTIVITY_STORAGE_KEY = 'medicine_inventory_activity';
 
+const formatLocalDateString = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+export const getTodayDateString = () => formatLocalDateString(new Date());
+
+export const getTomorrowDateString = () => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return formatLocalDateString(tomorrow);
+};
+
+export const isFutureDate = (value: string) => Boolean(value) && value > getTodayDateString();
+
 export const loadMedicineRecords = (): MedicineRecord[] => {
   try {
     const saved = window.localStorage.getItem(MEDICINES_STORAGE_KEY);
