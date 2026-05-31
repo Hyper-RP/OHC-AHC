@@ -1,4 +1,4 @@
-import type { MedicineRecord } from './medicineInventory';
+import { isFutureDate, type MedicineRecord } from './medicineInventory';
 
 const normalizeHeader = (value: string) =>
   value.trim().toLowerCase().replace(/[\s_-]+/g, '');
@@ -73,6 +73,11 @@ export const parseMedicineCsv = (csvText: string): MedicineRecord[] => {
         return null;
       }
 
+      const expiry = getCell(row, ['expiry', 'expirydate']);
+      if (expiry && !isFutureDate(expiry)) {
+        return null;
+      }
+
       return {
         id,
         name,
@@ -80,7 +85,7 @@ export const parseMedicineCsv = (csvText: string): MedicineRecord[] => {
         reorderLevel: Number.parseInt(getCell(row, ['reorderlevel', 'reorder', 'minimumstock']), 10) || 0,
         unit: getCell(row, ['unit']) || 'tablets',
         batch: getCell(row, ['batch', 'batchno', 'batchnumber']),
-        expiry: getCell(row, ['expiry', 'expirydate']),
+        expiry,
         supplier: getCell(row, ['supplier', 'suppliername']),
       } satisfies MedicineRecord;
     })

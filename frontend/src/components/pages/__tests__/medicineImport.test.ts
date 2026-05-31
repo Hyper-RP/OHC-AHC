@@ -1,7 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { parseMedicineCsv } from '../medicineImport';
 
 describe('parseMedicineCsv', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-30T10:00:00Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('parses excel-style csv rows into medicine records', () => {
     const csv = [
       'Medicine ID,Medicine Name,Opening Stock,Reorder Level,Unit,Batch,Expiry Date,Supplier',
@@ -29,6 +38,20 @@ describe('parseMedicineCsv', () => {
       ',Paracetamol 650,120',
       'MED-002,,40',
       'MED-003,ORS Sachet,50',
+    ].join('\n');
+
+    const result = parseMedicineCsv(csv);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('MED-003');
+  });
+
+  it('ignores rows whose expiry date is today or in the past', () => {
+    const csv = [
+      'Medicine ID,Medicine Name,Opening Stock,Expiry Date',
+      'MED-001,Paracetamol 650,120,2026-05-30',
+      'MED-002,ORS Sachet,40,2026-05-29',
+      'MED-003,Ibuprofen,75,2026-06-05',
     ].join('\n');
 
     const result = parseMedicineCsv(csv);
