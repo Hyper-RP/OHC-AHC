@@ -1,3 +1,4 @@
+from datetime import date
 from django.db import transaction
 from rest_framework import serializers
 
@@ -133,6 +134,10 @@ class DiagnosisWithPrescriptionsSerializer(serializers.Serializer):
         diagnosis = Diagnosis.objects.create(diagnosed_by=diagnosed_by, **validated_data)
 
         for prescription_data in prescriptions_data:
+            # Auto-set start_date to today if not provided
+            if "start_date" not in prescription_data or not prescription_data["start_date"]:
+                prescription_data = {**prescription_data, "start_date": date.today()}
+
             Prescription.objects.create(
                 diagnosis=diagnosis,
                 visit=diagnosis.visit,
@@ -525,3 +530,105 @@ class PharmacistPrescriptionSerializer(serializers.ModelSerializer):
         data["medicine"] = medicine_info if medicine_info else None
 
         return data
+
+
+class PreEmploymentCheckupSerializer(serializers.Serializer):
+    """
+    Serializer for pre-employment checkup visits.
+    Creates a visit with visit_type=PRE_EMPLOYMENT.
+    Accepts employee as integer ID (employee already created by frontend).
+    """
+    employee = serializers.IntegerField(required=True)
+    employee_name = serializers.CharField(max_length=150, write_only=True)
+    employee_department = serializers.CharField(max_length=120, write_only=True, required=False, allow_blank=True)
+    patient_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    patient_age = serializers.IntegerField(required=False, allow_null=True)
+    patient_gender = serializers.CharField(max_length=10, required=False, allow_blank=True)
+    patient_contact = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    visit_date = serializers.DateField(required=True)
+    visit_time = serializers.TimeField(required=False, allow_null=True)
+    vitals = serializers.JSONField(required=False, default=dict)
+    consulted_doctor = serializers.IntegerField(required=False, allow_null=True)
+
+    def validate(self, attrs):
+        request = self.context["request"]
+
+        # Get employee ID (already validated by IntegerField)
+        employee_id = attrs.get("employee")
+
+        try:
+            emp_profile = EmployeeProfile.objects.get(id=employee_id)
+        except EmployeeProfile.DoesNotExist:
+            raise serializers.ValidationError(f"Employee with ID {employee_id} not found")
+
+        # Auto-assign doctor if not provided and user is clinical staff
+        if not attrs.get("consulted_doctor") and request.user.role in {
+            request.user.Role.DOCTOR,
+            request.user.Role.NURSE,
+        }:
+            try:
+                doctor_profile = DoctorProfile.objects.get(user=request.user)
+                attrs["consulted_doctor"] = doctor_profile.id
+            except DoctorProfile.DoesNotExist:
+                pass
+
+        return attrs
+
+    def create(self, validated_data):
+        from ohc.models import OHCVisit
+
+        # Extract employee ID
+        employee_id = validated_data.pop("employee")
+
+        try:
+            employee = EmployeeProfile.objects.get(id=employee_id)
+        except EmployeeProfile.DoesNotExist:
+            raise serializers.ValidationError("Employee not found")
+
+        # Get doctor
+        consulted_doctor_id = validated_data.pop("consulted_doctor", None)
+        consulted_doctor = None
+        if consulted_doctor_id:
+            try:
+                consulted_doctor = DoctorProfile.objects.get(id=consulted_doctor_id)
+            except DoctorProfile.DoesNotExist:
+                raise serializers.ValidationError("Doctor not found")
+
+        # Create the pre-employment checkup visit
+        visit = OHCVisit.objects.create(
+            employee=employee,
+            consulted_doctor=consulted_doctor,
+            visit_type=OHCVisit.VisitType.PRE_EMPLOYMENT,
+            visit_status=OHCVisit.VisitStatus.OPEN,
+            triage_level=OHCVisit.TriageLevel.LOW,
+            visit_date=validated_data.get("visit_date"),
+            visit_time=validated_data.get("visit_time"),
+            patient_name=validated_data.get("patient_name", ""),
+            patient_age=validated_data.get("patient_age"),
+            patient_gender=validated_data.get("patient_gender", ""),
+            patient_contact=validated_data.get("patient_contact", ""),
+            vitals=validated_data.get("vitals", {}),
+        )
+
+        return visit
+
+    def to_representation(self, instance):
+        return {
+            "id": instance.id,
+            "employee": {
+                "id": instance.employee.id,
+                "employee_code": instance.employee.employee_code,
+                "name": f"{instance.employee.user.first_name} {instance.employee.user.last_name}",
+            },
+            "visit_type": instance.visit_type,
+            "visit_status": instance.visit_status,
+            "visit_date": instance.visit_date.isoformat() if instance.visit_date else None,
+            "visit_time": instance.visit_time.isoformat() if instance.visit_time else None,
+            "vitals": instance.vitals,
+            "consulted_doctor": {
+                "id": instance.consulted_doctor.id,
+                "name": f"{instance.consulted_doctor.user.first_name} {instance.consulted_doctor.user.last_name}",
+            } if instance.consulted_doctor else None,
+            "message": "Pre-employment checkup created successfully",
+        }
+

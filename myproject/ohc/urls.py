@@ -9,6 +9,7 @@ from ohc.views import (
     MedicalTestViewSet,
     MedicineSummaryViewSet,
     OHCVisitViewSet,
+    PreEmploymentCheckupAPIView,
     PrescriptionListViewSet,
 )
 
@@ -31,5 +32,10 @@ urlpatterns = [
         "complete-intake/",
         CompleteOHCIntakeAPIView.as_view(),
         name="complete-ohc-intake",
+    ),
+    path(
+        "pre-employment-checkup/",
+        PreEmploymentCheckupAPIView.as_view(),
+        name="pre-employment-checkup",
     ),
 ]
