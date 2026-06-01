@@ -19,6 +19,7 @@ from ohc.serializers import (
     MedicalTestSerializer,
     OHCVisitCreateSerializer,
     OHCVisitSerializer,
+    PreEmploymentCheckupSerializer,
 )
 
 
@@ -176,6 +177,25 @@ class CompleteOHCIntakeAPIView(GenericAPIView):
             self.get_serializer(diagnosis, context={"request": request}).data,
             status=status.HTTP_201_CREATED,
         )
+
+
+class PreEmploymentCheckupAPIView(GenericAPIView):
+    """
+    API endpoint for creating pre-employment checkup visits.
+    Medical examination conducted before an employee joins the company.
+    """
+    serializer_class = PreEmploymentCheckupSerializer
+    permission_classes = [permissions.IsAuthenticated, HasHealthPortalAccess, IsClinicalOrComplianceStaff]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        visit = serializer.save()
+        return Response(
+            serializer.to_representation(visit),
+            status=status.HTTP_201_CREATED,
+        )
+
 
 
 class MedicineStockViewSet(viewsets.ModelViewSet):
