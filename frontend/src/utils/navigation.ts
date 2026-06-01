@@ -77,6 +77,20 @@ export const NAV_ITEMS: NavItem[] = [
   //   roles: [Role.ADMIN, Role.NURSE, Role.EHS, Role.HR, Role.KAM, Role.DOCTOR],
   // },
   {
+    label: 'Pre-Employment Checkup',
+    url: '/pre-employment-checkup',
+    urlName: 'pre_employment_checkup',
+    icon: '🩺',
+    roles: [Role.ADMIN, Role.NURSE],
+  },
+  {
+    label: 'Pre-Employment Doctor',
+    url: '/pre-employment-doctor',
+    urlName: 'pre_employment_doctor',
+    icon: '👨‍⚕️',
+    roles: [Role.DOCTOR],
+  },
+  {
     label: 'Employee History',
     url: '/reports/employee-history',
     urlName: 'employee_history',
