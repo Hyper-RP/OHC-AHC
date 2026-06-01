@@ -62,7 +62,7 @@ export const PreEmploymentCheckupForm: React.FC = () => {
   const { show } = useSnackbar();
 
   const [loading, setLoading] = useState(false);
-  const [validatingEmployee, setValidatingEmployee] = useState(false);
+  const [_validatingEmployee, setValidatingEmployee] = useState(false);
   const [error, setError] = useState('');
   const [doctorOptions, setDoctorOptions] = useState<DoctorOption[]>([]);
   const [employeeExists, setEmployeeExists] = useState<boolean | null>(null);
@@ -339,7 +339,6 @@ export const PreEmploymentCheckupForm: React.FC = () => {
                   }}
                   required
                   helperText="Employee code (will validate against database)"
-                  loading={validatingEmployee}
                 />
                 {employeeExists !== null && (
                   <div className={styles.validationStatus}>
