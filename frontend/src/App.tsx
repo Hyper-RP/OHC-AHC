@@ -22,6 +22,8 @@ import {
   MedicineManagement,
   AddMedicine,
   NurseVisitForm,
+  PreEmploymentCheckupForm,
+  PreEmploymentDoctorDashboard,
   DoctorDashboard,
   PharmacistDashboard,
   EHSDashboard,
@@ -75,6 +77,9 @@ function App() {
               <Route path="reports/employee-history/:employeeId" element={<EmployeeHealthHistoryDetail />} />
               <Route path="reports/disease-trends" element={<DiseaseTrends />} />
               <Route path="reports/department-stats" element={<DepartmentStats />} />
+              {/* Pre-Employment Checkup */}
+              <Route path="pre-employment-checkup" element={<PreEmploymentCheckupForm />} />
+              <Route path="pre-employment-doctor" element={<PreEmploymentDoctorDashboard />} />
               {/* Role-specific dashboards */}
               <Route path="nurse/visit-form" element={<NurseVisitForm />} />
               <Route path="doctor/dashboard" element={<DoctorDashboard />} />

@@ -17,6 +17,8 @@ export { MedicineManagement } from './MedicineManagement';
 export { AddMedicine } from './AddMedicine';
 // OHC Role-based pages
 export { NurseVisitForm } from './NurseVisitForm';
+export { PreEmploymentCheckupForm } from './PreEmploymentCheckupForm';
+export { PreEmploymentDoctorDashboard } from './PreEmploymentDoctorDashboard';
 export { DoctorDashboard } from './DoctorDashboard';
 export { PharmacistDashboard } from './PharmacistDashboard';
 export { EHSDashboard } from './EHSDashboard';
