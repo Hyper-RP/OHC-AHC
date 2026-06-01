@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 import { Header } from '../layout';
 import { Card, Alert, Button, FormInput } from '../ui';
-import { StatusBadge, LastUpdated } from '../charts';
+import { StatusBadge } from '../charts';
 import { RefreshControl } from '../charts';
 import api from '../../services/api';
 import { FitnessDecision, Role, VisitStatus, VisitType } from '../../types';
@@ -62,8 +62,6 @@ export const PreEmploymentDoctorDashboard: React.FC = () => {
   }, [show]);
 
   const [selectedFilter, setSelectedFilter] = useState<string>(VisitStatus.OPEN);
-
-  const visitParams = useMemo(() => ({ visit_status: selectedFilter, visit_type: VisitType.PRE_EMPLOYMENT }), [selectedFilter]);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -178,7 +176,7 @@ export const PreEmploymentDoctorDashboard: React.FC = () => {
   };
 
   const formatDate = (value?: string) => {
-    if (!value) '-';
+    if (!value) return '-';
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
     return date.toLocaleDateString();
@@ -484,7 +482,7 @@ export const PreEmploymentDoctorDashboard: React.FC = () => {
                     label="Fitness Status *"
                     type="select"
                     value={fitnessDecision}
-                    onChange={setFitnessDecision}
+                    onChange={(value) => setFitnessDecision(value as FitnessDecision | '')}
                     required
                     error={fieldErrors.fitnessDecision}
                     options={FITNESS_DECISION_OPTIONS}
@@ -533,7 +531,7 @@ export const PreEmploymentDoctorDashboard: React.FC = () => {
                                 <Button
                                   type="button"
                                   variant="outline-danger"
-                                  size="small"
+                                  size="sm"
                                   onClick={() => handleRemovePrescription(index)}
                                 >
                                   Remove
@@ -575,7 +573,7 @@ export const PreEmploymentDoctorDashboard: React.FC = () => {
                               <FormInput
                                 label="Instructions"
                                 type="text"
-                                value={prescription.instructions}
+                                value={prescription.instructions || ''}
                                 onChange={(value) => handlePrescriptionChange(index, 'instructions', value)}
                                 placeholder="e.g., Take after food"
                               />
