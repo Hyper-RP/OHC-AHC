@@ -21,12 +21,16 @@ interface PrescriptionInput {
 
 interface PreEmploymentVisit {
   id: number;
-  employee: {
+  employee?: {
     id: number;
     employee_code: string;
     user: { first_name: string; last_name: string };
     department: string;
-  };
+  } | null;
+  candidate_id?: string;
+  candidate_department?: string;
+  candidate_designation?: string;
+  employee_name?: string;
   patient_name: string;
   patient_age: number;
   patient_gender: string;
@@ -144,8 +148,17 @@ export const PreEmploymentDoctorDashboard: React.FC = () => {
   }, []);
 
   const handleViewVisit = (visitId: number) => {
-    setSelectedVisit(visits.find((v) => v.id === visitId) || null);
+    navigate(`/pre-employment-doctor/request/${visitId}`);
   };
+
+  const getDisplayName = (visit: PreEmploymentVisit) =>
+    visit.patient_name ||
+    visit.employee_name ||
+    `${visit.employee?.user.first_name || ''} ${visit.employee?.user.last_name || ''}`.trim() ||
+    'N/A';
+
+  const getDisplayCode = (visit: PreEmploymentVisit) => visit.candidate_id || visit.employee?.employee_code || 'N/A';
+  const getDisplayDepartment = (visit: PreEmploymentVisit) => visit.candidate_department || visit.employee?.department || 'N/A';
 
   const handleCloseDetail = () => {
     setSelectedVisit(null);
@@ -370,9 +383,9 @@ export const PreEmploymentDoctorDashboard: React.FC = () => {
                   <div key={visit.id} className={styles.visitCard} onClick={() => handleViewVisit(visit.id)}>
                     <div className={styles.visitHeader}>
                       <div className={styles.visitInfo}>
-                        <h3>{visit.patient_name || `${visit.employee.user.first_name} ${visit.employee.user.last_name}`}</h3>
-                        <p className={styles.employeeCode}>{visit.employee.employee_code}</p>
-                        <p className={styles.department}>{visit.employee.department}</p>
+                        <h3>{getDisplayName(visit)}</h3>
+                        <p className={styles.employeeCode}>{getDisplayCode(visit)}</p>
+                        <p className={styles.department}>{getDisplayDepartment(visit)}</p>
                       </div>
                       <StatusBadge status={visit.visit_status} />
                     </div>
@@ -413,15 +426,15 @@ export const PreEmploymentDoctorDashboard: React.FC = () => {
               <div className={styles.detailGrid}>
                 <div className={styles.detailItem}>
                   <span className={styles.detailLabel}>Name:</span>
-                  <span>{selectedVisit.patient_name || `${selectedVisit.employee.user.first_name} ${selectedVisit.employee.user.last_name}`}</span>
+                  <span>{getDisplayName(selectedVisit)}</span>
                 </div>
                 <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Employee Code:</span>
-                  <span>{selectedVisit.employee.employee_code}</span>
+                  <span className={styles.detailLabel}>Candidate ID:</span>
+                  <span>{getDisplayCode(selectedVisit)}</span>
                 </div>
                 <div className={styles.detailItem}>
                   <span className={styles.detailLabel}>Department:</span>
-                  <span>{selectedVisit.employee.department}</span>
+                  <span>{getDisplayDepartment(selectedVisit)}</span>
                 </div>
                 <div className={styles.detailItem}>
                   <span className={styles.detailLabel}>Age:</span>

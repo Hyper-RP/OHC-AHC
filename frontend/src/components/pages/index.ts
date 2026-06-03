@@ -19,8 +19,13 @@ export { AddMedicine } from './AddMedicine';
 export { NurseVisitForm } from './NurseVisitForm';
 export { PreEmploymentCheckupForm } from './PreEmploymentCheckupForm';
 export { PreEmploymentDoctorDashboard } from './PreEmploymentDoctorDashboard';
+export { PreEmploymentDoctorRequestPage } from './PreEmploymentDoctorRequestPage';
+export { PreEmploymentPharmacistDashboard } from './PreEmploymentPharmacistDashboard';
+export { PreEmploymentPharmacistRequestPage } from './PreEmploymentPharmacistRequestPage';
 export { DoctorDashboard } from './DoctorDashboard';
+export { DoctorRequestPage } from './DoctorRequestPage';
 export { PharmacistDashboard } from './PharmacistDashboard';
+export { PharmacistRequestPage } from './PharmacistRequestPage';
 export { EHSDashboard } from './EHSDashboard';
 export { ManagementDashboard } from './ManagementDashboard';
 // EHS Detail Pages

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 import { Header } from '../layout';
 import { FormInput, Button, Card, Alert } from '../ui';
-import { Role, VisitType } from '../../types';
-import api from '../../services/api';
+import { VisitType } from '../../types';
+import api, { handleApiError } from '../../services/api';
 import styles from './PreEmploymentCheckupForm.module.css';
 
 interface DoctorOption {
@@ -15,23 +15,9 @@ interface DoctorOption {
   specializations: string;
 }
 
-interface EmployeeData {
-  id: number;
-  employee_code: string;
-  user: {
-    first_name: string;
-    last_name: string;
-  };
-  department: string;
-  designation: string;
-  date_of_birth?: string;
-  gender?: string;
-  phone_number?: string;
-}
-
 interface PreEmploymentFormData {
-  employee_id: string;
-  employee_name: string;
+  candidate_id: string;
+  candidate_name: string;
   department: string;
   date_of_birth: string;
   gender: string;
@@ -50,27 +36,18 @@ interface PreEmploymentFormData {
   consulted_doctor?: number;
 }
 
-/**
- * Pre-Employment Checkup Form component
- * Medical examination conducted before an employee joins the company
- * to determine fitness for the assigned job role.
- * Validates if employee exists in DB, creates new employee record if not found.
- */
 export const PreEmploymentCheckupForm: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { show } = useSnackbar();
 
   const [loading, setLoading] = useState(false);
-  const [_validatingEmployee, setValidatingEmployee] = useState(false);
   const [error, setError] = useState('');
   const [doctorOptions, setDoctorOptions] = useState<DoctorOption[]>([]);
-  const [employeeExists, setEmployeeExists] = useState<boolean | null>(null);
-  const [existingEmployeeData, setExistingEmployeeData] = useState<EmployeeData | null>(null);
 
   const [formData, setFormData] = useState<PreEmploymentFormData>({
-    employee_id: '',
-    employee_name: '',
+    candidate_id: '',
+    candidate_name: '',
     department: '',
     date_of_birth: '',
     gender: '',
@@ -87,7 +64,7 @@ export const PreEmploymentCheckupForm: React.FC = () => {
       navigate('/dashboard');
       return;
     }
-    fetchDoctorOptions();
+    void fetchDoctorOptions();
   }, [user, navigate]);
 
   const fetchDoctorOptions = async () => {
@@ -99,58 +76,9 @@ export const PreEmploymentCheckupForm: React.FC = () => {
         registration_number: doctor.registration_number,
         specializations: doctor.specializations || 'General Medicine',
       }));
-
       setDoctorOptions(doctors);
     } catch (err) {
       console.error('Failed to fetch doctors:', err);
-    }
-  };
-
-  const validateEmployee = async (employeeId: string) => {
-    console.log("validateEmployee CALLED WITH ID:", employeeId);
-    if (!employeeId.trim()) {
-      console.log("validateEmployee: employeeId is empty");
-      setEmployeeExists(null);
-      setExistingEmployeeData(null);
-      return;
-    }
-
-    setValidatingEmployee(true);
-    try {
-      const response = await api.get(`/accounts/employees/${employeeId.trim()}/`);
-      setEmployeeExists(true);
-      setExistingEmployeeData(response.data);
-
-      // Auto-fill form with existing employee data
-      setFormData((prev) => ({
-        ...prev,
-        employee_id: employeeId,
-        employee_name: `${response.data.user.first_name} ${response.data.user.last_name}`,
-        department: response.data.department,
-        designation: response.data.designation,
-        date_of_birth: response.data.date_of_birth || '',
-        gender: response.data.gender || '',
-        contact_number: response.data.phone_number || '',
-      }));
-
-      show('Employee found in database', 'success');
-    } catch (err) {
-      setEmployeeExists(false);
-      setExistingEmployeeData(null);
-      // Clear form fields except employee_id
-      setFormData((prev) => ({
-        ...prev,
-        employee_id: employeeId,
-        employee_name: '',
-        department: '',
-        designation: '',
-        date_of_birth: '',
-        gender: '',
-        contact_number: '',
-      }));
-      show('Employee not found. Please complete the employee details.', 'info');
-    } finally {
-      setValidatingEmployee(false);
     }
   };
 
@@ -182,44 +110,19 @@ export const PreEmploymentCheckupForm: React.FC = () => {
     return age >= 0 ? age : undefined;
   };
 
-  const createEmployeeRecord = async () => {
-    try {
-      const employeeData = {
-        employee_code: formData.employee_id.trim(),
-        user: {
-          first_name: formData.employee_name.split(' ')[0],
-          last_name: formData.employee_name.split(' ').slice(1).join(' ') || '',
-          email: `${formData.employee_id.trim()}@company.com`,
-          phone_number: formData.contact_number.trim(),
-          role: Role.EMPLOYEE,
-        },
-        department: formData.department,
-        designation: formData.designation,
-        date_of_birth: formData.date_of_birth,
-        gender: formData.gender,
-      };
-
-      const response = await api.post('/accounts/employees/', employeeData);
-      return response.data;
-    } catch (err) {
-      throw err;
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    // Validation
-    if (!formData.employee_id.trim()) {
-      setError('Employee ID is required');
-      show('Please enter employee ID', 'error');
+    if (!formData.candidate_id.trim()) {
+      setError('Candidate ID is required');
+      show('Please enter candidate ID', 'error');
       return;
     }
 
-    if (!formData.employee_name.trim()) {
-      setError('Employee name is required');
-      show('Please enter employee name', 'error');
+    if (!formData.candidate_name.trim()) {
+      setError('Candidate name is required');
+      show('Please enter candidate name', 'error');
       return;
     }
 
@@ -269,22 +172,12 @@ export const PreEmploymentCheckupForm: React.FC = () => {
     setLoading(true);
 
     try {
-      let employeeDbId: number;
-
-      // If employee doesn't exist, create the employee record first
-      if (!employeeExists) {
-        const newEmployee = await createEmployeeRecord();
-        employeeDbId = newEmployee.id;
-        show('New employee record created successfully', 'success');
-      } else {
-        employeeDbId = existingEmployeeData!.id;
-      }
-
       const visitData = {
-        employee: employeeDbId,
-        employee_name: formData.employee_name,
-        employee_department: formData.department,
-        patient_name: formData.employee_name,
+        candidate_id: formData.candidate_id.trim(),
+        candidate_name: formData.candidate_name.trim(),
+        candidate_department: formData.department.trim(),
+        candidate_designation: formData.designation.trim(),
+        patient_name: formData.candidate_name.trim(),
         patient_age: calculatedAge,
         patient_gender: formData.gender,
         patient_contact: formData.contact_number.trim(),
@@ -300,7 +193,7 @@ export const PreEmploymentCheckupForm: React.FC = () => {
       show('Pre-Employment Checkup created successfully!', 'success');
       navigate('/dashboard');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create pre-employment checkup';
+      const errorMessage = handleApiError(err, 'Failed to create pre-employment checkup');
       setError(errorMessage);
       show(errorMessage, 'error');
     } finally {
@@ -312,7 +205,7 @@ export const PreEmploymentCheckupForm: React.FC = () => {
     <div className={styles.visitForm}>
       <Header
         title="Pre-Employment Checkup"
-        subtitle="Medical examination conducted before an employee joins the company to determine fitness for the assigned job role"
+        subtitle="Medical examination before joining to determine fitness for the proposed role"
       />
 
       <main className={styles.visitFormMain}>
@@ -320,46 +213,25 @@ export const PreEmploymentCheckupForm: React.FC = () => {
 
         <Card>
           <form onSubmit={handleSubmit}>
-            {/* Employee Information */}
             <div className={styles.formSection}>
-              <h3>Employee Information</h3>
+              <h3>Candidate Information</h3>
 
-              {/* Employee ID with validation status */}
               <div className={styles.formGrid}>
                 <FormInput
-                  label="Employee ID *"
+                  label="Candidate ID *"
                   type="text"
-                  value={formData.employee_id}
-                  onChange={(value) => {
-                    console.log("Employee ID onChange CALLED WITH VALUE:", value);
-                    handleInputChange('employee_id', value);
-                    if (value.length > 2) {
-                      validateEmployee(value);
-                    }
-                  }}
+                  value={formData.candidate_id}
+                  onChange={(value) => handleInputChange('candidate_id', value)}
                   required
-                  helperText="Employee code (will validate against database)"
+                  helperText="Temporary candidate or reference ID before joining"
                 />
-                {employeeExists !== null && (
-                  <div className={styles.validationStatus}>
-                    {employeeExists ? (
-                      <span className={styles.statusSuccess}>✓ Employee exists in database</span>
-                    ) : (
-                      <span className={styles.statusInfo}>ℹ New employee - details required</span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className={styles.formGrid}>
                 <FormInput
-                  label="Employee Name *"
+                  label="Candidate Name *"
                   type="text"
-                  value={formData.employee_name}
-                  onChange={(value) => handleInputChange('employee_name', value)}
+                  value={formData.candidate_name}
+                  onChange={(value) => handleInputChange('candidate_name', value)}
                   required
-                  helperText="Full name of the employee"
-                  disabled={employeeExists === true}
+                  helperText="Full name of the candidate"
                 />
                 <FormInput
                   label="Department *"
@@ -367,8 +239,7 @@ export const PreEmploymentCheckupForm: React.FC = () => {
                   value={formData.department}
                   onChange={(value) => handleInputChange('department', value)}
                   required
-                  helperText="Department name for the employee record"
-                  disabled={employeeExists === true}
+                  helperText="Department or function the candidate is being evaluated for"
                 />
                 <FormInput
                   label="Designation *"
@@ -376,8 +247,7 @@ export const PreEmploymentCheckupForm: React.FC = () => {
                   value={formData.designation}
                   onChange={(value) => handleInputChange('designation', value)}
                   required
-                  helperText="Job title/position"
-                  disabled={employeeExists === true}
+                  helperText="Role or job title being considered"
                 />
                 <FormInput
                   label="DOB *"
@@ -387,7 +257,6 @@ export const PreEmploymentCheckupForm: React.FC = () => {
                   required
                   helperText="Date of birth"
                   max={new Date().toISOString().split('T')[0]}
-                  disabled={employeeExists === true}
                 />
                 <FormInput
                   label="Gender *"
@@ -401,7 +270,6 @@ export const PreEmploymentCheckupForm: React.FC = () => {
                     { value: 'FEMALE', label: 'Female' },
                     { value: 'OTHER', label: 'Other' },
                   ]}
-                  disabled={employeeExists === true}
                 />
                 <FormInput
                   label="Contact Number *"
@@ -411,7 +279,6 @@ export const PreEmploymentCheckupForm: React.FC = () => {
                   required
                   helperText="Phone number"
                   placeholder="+91 9876543210"
-                  disabled={employeeExists === true}
                 />
                 <FormInput
                   label="Checkup Date *"
@@ -430,17 +297,16 @@ export const PreEmploymentCheckupForm: React.FC = () => {
               </div>
             </div>
 
-            {/* Vital Signs */}
             <div className={styles.formSection}>
               <h3>Vital Signs</h3>
               <div className={styles.vitalsGrid}>
                 <FormInput
-                  label="Temperature (°F)"
+                  label="Temperature (F)"
                   type="text"
                   value={formData.vitals.temperature || ''}
                   onChange={(value) => handleVitalChange('temperature', value)}
                   placeholder="98.6"
-                  helperText="Valid range: 80-120°F"
+                  helperText="Valid range: 80-120F"
                 />
                 <FormInput
                   label="Blood Pressure"
@@ -485,7 +351,6 @@ export const PreEmploymentCheckupForm: React.FC = () => {
               </div>
             </div>
 
-            {/* Doctor Selection */}
             <div className={styles.formSection}>
               <h3>Assign to Doctor *</h3>
               <div className={styles.formGrid}>
@@ -493,7 +358,7 @@ export const PreEmploymentCheckupForm: React.FC = () => {
                   label="Select Doctor"
                   type="select"
                   value={formData.consulted_doctor?.toString() || ''}
-                  onChange={(value) => handleInputChange('consulted_doctor', parseInt(value))}
+                  onChange={(value) => handleInputChange('consulted_doctor', parseInt(value, 10))}
                   options={[
                     { value: '', label: 'Select a doctor' },
                     ...doctorOptions.map((doctor) => ({
@@ -507,11 +372,7 @@ export const PreEmploymentCheckupForm: React.FC = () => {
             </div>
 
             <div className={styles.formActions}>
-              <Button
-                type="button"
-                variant="outline-secondary"
-                onClick={() => navigate('/dashboard')}
-              >
+              <Button type="button" variant="outline-secondary" onClick={() => navigate('/dashboard')}>
                 Cancel
               </Button>
               <Button type="submit" variant="brand" loading={loading}>

@@ -91,6 +91,13 @@ export const NAV_ITEMS: NavItem[] = [
     roles: [Role.DOCTOR],
   },
   {
+    label: 'Pre-Employment Pharmacist',
+    url: '/pre-employment-pharmacist',
+    urlName: 'pre_employment_pharmacist',
+    icon: 'Rx',
+    roles: [Role.PHARMACIST],
+  },
+  {
     label: 'Employee History',
     url: '/reports/employee-history',
     urlName: 'employee_history',
