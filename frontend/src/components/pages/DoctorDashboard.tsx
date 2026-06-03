@@ -209,7 +209,7 @@ export const DoctorDashboard: React.FC = () => {
   }, [user, navigate]);
 
   const handleViewVisit = (visitId: number) => {
-    setSelectedVisit(visits.find((v: any) => v.id === visitId) || null);
+    navigate(`/doctor/request/${visitId}`);
   };
 
   const handleCloseDetail = () => {

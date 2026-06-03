@@ -143,20 +143,8 @@ export const PharmacistDashboard: React.FC = () => {
   };
 
   const handleOpenDispenseModal = (prescription: PrescriptionItem, medicine: any) => {
-    setSelectedPrescription(prescription);
-    setSelectedMedicine(medicine);
-    const stockAvailable = medicine.stock_quantity;
-    const quantityDispensed = 1;
-    setDispenseForm({
-      medicine_id: medicine.id,
-      medicine_name: medicine.name,
-      stock_available: stockAvailable,
-      quantity_dispensed: quantityDispensed,
-      remaining_stock: stockAvailable - quantityDispensed,
-      issue_date: new Date().toISOString().split('T')[0],
-      remarks: '',
-    });
-    setShowDispenseModal(true);
+    void medicine;
+    navigate(`/pharmacist/request/${prescription.id}`);
   };
 
   const handleCloseDispenseModal = () => {

@@ -24,8 +24,13 @@ import {
   NurseVisitForm,
   PreEmploymentCheckupForm,
   PreEmploymentDoctorDashboard,
+  PreEmploymentDoctorRequestPage,
+  PreEmploymentPharmacistDashboard,
+  PreEmploymentPharmacistRequestPage,
   DoctorDashboard,
+  DoctorRequestPage,
   PharmacistDashboard,
+  PharmacistRequestPage,
   EHSDashboard,
   ManagementDashboard,
   OPDDetailsPage,
@@ -80,10 +85,15 @@ function App() {
               {/* Pre-Employment Checkup */}
               <Route path="pre-employment-checkup" element={<PreEmploymentCheckupForm />} />
               <Route path="pre-employment-doctor" element={<PreEmploymentDoctorDashboard />} />
+              <Route path="pre-employment-doctor/request/:visitId" element={<PreEmploymentDoctorRequestPage />} />
+              <Route path="pre-employment-pharmacist" element={<PreEmploymentPharmacistDashboard />} />
+              <Route path="pre-employment-pharmacist/request/:prescriptionId" element={<PreEmploymentPharmacistRequestPage />} />
               {/* Role-specific dashboards */}
               <Route path="nurse/visit-form" element={<NurseVisitForm />} />
               <Route path="doctor/dashboard" element={<DoctorDashboard />} />
+              <Route path="doctor/request/:visitId" element={<DoctorRequestPage />} />
               <Route path="pharmacist/dashboard" element={<PharmacistDashboard />} />
+              <Route path="pharmacist/request/:prescriptionId" element={<PharmacistRequestPage />} />
               <Route path="ehs/dashboard" element={<EHSDashboard />} />
               <Route path="ehs/opd-details" element={<OPDDetailsPage />} />
               <Route path="ehs/pre-employment-details" element={<PreEmploymentDetailsPage />} />

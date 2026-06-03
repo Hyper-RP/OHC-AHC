@@ -76,6 +76,32 @@ api.interceptors.response.use(
 
 // Helper function to handle API errors
 export const handleApiError = (error: unknown, defaultMessage = 'An unexpected error occurred'): string => {
+  const stringifyValidationValue = (value: unknown): string => {
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    if (Array.isArray(value)) {
+      const parts = value
+        .map((item) => stringifyValidationValue(item))
+        .filter(Boolean);
+      return parts.join(', ');
+    }
+
+    if (value && typeof value === 'object') {
+      const entries = Object.entries(value as Record<string, unknown>)
+        .map(([key, nestedValue]) => `${formatFieldName(key)}: ${stringifyValidationValue(nestedValue)}`)
+        .filter((item) => item.endsWith(': ') === false);
+      return entries.join(', ');
+    }
+
+    if (value == null) {
+      return '';
+    }
+
+    return String(value);
+  };
+
   if (axios.isAxiosError(error)) {
     const { response, request, message } = error;
 
@@ -135,11 +161,9 @@ export const handleApiError = (error: unknown, defaultMessage = 'An unexpected e
         const firstField = errorFields[0];
         const fieldErrors = data[firstField];
 
-        if (Array.isArray(fieldErrors)) {
-          return `${formatFieldName(firstField)}: ${fieldErrors[0]}`;
-        }
-        if (typeof fieldErrors === 'string') {
-          return `${formatFieldName(firstField)}: ${fieldErrors}`;
+        const formattedFieldErrors = stringifyValidationValue(fieldErrors);
+        if (formattedFieldErrors) {
+          return `${formatFieldName(firstField)}: ${formattedFieldErrors}`;
         }
       }
     }

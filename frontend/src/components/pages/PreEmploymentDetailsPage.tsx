@@ -12,7 +12,8 @@ interface PreEmploymentVisit {
   id: number;
   employee_code: string;
   employee_name: string;
-  department: string;
+  employee_department?: string;
+  candidate_department?: string;
   visit_date: string;
   chief_complaint: string;
   visit_status: string;
@@ -96,6 +97,8 @@ export const PreEmploymentDetailsPage: React.FC = () => {
   const handleFilterChange = (key: keyof typeof filters, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
+
+  const getDepartment = (visit: PreEmploymentVisit) => visit.employee_department || visit.candidate_department || '-';
 
   return (
     <div className={styles.preEmploymentDetailsPage}>
@@ -239,7 +242,7 @@ export const PreEmploymentDetailsPage: React.FC = () => {
                   <tr key={visit.id}>
                     <td>{visit.employee_name}</td>
                     <td>{visit.employee_code}</td>
-                    <td>{visit.department}</td>
+                    <td>{getDepartment(visit)}</td>
                     <td>{new Date(visit.visit_date).toLocaleDateString()}</td>
                     <td>{visit.chief_complaint || '-'}</td>
                     <td>
