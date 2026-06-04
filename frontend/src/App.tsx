@@ -23,10 +23,15 @@ import {
   AddMedicine,
   NurseVisitForm,
   PreEmploymentCheckupForm,
+  AnnualHealthCheckupForm,
   PreEmploymentDoctorDashboard,
   PreEmploymentDoctorRequestPage,
   PreEmploymentPharmacistDashboard,
   PreEmploymentPharmacistRequestPage,
+  AnnualHealthDoctorDashboard,
+  AnnualHealthDoctorRequestPage,
+  AnnualHealthPharmacistDashboard,
+  AnnualHealthPharmacistRequestPage,
   DoctorDashboard,
   DoctorRequestPage,
   PharmacistDashboard,
@@ -88,6 +93,11 @@ function App() {
               <Route path="pre-employment-doctor/request/:visitId" element={<PreEmploymentDoctorRequestPage />} />
               <Route path="pre-employment-pharmacist" element={<PreEmploymentPharmacistDashboard />} />
               <Route path="pre-employment-pharmacist/request/:prescriptionId" element={<PreEmploymentPharmacistRequestPage />} />
+              <Route path="annual-health-checkup" element={<AnnualHealthCheckupForm />} />
+              <Route path="annual-health-doctor" element={<AnnualHealthDoctorDashboard />} />
+              <Route path="annual-health-doctor/request/:visitId" element={<AnnualHealthDoctorRequestPage />} />
+              <Route path="annual-health-pharmacist" element={<AnnualHealthPharmacistDashboard />} />
+              <Route path="annual-health-pharmacist/request/:prescriptionId" element={<AnnualHealthPharmacistRequestPage />} />
               {/* Role-specific dashboards */}
               <Route path="nurse/visit-form" element={<NurseVisitForm />} />
               <Route path="doctor/dashboard" element={<DoctorDashboard />} />

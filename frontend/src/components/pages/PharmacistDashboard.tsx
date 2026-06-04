@@ -7,7 +7,7 @@ import { Card, Alert, Button, FormInput } from '../ui';
 import { listMedicines, dispenseMedicine } from '../../services/medicine';
 import { getPharmacistPrescriptions, updateVisitStatus } from '../../services/ohc';
 import { handleApiError } from '../../services/api';
-import { Role, VisitStatus } from '../../types';
+import { Role, VisitStatus, VisitType } from '../../types';
 import receiptLogo from '../../assets/mediGplus.png';
 import styles from './PharmacistDashboard.module.css';
 
@@ -74,6 +74,8 @@ interface DispenseFormData {
   remarks: string;
 }
 
+const OHC_VISIT_TYPES: string[] = [VisitType.WALK_IN, VisitType.FOLLOW_UP, VisitType.EMERGENCY];
+
 /**
  * Pharmacist Dashboard component
  * Shows prescriptions queue and medicine inventory management
@@ -119,7 +121,9 @@ export const PharmacistDashboard: React.FC = () => {
     try {
       setLoading(true);
       const data = await getPharmacistPrescriptions();
-      setPrescriptions(data || []);
+      setPrescriptions(
+        (data || []).filter((item: PrescriptionItem) => OHC_VISIT_TYPES.includes(item.visit?.visit_type || '')),
+      );
       setError('');
     } catch (err) {
       const errorMessage = handleApiError(err, 'Failed to fetch prescriptions');
