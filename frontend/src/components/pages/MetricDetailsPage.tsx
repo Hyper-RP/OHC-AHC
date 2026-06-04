@@ -101,6 +101,13 @@ const matchesKeywords = (complaint: string, keywords: string[]) => {
   return keywords.some((keyword) => normalized.includes(keyword));
 };
 
+const isPreEmploymentVisit = (visit: VisitRecord) => visit.visitType === 'PRE_EMPLOYMENT';
+
+const isAnnualHealthCheckupVisit = (visit: VisitRecord) => visit.visitType === 'PERIODIC';
+
+const isCoreOHCVisit = (visit: VisitRecord) =>
+  !isPreEmploymentVisit(visit) && !isAnnualHealthCheckupVisit(visit);
+
 const mapVisitRecord = (visit: any): VisitRecord => ({
   id: visit.id,
   employeeCode: visit.employee_code ?? visit.employee?.employee_code ?? '-',
@@ -179,8 +186,12 @@ export const MetricDetailsPage: React.FC = () => {
       });
     }
 
+    if (metricSlug === 'ohc-visits') {
+      return records.filter(isCoreOHCVisit);
+    }
+
     return records;
-  }, [metricConfig]);
+  }, [metricConfig, metricSlug]);
 
   const fetchData = useCallback(async () => {
     if (!metricConfig) {

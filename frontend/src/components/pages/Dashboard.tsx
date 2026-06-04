@@ -150,6 +150,13 @@ const isEmergencyVisit = (visit: DashboardVisit) =>
 const isIncidentVisit = (visit: DashboardVisit) =>
   visit.visit_type !== 'EMERGENCY' && matchesKeywords(visit.chief_complaint, INCIDENT_KEYWORDS);
 
+const isPreEmploymentVisit = (visit: DashboardVisit) => visit.visit_type === 'PRE_EMPLOYMENT';
+
+const isAnnualHealthCheckupVisit = (visit: DashboardVisit) => visit.visit_type === 'PERIODIC';
+
+const isCoreOHCVisit = (visit: DashboardVisit) =>
+  !isPreEmploymentVisit(visit) && !isAnnualHealthCheckupVisit(visit);
+
 const isWithinGranularity = (visitDateValue: string | undefined, granularity: TrendGranularity) => {
   if (!visitDateValue) {
     return false;
@@ -245,13 +252,15 @@ const buildSummaryTrends = (visits: DashboardVisit[], granularity: TrendGranular
     }
 
     const bucket = trendMap.get(bucketKey)!;
-    bucket.ohcVisits += 1;
+    if (isCoreOHCVisit(visit)) {
+      bucket.ohcVisits += 1;
+    }
 
-    if (visit.visit_type === 'PRE_EMPLOYMENT') {
+    if (isPreEmploymentVisit(visit)) {
       bucket.preamtiveCheckUps += 1;
     }
 
-    if (visit.visit_type === 'PERIODIC') {
+    if (isAnnualHealthCheckupVisit(visit)) {
       bucket.annualCheckup += 1;
     }
 
@@ -297,7 +306,9 @@ const buildDepartmentComparison = (visits: DashboardVisit[]) => {
     }
 
     const bucket = departmentMap.get(department)!;
-    bucket.visits += 1;
+    if (isCoreOHCVisit(visit)) {
+      bucket.visits += 1;
+    }
     if (employeeCode) {
       bucket.employeeCodes.add(employeeCode);
       bucket.employees = bucket.employeeCodes.size;
@@ -305,10 +316,10 @@ const buildDepartmentComparison = (visits: DashboardVisit[]) => {
     if (visit.requires_referral || visit.visit_status === 'REFERRED') {
       bucket.referrals += 1;
     }
-    if (visit.visit_type === 'PRE_EMPLOYMENT') {
+    if (isPreEmploymentVisit(visit)) {
       bucket.preamtiveCheckUps += 1;
     }
-    if (visit.visit_type === 'PERIODIC') {
+    if (isAnnualHealthCheckupVisit(visit)) {
       bucket.annualCheckup += 1;
     }
   });
@@ -527,6 +538,7 @@ export const Dashboard: React.FC = () => {
       const ehsStatistics = ehsStatisticsResult.status === 'fulfilled' ? ehsStatisticsResult.value : null;
       const medicineSummary = medicineSummaryResult.status === 'fulfilled' ? medicineSummaryResult.value : null;
       const visits = visitsResult.status === 'fulfilled' ? visitsResult.value : [];
+      const coreOHCVisits = visits.filter(isCoreOHCVisit);
       const medicines =
         medicinesResult.status === 'fulfilled' && Array.isArray(medicinesResult.value?.results)
           ? medicinesResult.value.results as MedicineInventoryItem[]
@@ -541,11 +553,11 @@ export const Dashboard: React.FC = () => {
             yearly: buildSummaryTrends(visits, 'yearly'),
           },
           departmentComparison: buildDepartmentComparison(visits),
-          diagnosisTrends: buildDiagnosisTrends(visits),
+          diagnosisTrends: buildDiagnosisTrends(coreOHCVisits),
           medicineUsageBreakdown: buildMedicineUsageBreakdown(medicines, medicineSummary),
-          bioWasteBreakdown: buildBioWasteBreakdown(visits),
+          bioWasteBreakdown: buildBioWasteBreakdown(coreOHCVisits),
         });
-        setActivityFeed(buildActivityFeed(visits));
+        setActivityFeed(buildActivityFeed(coreOHCVisits));
       } else {
         setChartData((current) => ({
           ...current,
@@ -564,28 +576,35 @@ export const Dashboard: React.FC = () => {
       setPriorityItems([
         {
           label: 'Critical Cases',
-          value: analytics?.critical_cases.length ?? visits.filter((visit) => visit.triage_level === 'CRITICAL').length,
-          detail:
-            analytics && analytics.critical_cases.length > 0
-              ? `${analytics.critical_cases[0].employee_code} needs immediate attention.`
-              : 'No critical cases right now.',
+          value: coreOHCVisits.filter((visit) => visit.triage_level === 'CRITICAL').length,
+          detail: coreOHCVisits.find((visit) => visit.triage_level === 'CRITICAL')?.employee?.employee_code
+            ? `${coreOHCVisits.find((visit) => visit.triage_level === 'CRITICAL')?.employee?.employee_code} needs immediate attention.`
+            : 'No critical cases right now.',
           tone: styles.priorityCritical,
           route: '/dashboard/metric-details/critical-cases',
         },
         {
           label: 'Pending Follow-ups',
           value:
-            analytics?.summary.follow_up_pending ??
-            visits.filter((visit) => {
+            coreOHCVisits.filter((visit) => {
               if (!visit.follow_up_date) {
                 return false;
               }
               return new Date(visit.follow_up_date).getTime() < Date.now();
             }).length,
-          detail:
-            analytics && analytics.pending_follow_ups.length > 0
-              ? `${analytics.pending_follow_ups[0].employee_code} is overdue for follow-up.`
-              : 'No overdue follow-ups right now.',
+          detail: coreOHCVisits.find((visit) => {
+            if (!visit.follow_up_date) {
+              return false;
+            }
+            return new Date(visit.follow_up_date).getTime() < Date.now();
+          })?.employee?.employee_code
+            ? `${coreOHCVisits.find((visit) => {
+                if (!visit.follow_up_date) {
+                  return false;
+                }
+                return new Date(visit.follow_up_date).getTime() < Date.now();
+              })?.employee?.employee_code} is overdue for follow-up.`
+            : 'No overdue follow-ups right now.',
           tone: styles.priorityFollowUp,
           route: '/dashboard/metric-details/pending-follow-ups',
         },
