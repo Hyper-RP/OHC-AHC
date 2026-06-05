@@ -156,7 +156,7 @@ export const AnnualHealthPharmacistRequestPage: React.FC = () => {
   if (loading) {
     return (
       <div className={pageStyles.page}>
-        <Header title="Annual Health Check Up Pharmacist Request" subtitle="Loading prescription details" />
+    <Header title="Annual Health Checkup Pharmacist Request" subtitle="Loading prescription details" />
         <div className={dashboardStyles.loadingState}>Loading prescription details...</div>
       </div>
     );
@@ -164,7 +164,7 @@ export const AnnualHealthPharmacistRequestPage: React.FC = () => {
 
   return (
     <div className={pageStyles.page}>
-      <Header title="Annual Health Check Up Pharmacist Request" subtitle="Review and dispense annual health checkup medicine requests" />
+    <Header title="Annual Health Checkup Pharmacist Request" subtitle="Review and dispense annual health checkup medicine requests" />
 
       <main className={pageStyles.main}>
         {error && <Alert type="danger" onDismiss={() => setError('')}>{error}</Alert>}
@@ -173,7 +173,7 @@ export const AnnualHealthPharmacistRequestPage: React.FC = () => {
           <>
             <section className={pageStyles.hero}>
               <div className={pageStyles.heroText}>
-                <span className={pageStyles.eyebrow}>Annual Health Check Up Pharmacist</span>
+          <span className={pageStyles.eyebrow}>Annual Health Checkup Pharmacist</span>
                 <h2 className={pageStyles.heroTitle}>Dispense Medicine</h2>
                 <p className={pageStyles.heroSubtitle}>
                   Process medicine requests raised during annual health checkups using the same dedicated pharmacy workflow.

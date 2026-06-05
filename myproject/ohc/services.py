@@ -54,6 +54,11 @@ def create_referral_if_required(diagnosis):
         visit.visit_status = OHCVisit.VisitStatus.REFERRED
         visit.next_action = "REFER_TO_AHC"
 
+        # Pre-employment candidate visits do not have an employee profile yet,
+        # so we cannot create an AHC referral record that requires one.
+        if not visit.employee_id:
+            return None
+
         referral, created = Referral.objects.get_or_create(
             diagnosis=diagnosis,
             defaults={
@@ -92,20 +97,27 @@ def create_referral_if_required(diagnosis):
 def process_diagnosis_outcome(diagnosis):
     visit = diagnosis.visit
     employee = visit.employee
+    has_prescriptions = diagnosis.prescriptions.exists()
 
-    apply_fitness_decision(employee, diagnosis)
+    if employee is not None:
+        apply_fitness_decision(employee, diagnosis)
     schedule_follow_up_for_visit(visit, diagnosis)
     referral = create_referral_if_required(diagnosis)
+    if visit.visit_type == OHCVisit.VisitType.PRE_EMPLOYMENT and not has_prescriptions and referral is None:
+        visit.visit_status = OHCVisit.VisitStatus.COMPLETED
+        visit.closed_at = timezone.now()
     visit.save(
         update_fields=[
             "requires_referral",
             "visit_status",
             "follow_up_date",
             "next_action",
+            "closed_at",
             "updated_at",
         ]
     )
-    notify_employee_health_status(employee, diagnosis)
-    notify_follow_up(employee, visit)
-    notify_referral(employee, referral)
+    if employee is not None:
+        notify_employee_health_status(employee, diagnosis)
+        notify_follow_up(employee, visit)
+        notify_referral(employee, referral)
     return referral

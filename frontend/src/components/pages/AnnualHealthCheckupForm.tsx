@@ -176,15 +176,15 @@ export const AnnualHealthCheckupForm: React.FC = () => {
         triage_level: 'LOW',
         visit_date: formData.visit_date,
         visit_time: formData.visit_time,
-        chief_complaint: 'Annual Health Check Up',
+        chief_complaint: 'Annual Health Checkup',
         symptoms: 'Routine annual health screening',
         vitals: formData.vitals,
         consulted_doctor: formData.consulted_doctor,
       });
-      show('Annual Health Check Up created successfully!', 'success');
+      show('Annual Health Checkup created successfully!', 'success');
       navigate('/dashboard');
     } catch (err) {
-      const errorMessage = handleApiError(err, 'Failed to create annual health check up');
+      const errorMessage = handleApiError(err, 'Failed to create annual health checkup');
       setError(errorMessage);
       show(errorMessage, 'error');
     } finally {
@@ -195,7 +195,7 @@ export const AnnualHealthCheckupForm: React.FC = () => {
   return (
     <div className={styles.visitForm}>
       <Header
-        title="Annual Health Check Up"
+        title="Annual Health Checkup"
         subtitle="Register an annual health checkup and assign it to a doctor"
       />
 
@@ -317,7 +317,7 @@ export const AnnualHealthCheckupForm: React.FC = () => {
                 Cancel
               </Button>
               <Button type="submit" variant="brand" loading={loading}>
-                Submit Annual Health Check Up
+                Submit Annual Health Checkup
               </Button>
             </div>
           </form>

@@ -32,6 +32,9 @@ class OHCVisitSerializer(serializers.ModelSerializer):
     employee = EmployeeInfoSerializer(read_only=True)
     consulted_doctor = DoctorInfoSerializer(read_only=True)
     prescriptions = serializers.SerializerMethodField()
+    employee_code = serializers.SerializerMethodField()
+    employee_name = serializers.SerializerMethodField()
+    employee_department = serializers.SerializerMethodField()
 
     class Meta:
         model = OHCVisit
@@ -61,6 +64,22 @@ class OHCVisitSerializer(serializers.ModelSerializer):
             }
             for p in prescriptions
         ]
+
+    def get_employee_code(self, obj):
+        if obj.employee_id:
+            return obj.employee.employee_code
+        return obj.candidate_id
+
+    def get_employee_name(self, obj):
+        if obj.employee_id:
+            full_name = f"{obj.employee.user.first_name} {obj.employee.user.last_name}".strip()
+            return full_name or obj.employee.employee_code
+        return obj.patient_name
+
+    def get_employee_department(self, obj):
+        if obj.employee_id:
+            return obj.employee.department
+        return obj.candidate_department
 
 class DiagnosisSerializer(serializers.ModelSerializer):
     examination_notes = serializers.CharField(required=False, allow_null=True, allow_blank=True)
@@ -150,6 +169,16 @@ class DiagnosisWithPrescriptionsSerializer(serializers.Serializer):
                 },
             )
         referral = process_diagnosis_outcome(diagnosis)
+        if (
+            diagnosis.visit.visit_type == OHCVisit.VisitType.PRE_EMPLOYMENT
+            and not diagnosis.prescriptions.exists()
+            and referral is None
+        ):
+            diagnosis.visit.visit_status = OHCVisit.VisitStatus.COMPLETED
+            if not diagnosis.visit.closed_at:
+                from django.utils import timezone
+                diagnosis.visit.closed_at = timezone.now()
+            diagnosis.visit.save(update_fields=["visit_status", "closed_at", "updated_at"])
         if referral and selected_hospital:
             referral.hospital = selected_hospital
             referral.referral_status = referral.ReferralStatus.SENT
@@ -442,6 +471,19 @@ class PharmacistPrescriptionSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         # Add visit details
         if instance.visit:
+            employee_payload = None
+            if instance.visit.employee_id:
+                employee_payload = {
+                    "id": instance.visit.employee.id,
+                    "employee_code": instance.visit.employee.employee_code,
+                    "department": instance.visit.employee.department,
+                    "fitness_status": instance.visit.employee.fitness_status,
+                    "user": {
+                        "first_name": instance.visit.employee.user.first_name,
+                        "last_name": instance.visit.employee.user.last_name,
+                    },
+                }
+
             diagnoses = list(
                 instance.visit.diagnoses.all().values(
                     "diagnosis_name",
@@ -467,16 +509,11 @@ class PharmacistPrescriptionSerializer(serializers.ModelSerializer):
             )
             visit_data = {
                 "id": instance.visit.id,
-                "employee": {
-                    "id": instance.visit.employee.id,
-                    "employee_code": instance.visit.employee.employee_code,
-                    "department": instance.visit.employee.department,
-                    "fitness_status": instance.visit.employee.fitness_status,
-                    "user": {
-                        "first_name": instance.visit.employee.user.first_name,
-                        "last_name": instance.visit.employee.user.last_name,
-                    },
-                },
+                "employee": employee_payload,
+                "candidate_id": instance.visit.candidate_id,
+                "candidate_department": instance.visit.candidate_department,
+                "candidate_designation": instance.visit.candidate_designation,
+                "patient_name": instance.visit.patient_name,
                 "visit_date": instance.visit.visit_date.isoformat() if instance.visit.visit_date else None,
                 "visit_time": instance.visit.visit_time.isoformat() if instance.visit.visit_time else None,
                 "visit_type": instance.visit.visit_type,
@@ -536,11 +573,12 @@ class PreEmploymentCheckupSerializer(serializers.Serializer):
     """
     Serializer for pre-employment checkup visits.
     Creates a visit with visit_type=PRE_EMPLOYMENT.
-    Accepts employee as integer ID (employee already created by frontend).
+    Stores candidate details separately without requiring an employee record.
     """
-    employee = serializers.IntegerField(required=True)
-    employee_name = serializers.CharField(max_length=150, write_only=True)
-    employee_department = serializers.CharField(max_length=120, write_only=True, required=False, allow_blank=True)
+    candidate_id = serializers.CharField(max_length=50, required=True)
+    candidate_name = serializers.CharField(max_length=150, write_only=True)
+    candidate_department = serializers.CharField(max_length=120, write_only=True, required=False, allow_blank=True)
+    candidate_designation = serializers.CharField(max_length=120, write_only=True, required=False, allow_blank=True)
     patient_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     patient_age = serializers.IntegerField(required=False, allow_null=True)
     patient_gender = serializers.CharField(max_length=10, required=False, allow_blank=True)
@@ -552,14 +590,10 @@ class PreEmploymentCheckupSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         request = self.context["request"]
-
-        # Get employee ID (already validated by IntegerField)
-        employee_id = attrs.get("employee")
-
-        try:
-            emp_profile = EmployeeProfile.objects.get(id=employee_id)
-        except EmployeeProfile.DoesNotExist:
-            raise serializers.ValidationError(f"Employee with ID {employee_id} not found")
+        candidate_id = attrs.get("candidate_id", "").strip()
+        if not candidate_id:
+            raise serializers.ValidationError({"candidate_id": "Candidate ID is required"})
+        attrs["candidate_id"] = candidate_id
 
         # Auto-assign doctor if not provided and user is clinical staff
         if not attrs.get("consulted_doctor") and request.user.role in {
@@ -577,14 +611,6 @@ class PreEmploymentCheckupSerializer(serializers.Serializer):
     def create(self, validated_data):
         from ohc.models import OHCVisit
 
-        # Extract employee ID
-        employee_id = validated_data.pop("employee")
-
-        try:
-            employee = EmployeeProfile.objects.get(id=employee_id)
-        except EmployeeProfile.DoesNotExist:
-            raise serializers.ValidationError("Employee not found")
-
         # Get doctor
         consulted_doctor_id = validated_data.pop("consulted_doctor", None)
         consulted_doctor = None
@@ -596,14 +622,17 @@ class PreEmploymentCheckupSerializer(serializers.Serializer):
 
         # Create the pre-employment checkup visit
         visit = OHCVisit.objects.create(
-            employee=employee,
+            employee=None,
             consulted_doctor=consulted_doctor,
             visit_type=OHCVisit.VisitType.PRE_EMPLOYMENT,
             visit_status=OHCVisit.VisitStatus.OPEN,
             triage_level=OHCVisit.TriageLevel.LOW,
             visit_date=validated_data.get("visit_date"),
             visit_time=validated_data.get("visit_time"),
-            patient_name=validated_data.get("patient_name", ""),
+            candidate_id=validated_data.get("candidate_id", ""),
+            candidate_department=validated_data.get("candidate_department", ""),
+            candidate_designation=validated_data.get("candidate_designation", ""),
+            patient_name=validated_data.get("patient_name") or validated_data.get("candidate_name", ""),
             patient_age=validated_data.get("patient_age"),
             patient_gender=validated_data.get("patient_gender", ""),
             patient_contact=validated_data.get("patient_contact", ""),
@@ -615,7 +644,10 @@ class PreEmploymentCheckupSerializer(serializers.Serializer):
     def to_representation(self, instance):
         return {
             "id": instance.id,
-            "employee": {
+            "candidate_id": instance.candidate_id,
+            "candidate_department": instance.candidate_department,
+            "candidate_designation": instance.candidate_designation,
+            "employee": instance.employee and {
                 "id": instance.employee.id,
                 "employee_code": instance.employee.employee_code,
                 "name": f"{instance.employee.user.first_name} {instance.employee.user.last_name}",
@@ -624,6 +656,7 @@ class PreEmploymentCheckupSerializer(serializers.Serializer):
             "visit_status": instance.visit_status,
             "visit_date": instance.visit_date.isoformat() if instance.visit_date else None,
             "visit_time": instance.visit_time.isoformat() if instance.visit_time else None,
+            "patient_name": instance.patient_name,
             "vitals": instance.vitals,
             "consulted_doctor": {
                 "id": instance.consulted_doctor.id,

@@ -221,9 +221,9 @@ export const PreEmploymentDetailsPage: React.FC = () => {
 
         {/* Visitor List */}
         <Card className={styles.listCard}>
-          <h3>Pre-Employment Checks ({visits.length})</h3>
+          <h3>Pre-Employment Checkups ({visits.length})</h3>
           {visits.length === 0 ? (
-            <div className={styles.emptyState}>No pre-employment checks found</div>
+            <div className={styles.emptyState}>No pre-employment checkups found</div>
           ) : (
             <table className={styles.visitorsTable}>
               <thead>

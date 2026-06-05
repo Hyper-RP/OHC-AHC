@@ -49,7 +49,7 @@ export const NAV_ITEMS: NavItem[] = [
     roles: [Role.ADMIN, Role.NURSE],
   },
   {
-    label: 'Annual Health Check Up',
+    label: 'Annual Health Checkup',
     url: '/annual-health-checkup',
     urlName: 'annual_health_checkup',
     icon: 'AHC',
@@ -63,7 +63,7 @@ export const NAV_ITEMS: NavItem[] = [
     roles: [Role.DOCTOR],
   },
   {
-    label: 'Annual Health Doctor',
+    label: 'Annual Health Checkup Doctor',
     url: '/annual-health-doctor',
     urlName: 'annual_health_doctor',
     icon: 'AHC',
@@ -77,7 +77,7 @@ export const NAV_ITEMS: NavItem[] = [
     roles: [Role.PHARMACIST],
   },
   {
-    label: 'Annual Health Pharmacist',
+    label: 'Annual Health Checkup Pharmacist',
     url: '/annual-health-pharmacist',
     urlName: 'annual_health_pharmacist',
     icon: 'Rx',

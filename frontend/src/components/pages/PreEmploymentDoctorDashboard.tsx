@@ -344,7 +344,7 @@ export const PreEmploymentDoctorDashboard: React.FC = () => {
 
   return (
     <div className={styles.dashboard}>
-      <Header title="Pre-Employment Checkup - Doctor" subtitle="Review and diagnose pre-employment medical checkups" />
+      <Header title="Pre-Employment Checkup" subtitle="Review and diagnose pre-employment medical checkups" />
 
       <main className={styles.dashboardMain}>
         {error && <Alert type="danger" onDismiss={() => setError('')}>{error}</Alert>}

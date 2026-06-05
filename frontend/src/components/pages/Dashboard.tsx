@@ -403,7 +403,7 @@ const buildActivityFeed = (visits: DashboardVisit[]): ActivityItem[] =>
       title = 'Emergency Case';
       tag = 'Emergency';
     } else if (visit.visit_type === 'PRE_EMPLOYMENT') {
-      title = 'Pre-employement Check Up';
+      title = 'Pre-Employment Checkup';
       tag = 'Preventive';
     } else if (visit.visit_type === 'PERIODIC') {
       title = 'Annual Health Checkup';
@@ -655,15 +655,15 @@ export const Dashboard: React.FC = () => {
     },
     {
       key: 'preamtiveCheckUps',
-      title: 'Pre-employement Check Ups',
-      description: 'Monthly trend for pre-employement health checks.',
+      title: 'Pre-Employment Checkups',
+      description: 'Monthly trend for pre-employment checkups.',
       color: '#f0b24b',
       detailRoute: '/dashboard/metric-details/preamtive-check-ups',
     },
     {
       key: 'annualCheckup',
-      title: 'Annual Health Checkup',
-      description: 'Monthly trend for annual health checkup cases.',
+      title: 'Annual Health Checkups',
+      description: 'Monthly trend for annual health checkups.',
       color: '#5aa488',
       detailRoute: '/dashboard/metric-details/annual-checkup',
     },
@@ -704,14 +704,14 @@ export const Dashboard: React.FC = () => {
     },
     {
       key: 'preamtiveCheckUps',
-      title: 'Department-wise Pre-employement',
-      description: 'Pre-employement check ups by department',
+      title: 'Department-wise Pre-Employment Checkups',
+      description: 'Pre-employment checkups by department',
       detailRoute: '/dashboard/department-details/preamtive',
     },
     {
       key: 'annualCheckup',
-      title: 'Department-wise Annual Health Checkup',
-      description: 'Annual health checkup cases by department',
+      title: 'Department-wise Annual Health Checkups',
+      description: 'Annual health checkups by department',
       detailRoute: '/dashboard/department-details/annual',
     },
   ];

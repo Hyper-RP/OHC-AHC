@@ -56,17 +56,17 @@ const METRIC_CONFIG: Record<
     color: '#0a5f78',
   },
   preamtive: {
-    title: 'Department-wise Pre-employement Details',
-    subtitle: 'Full pre-employement check up cases for each department',
+    title: 'Department-wise Pre-Employment Checkup Details',
+    subtitle: 'Full pre-employment checkup cases for each department',
     dataKey: 'preamtiveCheckUps',
-    titleLabel: 'Pre-employement Check Ups',
+    titleLabel: 'Pre-Employment Checkups',
     color: '#f0b24b',
   },
   annual: {
     title: 'Department-wise Annual Health Checkup Details',
     subtitle: 'Full annual health checkup cases for each department',
     dataKey: 'annualCheckup',
-    titleLabel: 'Annual Health Checkup',
+    titleLabel: 'Annual Health Checkups',
     color: '#5aa488',
   },
 };
