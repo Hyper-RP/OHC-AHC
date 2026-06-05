@@ -87,7 +87,7 @@ export const AnnualHealthDoctorDashboard: React.FC = () => {
 
   return (
     <div className={styles.dashboard}>
-      <Header title="Annual Health Check Up - Doctor" subtitle="Review and diagnose annual health checkups" />
+      <Header title="Annual Health Checkup - Doctor" subtitle="Review and diagnose annual health checkups" />
 
       <main className={styles.dashboardMain}>
         {error && <Alert type="danger" onDismiss={() => setError('')}>{error}</Alert>}

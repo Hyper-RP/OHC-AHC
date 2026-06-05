@@ -48,8 +48,8 @@ const METRIC_CONFIG: Record<MetricSlug, MetricConfig> = {
     subtitle: 'Detailed employee records for OHC visits',
   },
   'preamtive-check-ups': {
-    title: 'Pre-employement Check Ups Details',
-    subtitle: 'Detailed employee records for pre-employement check ups',
+    title: 'Pre-Employment Checkup Details',
+    subtitle: 'Detailed employee records for pre-employment checkups',
     visitType: 'PRE_EMPLOYMENT',
   },
   'annual-checkup': {

@@ -25,7 +25,13 @@ class OHCVisit(BaseModel):
         HIGH = "HIGH", "High"
         CRITICAL = "CRITICAL", "Critical"
 
-    employee = models.ForeignKey("accounts.EmployeeProfile", on_delete=models.PROTECT, related_name="ohc_visits")
+    employee = models.ForeignKey(
+        "accounts.EmployeeProfile",
+        on_delete=models.PROTECT,
+        related_name="ohc_visits",
+        null=True,
+        blank=True,
+    )
     consulted_doctor = models.ForeignKey(
         "accounts.DoctorProfile",
         on_delete=models.PROTECT,
@@ -38,6 +44,9 @@ class OHCVisit(BaseModel):
     visit_time = models.TimeField(null=True, blank=True)
 
     # Patient details (filled by nurse)
+    candidate_id = models.CharField(max_length=50, blank=True)
+    candidate_department = models.CharField(max_length=120, blank=True)
+    candidate_designation = models.CharField(max_length=120, blank=True)
     patient_name = models.CharField(max_length=150, blank=True)
     patient_age = models.IntegerField(null=True, blank=True)
     patient_gender = models.CharField(max_length=10, blank=True)
@@ -54,7 +63,12 @@ class OHCVisit(BaseModel):
     closed_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.employee.employee_code} - {self.visit_date:%Y-%m-%d %H:%M}"
+        reference = (
+            self.employee.employee_code
+            if self.employee_id
+            else self.candidate_id or self.patient_name or f"Visit {self.pk}"
+        )
+        return f"{reference} - {self.visit_date:%Y-%m-%d %H:%M}"
 
 
 class Diagnosis(BaseModel):

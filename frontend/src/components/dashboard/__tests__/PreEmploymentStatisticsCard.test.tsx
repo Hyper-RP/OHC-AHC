@@ -24,14 +24,14 @@ describe('PreEmploymentStatisticsCard', () => {
     it('should display pre-employment header', () => {
       render(<PreEmploymentStatisticsCard statistics={mockStatistics} loading={false} />);
 
-      expect(screen.getByText('🩺 Pre-Employment Checkups')).toBeInTheDocument();
-      expect(screen.getByText('Today: 2')).toBeInTheDocument();
+      expect(screen.getByText('Pre-Employment Checkups')).toBeInTheDocument();
+      expect(screen.getByText('Today: 2 cases')).toBeInTheDocument();
     });
 
     it('should display total checks', () => {
       render(<PreEmploymentStatisticsCard statistics={mockStatistics} loading={false} />);
 
-      expect(screen.getByText('Total Checks')).toBeInTheDocument();
+      expect(screen.getByText('Total Cases')).toBeInTheDocument();
       expect(screen.getByText('48')).toBeInTheDocument();
     });
 
@@ -103,8 +103,8 @@ describe('PreEmploymentStatisticsCard', () => {
       };
       render(<PreEmploymentStatisticsCard statistics={allUnfit} loading={false} />);
 
-      expect(screen.getByText('0')).toBeInTheDocument(); // Fit count
-      expect(screen.getByText('10')).toBeInTheDocument(); // Unfit count
+      expect(screen.getByText('0')).toBeInTheDocument();
+      expect(screen.getByText('10')).toBeInTheDocument();
     });
   });
 });

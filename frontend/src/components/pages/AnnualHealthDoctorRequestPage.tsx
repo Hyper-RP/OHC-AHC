@@ -296,7 +296,7 @@ export const AnnualHealthDoctorRequestPage: React.FC = () => {
   if (loading) {
     return (
       <div className={pageStyles.page}>
-        <Header title="Annual Health Check Up Doctor Request" subtitle="Loading checkup details" />
+      <Header title="Annual Health Checkup Doctor Request" subtitle="Loading checkup details" />
         <div className={dashboardStyles.loading}>Loading visit details...</div>
       </div>
     );
@@ -305,7 +305,7 @@ export const AnnualHealthDoctorRequestPage: React.FC = () => {
   if (!selectedVisit) {
     return (
       <div className={pageStyles.page}>
-        <Header title="Annual Health Check Up Doctor Request" subtitle="Checkup details" />
+      <Header title="Annual Health Checkup Doctor Request" subtitle="Checkup details" />
         <main className={pageStyles.main}>
           {error && <Alert type="danger" onDismiss={() => setError('')}>{error}</Alert>}
         </main>
@@ -322,14 +322,14 @@ export const AnnualHealthDoctorRequestPage: React.FC = () => {
 
   return (
     <div className={pageStyles.page}>
-      <Header title="Annual Health Check Up Doctor Request" subtitle="Review and diagnose annual health checkups" />
+      <Header title="Annual Health Checkup Doctor Request" subtitle="Review and diagnose annual health checkups" />
 
       <main className={pageStyles.main}>
         {error && <Alert type="danger" onDismiss={() => setError('')}>{error}</Alert>}
 
         <section className={pageStyles.hero}>
           <div className={pageStyles.heroText}>
-            <span className={pageStyles.eyebrow}>Annual Health Check Up Doctor</span>
+            <span className={pageStyles.eyebrow}>Annual Health Checkup Doctor</span>
             <h2 className={pageStyles.heroTitle}>Checkup Details</h2>
             <p className={pageStyles.heroSubtitle}>
               Review employee information, vitals, and complete the annual health checkup diagnosis workflow.

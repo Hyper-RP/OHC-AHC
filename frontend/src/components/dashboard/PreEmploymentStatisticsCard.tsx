@@ -24,7 +24,7 @@ export const PreEmploymentStatisticsCard: React.FC<PreEmploymentStatisticsCardPr
     return (
       <Card className={styles.card}>
         <div className={styles.header}>
-          <h3><UserCheck size={18} className={styles.headerIcon} /> Pre-employement Check Ups</h3>
+          <h3><UserCheck size={18} className={styles.headerIcon} /> Pre-Employment Checkups</h3>
         </div>
         <div className={styles.loadingState}>
           <div className={styles.skeleton}></div>
@@ -41,7 +41,7 @@ export const PreEmploymentStatisticsCard: React.FC<PreEmploymentStatisticsCardPr
   return (
     <Card className={styles.card} onClick={handleClick}>
       <div className={styles.header}>
-        <h3><UserCheck size={18} className={styles.headerIcon} /> Pre-employement Check Ups</h3>
+        <h3><UserCheck size={18} className={styles.headerIcon} /> Pre-Employment Checkups</h3>
         <span className={styles.todayBadge}>Today: {statistics.today_count} cases</span>
       </div>
 

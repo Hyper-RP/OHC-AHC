@@ -71,7 +71,7 @@ export const AnnualHealthPharmacistDashboard: React.FC = () => {
 
   return (
     <div className={styles.pharmacistDashboard}>
-      <Header title="Annual Health Check Up Pharmacist" subtitle="Manage medicine requests for annual health checkups" />
+      <Header title="Annual Health Checkup Pharmacist" subtitle="Manage medicine requests for annual health checkups" />
 
       <main className={styles.dashboardMain}>
         {error && <Alert type="danger" onDismiss={() => setError('')}>{error}</Alert>}
@@ -92,7 +92,7 @@ export const AnnualHealthPharmacistDashboard: React.FC = () => {
         </div>
 
         <div className={styles.prescriptionsTab}>
-          <h3>Annual Health Check Up Medicine Queue</h3>
+          <h3>Annual Health Checkup Medicine Queue</h3>
 
           {loading ? (
             <div className={styles.loadingState}>Loading prescriptions...</div>

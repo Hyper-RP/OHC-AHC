@@ -54,7 +54,9 @@ def build_employee_health_history(employee_queryset=None):
         "employee__user",
         "consulted_doctor",
         "consulted_doctor__user",
-    ).prefetch_related("diagnoses", "prescriptions", "referrals", "medical_reports").order_by("-visit_date")
+    ).prefetch_related("diagnoses", "prescriptions", "referrals", "medical_reports").filter(
+        employee__isnull=False
+    ).order_by("-visit_date")
     if employee_queryset is not None:
         visit_queryset = visit_queryset.filter(employee__in=employee_queryset)
 
@@ -277,10 +279,21 @@ def _draw_receipt_logo(pdf, x, y, page_width=None):
     If page_width is provided, centers the logo horizontally.
     Returns the y-coordinate below the logo.
     """
-    # Try to use the actual logo image
-    logo_path = os.path.join(settings.BASE_DIR, 'static', 'react', 'assets', 'mediGplus-CFZGf1el.png')
+    # Prefer the shared frontend source asset so print and PDF receipts stay aligned.
+    logo_candidates = [
+        os.path.join(settings.BASE_DIR, 'frontend', 'src', 'assets', 'mediGplus.png'),
+        os.path.join(settings.BASE_DIR, 'static', 'react', 'assets', 'mediGplus.png'),
+    ]
 
-    if os.path.exists(logo_path) and PILImage is not None:
+    static_assets_dir = os.path.join(settings.BASE_DIR, 'static', 'react', 'assets')
+    if os.path.isdir(static_assets_dir):
+        for asset_name in os.listdir(static_assets_dir):
+            if asset_name.startswith('mediGplus') and asset_name.endswith('.png'):
+                logo_candidates.append(os.path.join(static_assets_dir, asset_name))
+
+    logo_path = next((path for path in logo_candidates if os.path.exists(path)), None)
+
+    if logo_path and PILImage is not None:
         try:
             # Get image dimensions and calculate aspect ratio
             with PILImage.open(logo_path) as img:
