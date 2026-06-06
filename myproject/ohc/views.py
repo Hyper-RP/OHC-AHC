@@ -4,6 +4,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django_filters import rest_framework as df_filters
+from django.db.models import Q
 
 from accounts.permissions import (
     HasHealthPortalAccess,
@@ -50,7 +51,12 @@ def get_accessible_ohc_visits(user):
         return queryset
 
     if user.role == user.Role.PHARMACIST:
-        return queryset.filter(visit_status=OHCVisit.VisitStatus.IN_PROGRESS)
+        return queryset.filter(
+            visit_status__in=[
+                OHCVisit.VisitStatus.IN_PROGRESS,
+                OHCVisit.VisitStatus.REFERRED,
+            ]
+        )
 
     if user.role == user.Role.EMPLOYEE:
         employee_profile = getattr(user, "employee_profile", None)
@@ -64,7 +70,7 @@ class OHCVisitFilter(df_filters.FilterSet):
     """Custom filter for OHCVisit with date range support"""
     date_from = df_filters.DateFilter(field_name='visit_date', lookup_expr='gte')
     date_to = df_filters.DateFilter(field_name='visit_date', lookup_expr='lte')
-    department = df_filters.CharFilter(field_name='employee__department', lookup_expr='icontains')
+    department = df_filters.CharFilter(method='filter_department')
 
     # Map 'OPD' to 'WALK_IN' for filtering
     visit_type = df_filters.CharFilter(method='filter_visit_type')
@@ -74,6 +80,11 @@ class OHCVisitFilter(df_filters.FilterSet):
         if value == 'OPD':
             return queryset.filter(visit_type='WALK_IN')
         return queryset.filter(visit_type=value)
+
+    def filter_department(self, queryset, name, value):
+        return queryset.filter(
+            Q(employee__department__icontains=value) | Q(candidate_department__icontains=value)
+        )
 
     class Meta:
         model = OHCVisit
@@ -85,7 +96,7 @@ class OHCVisitViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = OHCVisitFilter
-    search_fields = ['employee__user__first_name', 'employee__user__last_name', 'employee__employee_code']
+    search_fields = ['employee__user__first_name', 'employee__user__last_name', 'employee__employee_code', 'patient_name', 'candidate_id']
     ordering_fields = ['visit_date', 'created_at', 'visit_time']
     ordering = ['-created_at']
 
@@ -703,7 +714,8 @@ class PrescriptionListViewSet(viewsets.GenericViewSet):
 
     def list(self, request, *args, **kwargs):
         """List prescriptions that are pending for dispensing.
-        Only prescriptions from visits with IN_PROGRESS status and ACTIVE prescriptions.
+        Only prescriptions from visits that are still actionable by pharmacy
+        and ACTIVE prescriptions.
         """
         from ohc.models import OHCVisit, Prescription, MedicineDispense
 
@@ -715,7 +727,10 @@ class PrescriptionListViewSet(viewsets.GenericViewSet):
             )
             .filter(
                 status=Prescription.PrescriptionStatus.ACTIVE,
-                visit__visit_status=OHCVisit.VisitStatus.IN_PROGRESS,
+                visit__visit_status__in=[
+                    OHCVisit.VisitStatus.IN_PROGRESS,
+                    OHCVisit.VisitStatus.REFERRED,
+                ],
             )
             .order_by("-visit__visit_date")
         )
@@ -730,3 +745,25 @@ class PrescriptionListViewSet(viewsets.GenericViewSet):
         # Serialize with dispense status
         serializer = self.get_serializer_class()
         return Response(serializer(queryset, many=True).data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="pre-employment-summary")
+    def pre_employment_summary(self, request, *args, **kwargs):
+        from ohc.models import OHCVisit
+
+        completed_without_medicines = (
+            OHCVisit.objects.filter(
+                visit_type=OHCVisit.VisitType.PRE_EMPLOYMENT,
+                visit_status=OHCVisit.VisitStatus.COMPLETED,
+                diagnoses__isnull=False,
+                prescriptions__isnull=True,
+            )
+            .distinct()
+            .count()
+        )
+
+        return Response(
+            {
+                "doctor_completed_without_medicines": completed_without_medicines,
+            },
+            status=status.HTTP_200_OK,
+        )

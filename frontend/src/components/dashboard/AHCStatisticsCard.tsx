@@ -24,7 +24,7 @@ export const AHCStatisticsCard: React.FC<AHCStatisticsCardProps> = ({
     return (
       <Card className={styles.card}>
         <div className={styles.header}>
-          <h3><HeartPulse size={18} className={styles.headerIcon} /> Annual Health Checkup</h3>
+          <h3><HeartPulse size={18} className={styles.headerIcon} /> Annual Health Checkups</h3>
         </div>
         <div className={styles.loadingState}>
           <div className={styles.skeleton}></div>
@@ -41,7 +41,7 @@ export const AHCStatisticsCard: React.FC<AHCStatisticsCardProps> = ({
   return (
     <Card className={styles.card} onClick={handleClick}>
       <div className={styles.header}>
-        <h3><HeartPulse size={18} className={styles.headerIcon} /> Annual Health Checkup</h3>
+        <h3><HeartPulse size={18} className={styles.headerIcon} /> Annual Health Checkups</h3>
         <span className={styles.todayBadge}>Today: {statistics.today_count} cases</span>
       </div>
 

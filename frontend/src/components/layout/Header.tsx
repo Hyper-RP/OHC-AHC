@@ -92,7 +92,7 @@ export const Header: React.FC<HeaderProps> = ({
               <>
                 <div className={styles.headerDivider} />
                 <div className={styles.statItem}>
-                  <span className={styles.statLabel}>Pre-employement Check Ups</span>
+                  <span className={styles.statLabel}>Pre-Employment Checkups</span>
                   <span className={styles.statValue}>{stats.referralCount}</span>
                 </div>
               </>
@@ -101,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
               <>
                 <div className={styles.headerDivider} />
                 <div className={styles.statItem}>
-                  <span className={styles.statLabel}>Annual Health Checkup</span>
+                  <span className={styles.statLabel}>Annual Health Checkups</span>
                   <span className={styles.statValue}>{stats.pendingInvoices}</span>
                 </div>
               </>

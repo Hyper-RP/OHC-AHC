@@ -123,6 +123,17 @@ export const getPharmacistPrescriptions = async (): Promise<any[]> => {
   }
 };
 
+export const getPreEmploymentPharmacistSummary = async (): Promise<{
+  doctor_completed_without_medicines: number;
+}> => {
+  try {
+    const response = await api.get('/ohc/prescriptions/pre-employment-summary/');
+    return response.data;
+  } catch (error) {
+    throw new Error(handleApiError(error), { cause: error });
+  }
+};
+
 /**
  * Update visit status
  * @param visitId - Visit ID

@@ -19,6 +19,14 @@ export const listHospitals = async (params?: {
 }): Promise<PaginatedResponse<Hospital>> => {
   try {
     const response = await api.get<PaginatedResponse<Hospital>>('/ahc/hospitals/', { params });
+    if (Array.isArray(response.data)) {
+      return {
+        count: response.data.length,
+        next: null,
+        previous: null,
+        results: response.data,
+      };
+    }
     return response.data;
   } catch (error) {
     throw new Error(handleApiError(error), { cause: error });

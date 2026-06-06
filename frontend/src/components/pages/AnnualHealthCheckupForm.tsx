@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 import { Header } from '../layout';
 import { FormInput, Button, Card, Alert } from '../ui';
-import { VisitType } from '../../types';
+import { Role, VisitType } from '../../types';
 import api, { handleApiError } from '../../services/api';
 import styles from './PreEmploymentCheckupForm.module.css';
 
@@ -15,14 +15,13 @@ interface DoctorOption {
   specializations: string;
 }
 
-interface PreEmploymentFormData {
-  candidate_id: string;
-  candidate_name: string;
+interface AnnualHealthCheckupFormData {
+  patient_name: string;
+  employee_id: string;
   department: string;
   date_of_birth: string;
   gender: string;
   contact_number: string;
-  designation: string;
   visit_date: string;
   visit_time: string;
   vitals: {
@@ -36,7 +35,7 @@ interface PreEmploymentFormData {
   consulted_doctor?: number;
 }
 
-export const PreEmploymentCheckupForm: React.FC = () => {
+export const AnnualHealthCheckupForm: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { show } = useSnackbar();
@@ -45,14 +44,13 @@ export const PreEmploymentCheckupForm: React.FC = () => {
   const [error, setError] = useState('');
   const [doctorOptions, setDoctorOptions] = useState<DoctorOption[]>([]);
 
-  const [formData, setFormData] = useState<PreEmploymentFormData>({
-    candidate_id: '',
-    candidate_name: '',
+  const [formData, setFormData] = useState<AnnualHealthCheckupFormData>({
+    patient_name: '',
+    employee_id: '',
     department: '',
     date_of_birth: '',
     gender: '',
     contact_number: '',
-    designation: '',
     visit_date: new Date().toISOString().split('T')[0],
     visit_time: new Date().toTimeString().split(' ')[0].substring(0, 5),
     vitals: {},
@@ -60,12 +58,12 @@ export const PreEmploymentCheckupForm: React.FC = () => {
   });
 
   useEffect(() => {
-    if (!user || !user.role) {
+    if (!user || (user.role !== Role.ADMIN && user.role !== Role.NURSE)) {
       navigate('/dashboard');
       return;
     }
     void fetchDoctorOptions();
-  }, [user, navigate]);
+  }, [navigate, user]);
 
   const fetchDoctorOptions = async () => {
     try {
@@ -89,7 +87,7 @@ export const PreEmploymentCheckupForm: React.FC = () => {
     }));
   };
 
-  const handleInputChange = (field: keyof PreEmploymentFormData, value: any) => {
+  const handleInputChange = (field: keyof AnnualHealthCheckupFormData, value: string | number | undefined) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -114,27 +112,21 @@ export const PreEmploymentCheckupForm: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    if (!formData.candidate_id.trim()) {
-      setError('Candidate ID is required');
-      show('Please enter candidate ID', 'error');
+    if (!formData.patient_name.trim()) {
+      setError('Employee name is required');
+      show('Please enter employee name', 'error');
       return;
     }
 
-    if (!formData.candidate_name.trim()) {
-      setError('Candidate name is required');
-      show('Please enter candidate name', 'error');
+    if (!formData.employee_id.trim()) {
+      setError('Employee ID is required');
+      show('Please enter employee ID', 'error');
       return;
     }
 
     if (!formData.department.trim()) {
       setError('Department is required');
       show('Please enter department', 'error');
-      return;
-    }
-
-    if (!formData.designation.trim()) {
-      setError('Designation is required');
-      show('Please enter designation', 'error');
       return;
     }
 
@@ -172,28 +164,27 @@ export const PreEmploymentCheckupForm: React.FC = () => {
     setLoading(true);
 
     try {
-      const visitData = {
-        candidate_id: formData.candidate_id.trim(),
-        candidate_name: formData.candidate_name.trim(),
-        candidate_department: formData.department.trim(),
-        candidate_designation: formData.designation.trim(),
-        patient_name: formData.candidate_name.trim(),
+      await api.post('/ohc/visits/', {
+        employee: formData.employee_id.trim(),
+        employee_name: formData.patient_name.trim(),
+        employee_department: formData.department.trim(),
+        patient_name: formData.patient_name.trim(),
         patient_age: calculatedAge,
         patient_gender: formData.gender,
         patient_contact: formData.contact_number.trim(),
-        visit_type: VisitType.PRE_EMPLOYMENT,
+        visit_type: VisitType.PERIODIC,
         triage_level: 'LOW',
         visit_date: formData.visit_date,
         visit_time: formData.visit_time,
+        chief_complaint: 'Annual Health Checkup',
+        symptoms: 'Routine annual health screening',
         vitals: formData.vitals,
         consulted_doctor: formData.consulted_doctor,
-      };
-
-      await api.post('/ohc/pre-employment-checkup/', visitData);
-      show('Pre-Employment Checkup created successfully!', 'success');
+      });
+      show('Annual Health Checkup created successfully!', 'success');
       navigate('/dashboard');
     } catch (err) {
-      const errorMessage = handleApiError(err, 'Failed to create pre-employment checkup');
+      const errorMessage = handleApiError(err, 'Failed to create annual health checkup');
       setError(errorMessage);
       show(errorMessage, 'error');
     } finally {
@@ -204,8 +195,8 @@ export const PreEmploymentCheckupForm: React.FC = () => {
   return (
     <div className={styles.visitForm}>
       <Header
-        title="Pre-Employment Checkup"
-        subtitle="Medical examination before joining to determine fitness for the proposed role"
+        title="Annual Health Checkup"
+        subtitle="Register an annual health checkup and assign it to a doctor"
       />
 
       <main className={styles.visitFormMain}>
@@ -214,24 +205,24 @@ export const PreEmploymentCheckupForm: React.FC = () => {
         <Card>
           <form onSubmit={handleSubmit}>
             <div className={styles.formSection}>
-              <h3>Candidate Information</h3>
+              <h3>Employee Information</h3>
 
               <div className={styles.formGrid}>
                 <FormInput
-                  label="Candidate ID *"
+                  label="Employee Name *"
                   type="text"
-                  value={formData.candidate_id}
-                  onChange={(value) => handleInputChange('candidate_id', value)}
+                  value={formData.patient_name}
+                  onChange={(value) => handleInputChange('patient_name', value)}
                   required
-                  helperText="Temporary candidate or reference ID before joining"
+                  helperText="Full name of the employee"
                 />
                 <FormInput
-                  label="Candidate Name *"
+                  label="Employee ID *"
                   type="text"
-                  value={formData.candidate_name}
-                  onChange={(value) => handleInputChange('candidate_name', value)}
+                  value={formData.employee_id}
+                  onChange={(value) => handleInputChange('employee_id', value)}
                   required
-                  helperText="Full name of the candidate"
+                  helperText="Employee code"
                 />
                 <FormInput
                   label="Department *"
@@ -239,15 +230,7 @@ export const PreEmploymentCheckupForm: React.FC = () => {
                   value={formData.department}
                   onChange={(value) => handleInputChange('department', value)}
                   required
-                  helperText="Department or function the candidate is being evaluated for"
-                />
-                <FormInput
-                  label="Designation *"
-                  type="text"
-                  value={formData.designation}
-                  onChange={(value) => handleInputChange('designation', value)}
-                  required
-                  helperText="Role or job title being considered"
+                  helperText="Department name for the employee record"
                 />
                 <FormInput
                   label="DOB *"
@@ -300,54 +283,12 @@ export const PreEmploymentCheckupForm: React.FC = () => {
             <div className={styles.formSection}>
               <h3>Vital Signs</h3>
               <div className={styles.vitalsGrid}>
-                <FormInput
-                  label="Temperature (F)"
-                  type="text"
-                  value={formData.vitals.temperature || ''}
-                  onChange={(value) => handleVitalChange('temperature', value)}
-                  placeholder="98.6"
-                  helperText="Valid range: 80-120F"
-                />
-                <FormInput
-                  label="Blood Pressure"
-                  type="text"
-                  value={formData.vitals.blood_pressure || ''}
-                  onChange={(value) => handleVitalChange('blood_pressure', value)}
-                  placeholder="120/80"
-                  helperText="Format: 120/80"
-                />
-                <FormInput
-                  label="Pulse Rate (bpm)"
-                  type="text"
-                  value={formData.vitals.pulse || ''}
-                  onChange={(value) => handleVitalChange('pulse', value)}
-                  placeholder="76"
-                  helperText="Valid range: 40-200 bpm"
-                />
-                <FormInput
-                  label="SpO2 (%)"
-                  type="text"
-                  value={formData.vitals.spo2 || ''}
-                  onChange={(value) => handleVitalChange('spo2', value)}
-                  placeholder="98"
-                  helperText="Valid range: 70-100%"
-                />
-                <FormInput
-                  label="Weight (kg)"
-                  type="text"
-                  value={formData.vitals.weight || ''}
-                  onChange={(value) => handleVitalChange('weight', value)}
-                  placeholder="70"
-                  helperText="Valid range: 1-300 kg"
-                />
-                <FormInput
-                  label="Height (cm)"
-                  type="text"
-                  value={formData.vitals.height || ''}
-                  onChange={(value) => handleVitalChange('height', value)}
-                  placeholder="172"
-                  helperText="Valid range: 50-250 cm"
-                />
+                <FormInput label="Temperature (F)" type="text" value={formData.vitals.temperature || ''} onChange={(value) => handleVitalChange('temperature', value)} placeholder="98.6" helperText="Valid range: 80-120F" />
+                <FormInput label="Blood Pressure" type="text" value={formData.vitals.blood_pressure || ''} onChange={(value) => handleVitalChange('blood_pressure', value)} placeholder="120/80" helperText="Format: 120/80" />
+                <FormInput label="Pulse Rate (bpm)" type="text" value={formData.vitals.pulse || ''} onChange={(value) => handleVitalChange('pulse', value)} placeholder="76" helperText="Valid range: 40-200 bpm" />
+                <FormInput label="SpO2 (%)" type="text" value={formData.vitals.spo2 || ''} onChange={(value) => handleVitalChange('spo2', value)} placeholder="98" helperText="Valid range: 70-100%" />
+                <FormInput label="Weight (kg)" type="text" value={formData.vitals.weight || ''} onChange={(value) => handleVitalChange('weight', value)} placeholder="70" helperText="Valid range: 1-300 kg" />
+                <FormInput label="Height (cm)" type="text" value={formData.vitals.height || ''} onChange={(value) => handleVitalChange('height', value)} placeholder="172" helperText="Valid range: 50-250 cm" />
               </div>
             </div>
 
@@ -376,7 +317,7 @@ export const PreEmploymentCheckupForm: React.FC = () => {
                 Cancel
               </Button>
               <Button type="submit" variant="brand" loading={loading}>
-                Submit Pre-Employment Checkup
+                Submit Annual Health Checkup
               </Button>
             </div>
           </form>

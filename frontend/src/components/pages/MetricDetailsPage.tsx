@@ -48,8 +48,8 @@ const METRIC_CONFIG: Record<MetricSlug, MetricConfig> = {
     subtitle: 'Detailed employee records for OHC visits',
   },
   'preamtive-check-ups': {
-    title: 'Pre-employement Check Ups Details',
-    subtitle: 'Detailed employee records for pre-employement check ups',
+    title: 'Pre-Employment Checkup Details',
+    subtitle: 'Detailed employee records for pre-employment checkups',
     visitType: 'PRE_EMPLOYMENT',
   },
   'annual-checkup': {
@@ -100,6 +100,13 @@ const matchesKeywords = (complaint: string, keywords: string[]) => {
   const normalized = complaint.toLowerCase();
   return keywords.some((keyword) => normalized.includes(keyword));
 };
+
+const isPreEmploymentVisit = (visit: VisitRecord) => visit.visitType === 'PRE_EMPLOYMENT';
+
+const isAnnualHealthCheckupVisit = (visit: VisitRecord) => visit.visitType === 'PERIODIC';
+
+const isCoreOHCVisit = (visit: VisitRecord) =>
+  !isPreEmploymentVisit(visit) && !isAnnualHealthCheckupVisit(visit);
 
 const mapVisitRecord = (visit: any): VisitRecord => ({
   id: visit.id,
@@ -179,8 +186,12 @@ export const MetricDetailsPage: React.FC = () => {
       });
     }
 
+    if (metricSlug === 'ohc-visits') {
+      return records.filter(isCoreOHCVisit);
+    }
+
     return records;
-  }, [metricConfig]);
+  }, [metricConfig, metricSlug]);
 
   const fetchData = useCallback(async () => {
     if (!metricConfig) {

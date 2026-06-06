@@ -31,6 +31,13 @@ type DepartmentPoint = {
   annualCheckup: number;
 };
 
+const isPreEmploymentVisit = (visit: DashboardVisit) => visit.visit_type === 'PRE_EMPLOYMENT';
+
+const isAnnualHealthCheckupVisit = (visit: DashboardVisit) => visit.visit_type === 'PERIODIC';
+
+const isCoreOHCVisit = (visit: DashboardVisit) =>
+  !isPreEmploymentVisit(visit) && !isAnnualHealthCheckupVisit(visit);
+
 const METRIC_CONFIG: Record<
   DepartmentMetricSlug,
   {
@@ -49,17 +56,17 @@ const METRIC_CONFIG: Record<
     color: '#0a5f78',
   },
   preamtive: {
-    title: 'Department-wise Pre-employement Details',
-    subtitle: 'Full pre-employement check up cases for each department',
+    title: 'Department-wise Pre-Employment Checkup Details',
+    subtitle: 'Full pre-employment checkup cases for each department',
     dataKey: 'preamtiveCheckUps',
-    titleLabel: 'Pre-employement Check Ups',
+    titleLabel: 'Pre-Employment Checkups',
     color: '#f0b24b',
   },
   annual: {
     title: 'Department-wise Annual Health Checkup Details',
     subtitle: 'Full annual health checkup cases for each department',
     dataKey: 'annualCheckup',
-    titleLabel: 'Annual Health Checkup',
+    titleLabel: 'Annual Health Checkups',
     color: '#5aa488',
   },
 };
@@ -133,7 +140,9 @@ const buildDepartmentComparison = (visits: DashboardVisit[]) => {
     }
 
     const bucket = departmentMap.get(department)!;
-    bucket.visits += 1;
+    if (isCoreOHCVisit(visit)) {
+      bucket.visits += 1;
+    }
 
     if (employeeCode) {
       bucket.employeeCodes.add(employeeCode);
@@ -144,11 +153,11 @@ const buildDepartmentComparison = (visits: DashboardVisit[]) => {
       bucket.referrals += 1;
     }
 
-    if (visit.visit_type === 'PRE_EMPLOYMENT') {
+    if (isPreEmploymentVisit(visit)) {
       bucket.preamtiveCheckUps += 1;
     }
 
-    if (visit.visit_type === 'PERIODIC') {
+    if (isAnnualHealthCheckupVisit(visit)) {
       bucket.annualCheckup += 1;
     }
   });

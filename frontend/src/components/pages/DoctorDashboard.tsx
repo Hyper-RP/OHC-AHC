@@ -9,7 +9,7 @@ import { RefreshControl } from '../charts';
 import { createDiagnosis } from '../../services/ohc';
 import { listHospitals } from '../../services/ahc';
 import { useDashboardData } from '../../hooks/useDashboardData';
-import { FitnessDecision, Role, VisitStatus, type Hospital } from '../../types';
+import { FitnessDecision, Role, VisitStatus, VisitType, type Hospital } from '../../types';
 import { FITNESS_DECISION_OPTIONS } from '../../utils/constants';
 import { validatePrescriptions, formatSubmitError } from '../../utils/errorHandling';
 import receiptLogo from '../../assets/mediGplus.png';
@@ -44,6 +44,8 @@ const FITNESS_STATUS_OPTIONS = [
   ...FITNESS_DECISION_OPTIONS,
 ];
 
+const OHC_VISIT_TYPES: string[] = [VisitType.WALK_IN, VisitType.FOLLOW_UP, VisitType.EMERGENCY];
+
 /**
  * Doctor Dashboard component
  * Shows visits assigned to the current doctor
@@ -69,7 +71,8 @@ export const DoctorDashboard: React.FC = () => {
     { onError: handleError }
   );
 
-  const visits = Array.isArray(visitsData) ? visitsData : (visitsData?.results || []);
+  const rawVisits = Array.isArray(visitsData) ? visitsData : (visitsData?.results || []);
+  const visits = rawVisits.filter((visit: any) => OHC_VISIT_TYPES.includes(visit.visit_type));
 
   // Track previous visit IDs to detect new visits
   const previousVisitIdsRef = useRef<Set<number>>(new Set());
@@ -209,7 +212,7 @@ export const DoctorDashboard: React.FC = () => {
   }, [user, navigate]);
 
   const handleViewVisit = (visitId: number) => {
-    setSelectedVisit(visits.find((v: any) => v.id === visitId) || null);
+    navigate(`/doctor/request/${visitId}`);
   };
 
   const handleCloseDetail = () => {
