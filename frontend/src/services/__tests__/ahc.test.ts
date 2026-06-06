@@ -45,6 +45,20 @@ describe('ahc service', () => {
       expect(api.get).toHaveBeenCalledWith('/ahc/hospitals/', { params });
     });
 
+    it('normalizes plain list responses', async () => {
+      const hospitals = [mockHospital()];
+      vi.mocked(api.get).mockResolvedValueOnce({ data: hospitals });
+
+      const result = await listHospitals();
+
+      expect(result).toEqual({
+        count: hospitals.length,
+        next: null,
+        previous: null,
+        results: hospitals,
+      });
+    });
+
     it('throws on error', async () => {
       vi.mocked(api.get).mockRejectedValueOnce(new Error('Network Error'));
       await expect(listHospitals()).rejects.toThrow();

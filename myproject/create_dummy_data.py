@@ -152,6 +152,46 @@ HOSPITALS = [
         "state": "Maharashtra",
         "specialties": ["Emergency", "Trauma"],
     },
+    {
+        "code": "HSP004",
+        "name": "Ruby Hall Clinic",
+        "address_line_1": "40 Sassoon Road",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "specialties": ["Cardiology", "Neurology", "Emergency"],
+    },
+    {
+        "code": "HSP005",
+        "name": "Jehangir Hospital",
+        "address_line_1": "32 Sassoon Road",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "specialties": ["General Surgery", "Orthopedics", "Diagnostics"],
+    },
+    {
+        "code": "HSP006",
+        "name": "Apollo Hospitals Navi Mumbai",
+        "address_line_1": "Sector 23, Parsik Hill Road",
+        "city": "Navi Mumbai",
+        "state": "Maharashtra",
+        "specialties": ["Oncology", "Cardiology", "Nephrology"],
+    },
+    {
+        "code": "HSP007",
+        "name": "Fortis Hospital Mulund",
+        "address_line_1": "Mulund Goregaon Link Road",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "specialties": ["Trauma Care", "Neurology", "ICU"],
+    },
+    {
+        "code": "HSP008",
+        "name": "Aditya Birla Memorial Hospital",
+        "address_line_1": "Chinchwad Station Road",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "specialties": ["Pulmonology", "Gastroenterology", "Orthopedics"],
+    },
 ]
 
 
