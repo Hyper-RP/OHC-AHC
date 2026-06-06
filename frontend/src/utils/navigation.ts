@@ -90,6 +90,93 @@ export const NAV_ITEMS: NavItem[] = [
     icon: 'HIS',
     roles: [Role.ADMIN, Role.HR, Role.EHS, Role.NURSE],
   },
+
+  // {
+  //   label: 'Diagnosis Entry',
+  //   url: '/ohc/diagnosis-entry',
+  //   urlName: 'diagnosis_entry',
+  //   icon: '🔬',
+  //   roles: [Role.ADMIN, Role.DOCTOR],
+  // },
+  // {
+  //   label: 'Complete Intake',
+  //   url: '/ohc/complete-intake',
+  //   urlName: 'complete_intake',
+  //   icon: '✅',
+  //   roles: [Role.ADMIN, Role.NURSE, Role.DOCTOR],
+  // },
+  // {
+  //   label: 'Referrals',
+  //   url: '/ahc/referrals',
+  //   urlName: 'referrals',
+  //   icon: '🏢',
+  //   roles: [Role.ADMIN, Role.NURSE, Role.EHS, Role.HR, Role.DOCTOR],
+  // },
+  // {
+  //   label: 'Hospital Selection',
+  //   url: '/ahc/hospital-selection',
+  //   urlName: 'hospital_selection',
+  //   icon: '🏨',
+  //   roles: [Role.ADMIN, Role.NURSE, Role.EHS, Role.HR, Role.KAM, Role.DOCTOR],
+  // },
+
+  // {
+  //   label: 'Medical Reports',
+  //   url: '/reports/medical',
+  //   urlName: 'medical_reports',
+  //   icon: '📋',
+  //   roles: [Role.ADMIN, Role.NURSE, Role.EHS, Role.HR, Role.KAM, Role.DOCTOR],
+  // },
+/** 
+  {
+    label: 'Pre-Employment Pharmacist',
+    url: '/pre-employment-pharmacist',
+    urlName: 'pre_employment_pharmacist',
+    icon: 'Rx',
+    roles: [Role.PHARMACIST],
+  },
+  {
+    label: 'Annual Health Pharmacist',
+    url: '/annual-health-pharmacist',
+    urlName: 'annual_health_pharmacist',
+    icon: 'Rx',
+    roles: [Role.PHARMACIST],
+  },
+
+  {
+    label: 'Annual Health Doctor',
+    url: '/annual-health-doctor',
+    urlName: 'annual_health_doctor',
+    icon: 'AHC',
+    roles: [Role.DOCTOR],
+  },
+
+  {
+    label: 'Annual Health Check Up',
+    url: '/annual-health-checkup',
+    urlName: 'annual_health_checkup',
+    icon: 'AHC',
+    roles: [Role.ADMIN, Role.NURSE],
+  },
+
+
+*/
+
+// {
+  //   label: 'Disease Trends',
+  //   url: '/reports/disease-trends',
+  //   urlName: 'disease_trends',
+  //   icon: '📈',
+  //   roles: [Role.ADMIN, Role.HR, Role.EHS],
+  // },
+  // {
+  //   label: 'Department Stats',
+  //   url: '/reports/department-stats',
+  //   urlName: 'department_stats',
+  //   icon: '🏢',
+  //   roles: [Role.ADMIN, Role.HR, Role.EHS],
+  // },
+
 ];
 
 /**
