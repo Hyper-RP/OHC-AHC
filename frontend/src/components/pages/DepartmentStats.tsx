@@ -26,7 +26,14 @@ export const DepartmentStats: React.FC = () => {
       setChartError(null);
       try {
         const result = await getDepartmentHealthStats(period);
-        const transformed = transformDepartmentStatsData(result);
+        const transformed = transformDepartmentStatsData({
+          departments: result.departments.map((dept) => ({
+            ...dept,
+            visits: dept.total_visits,
+            employees: dept.total_employees,
+            referrals: dept.referred_cases,
+          })),
+        });
         setChartData(transformed);
       } catch (error) {
         console.error('Failed to load stats:', error);

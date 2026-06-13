@@ -318,6 +318,18 @@ export interface Payment {
 }
 
 // Reports Types
+export interface VisitDiagnosis {
+  diagnosis_name: string;
+  fitness_decision?: string;
+  diagnosed_at?: string;
+}
+
+export interface VisitPrescription {
+  medicine_name: string;
+  dosage?: string;
+  start_date?: string;
+}
+
 export interface EmployeeHealthHistory {
   mode?: 'detail';
   employee: {
@@ -341,8 +353,8 @@ export interface EmployeeHealthHistory {
     requires_referral?: boolean;
     follow_up_date?: string;
     next_action?: string;
-    diagnoses?: unknown[];
-    prescriptions?: unknown[];
+    diagnoses?: VisitDiagnosis[];
+    prescriptions?: VisitPrescription[];
   }>;
 }
 

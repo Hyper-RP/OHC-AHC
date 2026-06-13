@@ -32,7 +32,7 @@ interface DispenseResponse {
   message: string;
 }
 
-interface LowStockMedicine {
+export interface LowStockMedicine {
   id: number;
   medicine_id: string;
   name: string;

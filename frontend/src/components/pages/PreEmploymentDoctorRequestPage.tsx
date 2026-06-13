@@ -391,7 +391,7 @@ export const PreEmploymentDoctorRequestPage: React.FC = () => {
                 </div>
               </div>
 
-              {selectedVisit.vitals && Object.keys(selectedVisit.vitals).filter((key) => selectedVisit.vitals[key]).length > 0 ? (
+              {selectedVisit.vitals && Object.keys(selectedVisit.vitals).filter((key) => selectedVisit.vitals![key]).length > 0 ? (
                 <div className={pageStyles.vitalsGrid}>
                   {Object.entries(selectedVisit.vitals)
                     .filter(([, value]) => Boolean(value))
