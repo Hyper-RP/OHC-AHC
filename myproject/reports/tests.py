@@ -171,7 +171,7 @@ class NotificationModelTests(TestCase):
             title='General Announcement',
             message='System maintenance tonight',
             notification_type=Notification.NotificationType.GENERAL,
-            related_model=None,
+            related_model="",
             related_object_id=None,  # General notification
         )
         self.assertIsNone(notification.related_object_id)
@@ -493,7 +493,7 @@ class IntegrationTests(TestCase):
             title='System Announcement',
             message='Scheduled maintenance tonight.',
             notification_type=Notification.NotificationType.GENERAL,
-            related_model=None,
+            related_model="",
             related_object_id=None,
         )
         notifications = Notification.objects.filter(related_object_id__isnull=True)
