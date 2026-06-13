@@ -14,7 +14,7 @@ import styles from './DepartmentStats.module.css';
 export const DepartmentStats: React.FC = () => {
   const [period, setPeriod] = useState(90);
   const [loading, setLoading] = useState(true);
-  const [chartData, setChartData] = useState<any>({
+  const [chartData, setChartData] = useState<ReturnType<typeof transformDepartmentStatsData>>({
     healthIndex: [],
     visitsReferrals: [],
   });
@@ -92,7 +92,7 @@ export const DepartmentStats: React.FC = () => {
             <section className={styles.healthIndexSection}>
               <h2 className={styles.sectionTitle}>Department Health Index</h2>
               <div className={styles.gaugesGrid}>
-                {chartData.healthIndex.map((dept: any) => (
+                {chartData.healthIndex.map((dept) => (
                   <div key={dept.department} className={styles.gaugeCard}>
                     <HealthIndexGauge data={dept} size={180} showLabel={true} animate={true} />
                     <p className={styles.gaugeLabel}>{dept.department}</p>

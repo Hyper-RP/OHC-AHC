@@ -11,6 +11,42 @@ import {
 } from 'recharts';
 import styles from './VisitsReferralsStackedBar.module.css';
 
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      department: string;
+      visits: number;
+      referrals: number;
+      referralRate: string | number;
+    };
+  }>;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className={styles.tooltip}>
+        <p className={styles.tooltipTitle}>{data.department}</p>
+        <p className={styles.tooltipRow}>
+          <span className={styles.tooltipLabel}>Visits:</span>
+          <span className={styles.tooltipValue}>{data.visits}</span>
+        </p>
+        <p className={styles.tooltipRow}>
+          <span className={styles.tooltipLabel}>Referrals:</span>
+          <span className={styles.tooltipValue}>{data.referrals}</span>
+        </p>
+        <p className={styles.tooltipRow}>
+          <span className={styles.tooltipLabel}>Referral Rate:</span>
+          <span className={styles.tooltipValue}>{data.referralRate}%</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 interface VisitsReferralsData {
   department: string;
   visits: number;
@@ -23,10 +59,6 @@ interface VisitsReferralsStackedBarProps {
   height?: number;
 }
 
-/**
- * VisitsReferralsStackedBar component
- * Stacked bar chart showing visits vs referrals per department
- */
 export const VisitsReferralsStackedBar: React.FC<VisitsReferralsStackedBarProps> = ({
   data,
   loading = false,
@@ -37,31 +69,6 @@ export const VisitsReferralsStackedBar: React.FC<VisitsReferralsStackedBarProps>
     ...item,
     referralRate: item.visits > 0 ? ((item.referrals / item.visits) * 100).toFixed(1) : 0,
   }));
-
-  // Custom tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className={styles.tooltip}>
-          <p className={styles.tooltipTitle}>{data.department}</p>
-          <p className={styles.tooltipRow}>
-            <span className={styles.tooltipLabel}>Visits:</span>
-            <span className={styles.tooltipValue}>{data.visits}</span>
-          </p>
-          <p className={styles.tooltipRow}>
-            <span className={styles.tooltipLabel}>Referrals:</span>
-            <span className={styles.tooltipValue}>{data.referrals}</span>
-          </p>
-          <p className={styles.tooltipRow}>
-            <span className={styles.tooltipLabel}>Referral Rate:</span>
-            <span className={styles.tooltipValue}>{data.referralRate}%</span>
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   if (loading) {
     return <div className={styles.skeleton} style={{ height }} />;

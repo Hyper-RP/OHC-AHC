@@ -46,6 +46,33 @@ const FITNESS_STATUS_OPTIONS = [
 
 const OHC_VISIT_TYPES: string[] = [VisitType.WALK_IN, VisitType.FOLLOW_UP, VisitType.EMERGENCY];
 
+interface Visit {
+  id: number;
+  visit_date: string;
+  visit_time?: string;
+  visit_type?: string;
+  visit_status?: string;
+  chief_complaint?: string;
+  symptoms?: string;
+  vitals?: Record<string, unknown>;
+  diagnoses?: Array<Record<string, unknown>>;
+  prescriptions?: Array<{ id: number; medicine_name: string; dosage?: string }>;
+  follow_up_date?: string;
+  doctor_name?: string;
+  patient_name?: string;
+  patient_age?: number;
+  patient_gender?: string;
+  patient_contact?: string;
+  employee_name?: string;
+  employee_id?: string;
+  employee_department?: string;
+  employee?: {
+    user?: { first_name?: string; last_name?: string };
+    employee_code?: string;
+    department?: string;
+  };
+}
+
 /**
  * Doctor Dashboard component
  * Shows visits assigned to the current doctor
@@ -65,14 +92,16 @@ export const DoctorDashboard: React.FC = () => {
   const visitParams = useMemo(() => ({ visit_status: selectedFilter }), [selectedFilter]);
 
   // Fetch visits assigned to doctor, with manual refresh option
-  const { data: visitsData, isLoading: loading, refetch, lastUpdated } = useDashboardData<any>(
+  const { data: visitsData, isLoading: loading, refetch, lastUpdated } = useDashboardData<{
+    results?: Visit[];
+  } | Visit[]>(
     '/ohc/visits/',
     visitParams,
     { onError: handleError }
   );
 
   const rawVisits = Array.isArray(visitsData) ? visitsData : (visitsData?.results || []);
-  const visits = rawVisits.filter((visit: any) => OHC_VISIT_TYPES.includes(visit.visit_type));
+  const visits = rawVisits.filter((visit: Visit) => OHC_VISIT_TYPES.includes(visit.visit_type || ''));
 
   // Track previous visit IDs to detect new visits
   const previousVisitIdsRef = useRef<Set<number>>(new Set());
@@ -80,12 +109,12 @@ export const DoctorDashboard: React.FC = () => {
   // Show new visits count after refresh
   useEffect(() => {
     if (visits.length > 0) {
-      const currentIds = new Set<number>(visits.map((v: any) => v.id as number));
+      const currentIds = new Set<number>(visits.map((v: Visit) => v.id));
       const previousIds = previousVisitIdsRef.current;
 
       // Only show notification on refresh (when we had previous data)
       if (previousIds.size > 0) {
-        const newVisits = visits.filter((v: any) => !previousIds.has(v.id));
+        const newVisits = visits.filter((v: Visit) => !previousIds.has(v.id));
         if (newVisits.length > 0) {
           show(`${newVisits.length} new visit${newVisits.length === 1 ? '' : 's'} assigned`, 'info');
         }
@@ -98,13 +127,13 @@ export const DoctorDashboard: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [selectedVisit, setSelectedVisit] = useState<any | null>(null);
+  const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null);
   const [showDiagnosisForm, setShowDiagnosisForm] = useState(false);
   const [hospitalOptions, setHospitalOptions] = useState<Array<{ value: string; label: string }>>([
     { value: '', label: 'Select hospital' },
   ]);
 
-  const getVisitDisplayName = (visit: any) => {
+  const getVisitDisplayName = (visit: Visit) => {
     const explicitVisitName = visit.patient_name?.trim() || visit.employee_name?.trim();
     if (explicitVisitName) {
       return explicitVisitName;
@@ -116,15 +145,15 @@ export const DoctorDashboard: React.FC = () => {
     return linkedEmployeeName || 'N/A';
   };
 
-  const getVisitDisplayCode = (visit: any) => {
+  const getVisitDisplayCode = (visit: Visit) => {
     return visit.employee_id || visit.employee?.employee_code || 'N/A';
   };
 
-  const getVisitDisplayDepartment = (visit: any) => {
+  const getVisitDisplayDepartment = (visit: Visit) => {
     return visit.employee_department || visit.employee?.department || 'N/A';
   };
 
-  const getVisitDisplayTime = (visit: any) => {
+  const getVisitDisplayTime = (visit: Visit) => {
     if (!visit.visit_time) {
       return 'N/A';
     }
@@ -206,7 +235,6 @@ export const DoctorDashboard: React.FC = () => {
 
   useEffect(() => {
     if (!user || user.role !== Role.DOCTOR) {
-      setError('Access restricted to doctors only');
       navigate('/dashboard');
     }
   }, [user, navigate]);
@@ -620,7 +648,7 @@ export const DoctorDashboard: React.FC = () => {
               <div className={styles.columnHeader}>Date</div>
               <div className={styles.columnHeader}>Status</div>
             </div>
-            {visits.map((visit: any) => (
+            {visits.map((visit: Visit) => (
               <div key={visit.id} className={styles.visitListItem} onClick={() => handleViewVisit(visit.id)}>
                 <div className={styles.listCell}>
                   <span className={styles.patientName}>
@@ -743,7 +771,7 @@ export const DoctorDashboard: React.FC = () => {
               <div className={styles.section}>
                 <h4>Medicines Prescribed</h4>
                 <div className={styles.medicinesList}>
-                  {selectedVisit.prescriptions.map((prescription: any) => (
+                  {selectedVisit.prescriptions.map((prescription: { id: number; medicine_name: string; dosage?: string }) => (
                     <div key={prescription.id} className={styles.medicineItem}>
                       <span className={styles.medicineName}>{prescription.medicine_name}</span>
                       <span className={styles.medicineDosage}>{prescription.dosage}</span>

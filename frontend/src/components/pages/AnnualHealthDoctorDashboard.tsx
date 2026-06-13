@@ -67,7 +67,10 @@ export const AnnualHealthDoctorDashboard: React.FC = () => {
       navigate('/dashboard');
       return;
     }
-    void fetchVisits();
+    const timer = setTimeout(() => {
+      void fetchVisits();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchVisits, navigate, user]);
 
   const stats = useMemo(() => ({

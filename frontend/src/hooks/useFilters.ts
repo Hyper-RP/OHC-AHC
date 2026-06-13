@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import type { Severity } from '../types';
 
 export interface DashboardFilters {
@@ -32,21 +32,22 @@ const DEFAULT_FILTERS: DashboardFilters = {
 
 export function useFilters() {
   const [filters, setFilters] = useState<DashboardFilters>(DEFAULT_FILTERS);
-  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
-  const [isDirty, setIsDirty] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('saved-dashboard-filters');
-    if (saved) {
-      try {
+  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>(() => {
+    try {
+      const saved = localStorage.getItem('saved-dashboard-filters');
+      if (saved) {
         const parsed = JSON.parse(saved);
-        setSavedFilters(parsed.map((f: SavedFilter) => ({
+        return parsed.map((f: SavedFilter) => ({
           ...f,
           createdAt: new Date(f.createdAt),
-        })));
-      } catch {}
+        }));
+      }
+    } catch {
+      // ignore invalid stored data
     }
-  }, []);
+    return [];
+  });
+  const [isDirty, setIsDirty] = useState(false);
 
   const updateFilters = useCallback((newFilters: Partial<DashboardFilters>) => {
     setFilters((prev) => {

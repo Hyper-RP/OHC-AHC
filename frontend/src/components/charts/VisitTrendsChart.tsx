@@ -11,6 +11,29 @@ import {
 } from 'recharts';
 import styles from './VisitTrendsChart.module.css';
 
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      fullDate: string;
+      count: number;
+    };
+  }>;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className={styles.tooltip}>
+        <p className={styles.tooltipDate}>{data.fullDate}</p>
+        <p className={styles.tooltipValue}>{data.count} visits</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 interface VisitTrendData {
   date: Date;
   count: number;
@@ -22,10 +45,6 @@ interface VisitTrendsChartProps {
   height?: number;
 }
 
-/**
- * VisitTrendsChart component
- * Line chart showing daily/monthly visit trends
- */
 export const VisitTrendsChart: React.FC<VisitTrendsChartProps> = ({
   data,
   loading = false,
@@ -37,20 +56,6 @@ export const VisitTrendsChart: React.FC<VisitTrendsChartProps> = ({
     count: item.count,
     fullDate: item.date.toISOString(),
   }));
-
-  // Custom tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className={styles.tooltip}>
-          <p className={styles.tooltipDate}>{data.fullDate}</p>
-          <p className={styles.tooltipValue}>{data.count} visits</p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   if (loading) {
     return <div className={styles.skeleton} style={{ height }} data-testid="chart-skeleton" />;

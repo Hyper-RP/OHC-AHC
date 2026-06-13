@@ -11,6 +11,44 @@ import {
 } from 'recharts';
 import styles from './DepartmentComparisonChart.module.css';
 
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      department: string;
+      employees: number;
+      referrals: number;
+      [key: string]: string | number | boolean | undefined;
+    };
+  }>;
+  titleLabel: string;
+  dataKey: string;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, titleLabel, dataKey }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className={styles.tooltip}>
+        <p className={styles.tooltipTitle}>{data.department}</p>
+        <p className={styles.tooltipRow}>
+          <span className={styles.tooltipLabel}>{titleLabel}:</span>
+          <span className={styles.tooltipValue}>{data[dataKey] ?? 0}</span>
+        </p>
+        <p className={styles.tooltipRow}>
+          <span className={styles.tooltipLabel}>Employees:</span>
+          <span className={styles.tooltipValue}>{data.employees}</span>
+        </p>
+        <p className={styles.tooltipRow}>
+          <span className={styles.tooltipLabel}>Referrals:</span>
+          <span className={styles.tooltipValue}>{data.referrals}</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 interface DepartmentData {
   department: string;
   visits: number;
@@ -56,31 +94,6 @@ export const DepartmentComparisonChart: React.FC<DepartmentComparisonChartProps>
     return sorted;
   }, [data, sortBy, sortOrder]);
 
-  // Custom tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className={styles.tooltip}>
-          <p className={styles.tooltipTitle}>{data.department}</p>
-          <p className={styles.tooltipRow}>
-            <span className={styles.tooltipLabel}>{titleLabel}:</span>
-            <span className={styles.tooltipValue}>{data[dataKey] ?? 0}</span>
-          </p>
-          <p className={styles.tooltipRow}>
-            <span className={styles.tooltipLabel}>Employees:</span>
-            <span className={styles.tooltipValue}>{data.employees}</span>
-          </p>
-          <p className={styles.tooltipRow}>
-            <span className={styles.tooltipLabel}>Referrals:</span>
-            <span className={styles.tooltipValue}>{data.referrals}</span>
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   if (loading) {
     return <div className={styles.skeleton} style={{ height }} />;
   }
@@ -112,7 +125,7 @@ export const DepartmentComparisonChart: React.FC<DepartmentComparisonChartProps>
             axisLine={false}
             width={90}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip titleLabel={titleLabel} dataKey={dataKey} />} />
           <Legend />
           <Bar
             dataKey={dataKey}

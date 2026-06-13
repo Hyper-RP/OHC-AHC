@@ -108,7 +108,30 @@ const isAnnualHealthCheckupVisit = (visit: VisitRecord) => visit.visitType === '
 const isCoreOHCVisit = (visit: VisitRecord) =>
   !isPreEmploymentVisit(visit) && !isAnnualHealthCheckupVisit(visit);
 
-const mapVisitRecord = (visit: any): VisitRecord => ({
+interface RawVisitPayload {
+  id: number | string;
+  employee_code?: string;
+  employee?: {
+    employee_code?: string;
+    department?: string;
+    user?: {
+      first_name?: string;
+      last_name?: string;
+    };
+  };
+  employee_name?: string;
+  patient_name?: string;
+  department?: string;
+  visit_date?: string;
+  visit_time?: string;
+  follow_up_date?: string;
+  visit_type?: string;
+  chief_complaint?: string;
+  triage_level?: string;
+  visit_status?: string;
+}
+
+const mapVisitRecord = (visit: RawVisitPayload): VisitRecord => ({
   id: visit.id,
   employeeCode: visit.employee_code ?? visit.employee?.employee_code ?? '-',
   employeeName: (
@@ -224,11 +247,16 @@ export const MetricDetailsPage: React.FC = () => {
 
   useEffect(() => {
     if (!user) {
-      setError('Please sign in to view records');
-      setLoading(false);
-      return;
+      const timer = setTimeout(() => {
+        setError('Please sign in to view records');
+        setLoading(false);
+      }, 0);
+      return () => clearTimeout(timer);
     }
-    fetchData();
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [user, fetchData]);
 
   const summary = useMemo(() => ({

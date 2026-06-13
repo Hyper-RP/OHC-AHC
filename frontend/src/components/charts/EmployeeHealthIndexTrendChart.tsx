@@ -13,6 +13,32 @@ import {
 import type { HealthIndexTrendData } from '../../utils/charts/employee-health-transformers';
 import styles from './EmployeeHealthIndexTrendChart.module.css';
 
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      date: string;
+      healthIndex: number;
+      status: 'good' | 'warning' | 'needsAttention' | string;
+    };
+  }>;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const item = payload[0].payload;
+    const statusLabel = item.status === 'good' ? 'Excellent' : item.status === 'warning' ? 'Good' : 'Needs Attention';
+    return (
+      <div className={styles.tooltip}>
+        <p className={styles.tooltipDate}>{item.date}</p>
+        <p className={styles.tooltipScore}>Health Index: {item.healthIndex}</p>
+        <p className={`${styles.tooltipStatus} ${styles[item.status] || ''}`}>{statusLabel}</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 interface EmployeeHealthIndexTrendChartProps {
   data: HealthIndexTrendData[];
   height?: number;
@@ -35,21 +61,6 @@ export const EmployeeHealthIndexTrendChart: React.FC<EmployeeHealthIndexTrendCha
       </div>
     );
   }
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const item = payload[0].payload;
-      const statusLabel = item.status === 'good' ? 'Excellent' : item.status === 'warning' ? 'Good' : 'Needs Attention';
-      return (
-        <div className={styles.tooltip}>
-          <p className={styles.tooltipDate}>{item.date}</p>
-          <p className={styles.tooltipScore}>Health Index: {item.healthIndex}</p>
-          <p className={`${styles.tooltipStatus} ${styles[item.status]}`}>{statusLabel}</p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className={styles.chartContainer} style={{ height }} data-testid="chart-container">

@@ -39,23 +39,29 @@ export const MedicineManagement: React.FC = () => {
   const nearExpiryCount = medicines.filter((medicine) => medicine.expiry <= '2026-12-31').length;
 
   useEffect(() => {
-    const storedMedicines = loadMedicineRecords();
-    const storedActivity = loadMedicineActivity();
-    setMedicines(storedMedicines);
-    setActivity(storedActivity);
-    if (storedMedicines.length > 0) {
-      setSelectedMedicineId((current) =>
-        current && storedMedicines.some((medicine) => medicine.id === current)
-          ? current
-          : storedMedicines[0].id
-      );
-    }
+    const timer = setTimeout(() => {
+      const storedMedicines = loadMedicineRecords();
+      const storedActivity = loadMedicineActivity();
+      setMedicines(storedMedicines);
+      setActivity(storedActivity);
+      if (storedMedicines.length > 0) {
+        setSelectedMedicineId((current) =>
+          current && storedMedicines.some((medicine) => medicine.id === current)
+            ? current
+            : storedMedicines[0].id
+        );
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     const state = location.state as { banner?: string } | null;
     if (state?.banner) {
-      setBanner(state.banner);
+      const timer = setTimeout(() => {
+        setBanner(state.banner);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [location.state]);
 

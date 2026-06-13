@@ -51,7 +51,10 @@ export const HealthIndexGauge: React.FC<HealthIndexGaugeProps> = ({
 
       requestAnimationFrame(animateValue);
     } else {
-      setAnimatedIndex(data.healthIndex);
+      const timer = setTimeout(() => {
+        setAnimatedIndex(data.healthIndex);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [data.healthIndex, animate]);
 

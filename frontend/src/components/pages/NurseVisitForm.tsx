@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSnackbar } from '../../contexts/SnackbarContext';
@@ -13,6 +13,16 @@ interface DoctorOption {
   name: string;
   registration_number: string;
   specializations: string;
+}
+
+interface DoctorApiResponse {
+  id: number;
+  user: {
+    first_name: string;
+    last_name: string;
+  };
+  registration_number: string;
+  specializations?: string;
 }
 
 interface VisitFormData {
@@ -61,18 +71,10 @@ export const NurseVisitForm: React.FC = () => {
     consulted_doctor: undefined,
   });
 
-  useEffect(() => {
-    if (!user || user.role !== Role.NURSE) {
-      navigate('/dashboard');
-      return;
-    }
-    fetchDoctorOptions();
-  }, [user, navigate]);
-
-  const fetchDoctorOptions = async () => {
+  const fetchDoctorOptions = useCallback(async () => {
     try {
       const response = await api.get('/accounts/doctors/');
-      const doctors: DoctorOption[] = response.data.map((doctor: any) => ({
+      const doctors: DoctorOption[] = response.data.map((doctor: DoctorApiResponse) => ({
         id: doctor.id,
         name: `${doctor.user.first_name} ${doctor.user.last_name}`,
         registration_number: doctor.registration_number,
@@ -83,7 +85,18 @@ export const NurseVisitForm: React.FC = () => {
     } catch (err) {
       console.error('Failed to fetch doctors:', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!user || user.role !== Role.NURSE) {
+      navigate('/dashboard');
+      return;
+    }
+    const timer = setTimeout(() => {
+      fetchDoctorOptions();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [user, navigate, fetchDoctorOptions]);
 
   const handleVitalChange = (name: string, value: string) => {
     setFormData((prev) => ({
@@ -92,7 +105,7 @@ export const NurseVisitForm: React.FC = () => {
     }));
   };
 
-  const handleInputChange = (field: keyof VisitFormData, value: any) => {
+  const handleInputChange = (field: keyof VisitFormData, value: string | number | undefined) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 

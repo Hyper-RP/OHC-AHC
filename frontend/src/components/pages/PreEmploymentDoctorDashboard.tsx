@@ -97,13 +97,20 @@ export const PreEmploymentDoctorDashboard: React.FC = () => {
   }, [selectedFilter, handleError]);
 
   useEffect(() => {
-    if (!user || user.role !== Role.DOCTOR) {
-      setError('Access restricted to doctors only');
+    if (user && user.role !== Role.DOCTOR) {
+      show('Access restricted to doctors only', 'error');
       navigate('/dashboard');
-      return;
     }
-    fetchVisits();
-  }, [user, navigate, fetchVisits]);
+  }, [user, navigate, show]);
+
+  useEffect(() => {
+    if (user && user.role === Role.DOCTOR) {
+      const timer = setTimeout(() => {
+        fetchVisits();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [user, fetchVisits]);
 
   // Diagnosis form state
   const [diagnosisName, setDiagnosisName] = useState('');
@@ -136,8 +143,8 @@ export const PreEmploymentDoctorDashboard: React.FC = () => {
         const inStockMedicines = [
           { value: '', label: 'Select medicine' },
           ...medicineData
-            .filter((m: any) => m.stock_quantity > 0)
-            .map((m: any) => ({ value: m.name, label: m.name })),
+            .filter((m: { stock_quantity: number }) => m.stock_quantity > 0)
+            .map((m: { name: string }) => ({ value: m.name, label: m.name })),
         ];
         setMedicines(inStockMedicines);
       } catch (err) {
@@ -219,7 +226,11 @@ export const PreEmploymentDoctorDashboard: React.FC = () => {
     setPrescriptions(prescriptions.filter((_, i) => i !== index));
   };
 
-  const handlePrescriptionChange = (index: number, field: keyof PrescriptionInput, value: any) => {
+  const handlePrescriptionChange = <K extends keyof PrescriptionInput>(
+    index: number,
+    field: K,
+    value: PrescriptionInput[K]
+  ) => {
     const updated = [...prescriptions];
     updated[index] = { ...updated[index], [field]: value };
     setPrescriptions(updated);
@@ -328,7 +339,7 @@ export const PreEmploymentDoctorDashboard: React.FC = () => {
   };
 
   const getVitalsDisplay = (vitals: Record<string, string>) => {
-    const entries = Object.entries(vitals).filter(([_, v]) => v && v.trim() !== '');
+    const entries = Object.entries(vitals).filter((entry) => entry[1] && entry[1].trim() !== '');
     if (entries.length === 0) return null;
 
     return (

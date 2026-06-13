@@ -22,8 +22,8 @@ export const BrushSelector: React.FC<BrushSelectorProps> = ({
 }) => {
   if (!data || data.length === 0) return null;
 
-  const handleChange = (brushData: any) => {
-    if (brushData?.startIndex !== undefined && brushData?.endIndex !== undefined) {
+  const handleChange = (brushData: { startIndex?: number; endIndex?: number } | undefined | null) => {
+    if (brushData && brushData.startIndex !== undefined && brushData.endIndex !== undefined) {
       onChange?.(brushData.startIndex, brushData.endIndex);
     }
   };

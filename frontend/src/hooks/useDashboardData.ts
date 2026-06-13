@@ -66,15 +66,14 @@ export function useDashboardData<T = unknown>(
       onSuccess?.(response.data);
     } catch (err) {
       if (err instanceof Error && err.name !== 'AbortError') {
-        const error = err as Error;
-        setError(error);
-        onError?.(error);
+        setError(err);
+        onError?.(err);
       }
     } finally {
       setIsLoading(false);
       isFetchingRef.current = false;
     }
-  }, [endpoint, enabled, cacheKey, onSuccess, onError]);
+  }, [endpoint, enabled, cacheKey, onSuccess, onError, params]);
 
   useEffect(() => {
     fetchData();

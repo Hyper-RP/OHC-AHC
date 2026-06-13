@@ -59,18 +59,15 @@ export const PreEmploymentCheckupForm: React.FC = () => {
     consulted_doctor: undefined,
   });
 
-  useEffect(() => {
-    if (!user || !user.role) {
-      navigate('/dashboard');
-      return;
-    }
-    void fetchDoctorOptions();
-  }, [user, navigate]);
-
-  const fetchDoctorOptions = async () => {
+  const fetchDoctorOptions = useCallback(async () => {
     try {
       const response = await api.get('/accounts/doctors/');
-      const doctors: DoctorOption[] = response.data.map((doctor: any) => ({
+      const doctors: DoctorOption[] = response.data.map((doctor: {
+        id: number;
+        user: { first_name: string; last_name: string };
+        registration_number: string;
+        specializations?: string;
+      }) => ({
         id: doctor.id,
         name: `${doctor.user.first_name} ${doctor.user.last_name}`,
         registration_number: doctor.registration_number,
@@ -80,7 +77,18 @@ export const PreEmploymentCheckupForm: React.FC = () => {
     } catch (err) {
       console.error('Failed to fetch doctors:', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!user || !user.role) {
+      navigate('/dashboard');
+      return;
+    }
+    const timer = setTimeout(() => {
+      void fetchDoctorOptions();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [user, navigate, fetchDoctorOptions]);
 
   const handleVitalChange = (name: string, value: string) => {
     setFormData((prev) => ({
@@ -89,7 +97,10 @@ export const PreEmploymentCheckupForm: React.FC = () => {
     }));
   };
 
-  const handleInputChange = (field: keyof PreEmploymentFormData, value: any) => {
+  const handleInputChange = <K extends keyof PreEmploymentFormData>(
+    field: K,
+    value: PreEmploymentFormData[K]
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 

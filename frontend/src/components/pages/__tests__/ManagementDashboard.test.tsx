@@ -3,6 +3,7 @@ import { screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders, mockUser } from '../../../tests/test-utils';
 import { Role } from '../../types';
+import { ManagementDashboard } from '../ManagementDashboard';
 
 const mockNavigate = vi.fn();
 
@@ -182,13 +183,14 @@ describe('ManagementDashboard', () => {
         expect(screen.queryByText('Modify')).not.toBeInTheDocument();
       });
     });
+  });
 
   describe('Navigation', () => {
     it('does not provide navigation back to dashboard', async () => {
       renderWithProviders(<ManagementDashboard />);
 
       // Management dashboard has no navigation, it's a read-only view
-      expect(screen.queryByRole('link', { name: /dashboard/i }).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /dashboard/i })).not.toBeInTheDocument();
     });
   });
 });

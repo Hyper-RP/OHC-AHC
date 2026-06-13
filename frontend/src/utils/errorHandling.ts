@@ -203,7 +203,7 @@ export const formatSubmitError = (error: unknown): string => {
   }
 
   if (error && typeof error === 'object' && 'detail' in error) {
-    const detail = (error as any).detail;
+    const detail = (error as Record<string, unknown>).detail;
     if (Array.isArray(detail)) {
       return detail.join(', ');
     }

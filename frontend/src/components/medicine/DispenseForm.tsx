@@ -35,8 +35,6 @@ export const DispenseForm: React.FC<DispenseFormProps> = ({
       setQuantityError(`Cannot dispense more than available stock (${medicine.stock_quantity} ${medicine.unit})`);
     } else if (numValue <= 0) {
       setQuantityError('Quantity must be at least 1');
-    } else if (visitId && numValue > medicine.stock_quantity) {
-      setQuantityError(`Cannot dispense ${numValue} for visit. Available: ${medicine.stock_quantity} ${medicine.unit}`);
     } else {
       setQuantity(value);
     }

@@ -63,8 +63,8 @@ interface MedicineHistory {
  */
 export const listMedicines = async (
   params?: MedicineStockListParams
-): Promise<{ results: any[] }> => {
-  const queryParams: any = {};
+): Promise<{ results: LowStockMedicine[] }> => {
+  const queryParams: Record<string, string | number | boolean> = {};
 
   if (params?.search) queryParams.search = params.search;
   if (params?.low_stock_only) queryParams.low_stock_only = params.low_stock_only;
@@ -98,7 +98,7 @@ export const medicineService = {
   /**
    * Create new medicine entry
    */
-  createMedicine: async (data: any): Promise<LowStockMedicine> => {
+  createMedicine: async (data: Partial<LowStockMedicine>): Promise<LowStockMedicine> => {
     const response = await api.post('/ohc/medicines/', data);
     return response.data;
   },
@@ -125,7 +125,7 @@ export const medicineService = {
    */
   getLowStockMedicines: async (): Promise<LowStockMedicine[]> => {
     const response = await api.get('/ohc/medicines/', { params: { low_stock_only: true } });
-    return response.data.results?.filter((medicine: any) => medicine.is_low_stock) || [];
+    return response.data.results?.filter((medicine: LowStockMedicine) => medicine.is_low_stock) || [];
   },
 
   /**
@@ -133,7 +133,7 @@ export const medicineService = {
    */
   getExpiringSoonMedicines: async (): Promise<LowStockMedicine[]> => {
     const response = await api.get('/ohc/medicines/', { params: { expiring_soon: true } });
-    return response.data.results?.filter((medicine: any) => medicine.is_expiring_soon) || [];
+    return response.data.results?.filter((medicine: LowStockMedicine) => medicine.is_expiring_soon) || [];
   },
 
   /**
@@ -158,7 +158,7 @@ export const medicineService = {
   /**
    * Get department health trends for management
    */
-  getDepartmentHealthTrends: async (): Promise<any> => {
+  getDepartmentHealthTrends: async (): Promise<unknown> => {
     const response = await api.get('/ohc/analytics/medicine-summary/');
     return response.data.department_health_trends;
   },

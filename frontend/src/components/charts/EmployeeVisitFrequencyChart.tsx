@@ -12,6 +12,29 @@ import {
 import type { VisitFrequencyData } from '../../utils/charts/employee-health-transformers';
 import styles from './EmployeeVisitFrequencyChart.module.css';
 
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      date: string;
+      count: number;
+    };
+  }>;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const item = payload[0].payload;
+    return (
+      <div className={styles.tooltip}>
+        <p className={styles.tooltipDate}>{item.date}</p>
+        <p className={styles.tooltipValue}>{item.count} visits</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 interface EmployeeVisitFrequencyChartProps {
   data: VisitFrequencyData[];
   height?: number;
@@ -34,19 +57,6 @@ export const EmployeeVisitFrequencyChart: React.FC<EmployeeVisitFrequencyChartPr
       </div>
     );
   }
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const item = payload[0].payload;
-      return (
-        <div className={styles.tooltip}>
-          <p className={styles.tooltipDate}>{item.date}</p>
-          <p className={styles.tooltipValue}>{item.count} visits</p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className={styles.chartContainer} style={{ height }} data-testid="chart-container">

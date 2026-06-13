@@ -43,6 +43,34 @@ const FITNESS_STATUS_OPTIONS = [
   ...FITNESS_DECISION_OPTIONS,
 ];
 
+interface DoctorVisitDetails {
+  id: number;
+  patient_name?: string;
+  employee_name?: string;
+  employee_id?: string;
+  employee_department?: string;
+  patient_gender?: string;
+  patient_age?: number;
+  patient_contact?: string;
+  visit_status: string;
+  visit_date: string;
+  visit_time?: string;
+  vitals?: Record<string, string | number>;
+  employee?: {
+    employee_code?: string;
+    department?: string;
+    user?: {
+      first_name?: string;
+      last_name?: string;
+    };
+  } | null;
+  prescriptions?: Array<{
+    id: number;
+    medicine_name: string;
+    dosage: string;
+  }>;
+}
+
 export const DoctorRequestPage: React.FC = () => {
   const navigate = useNavigate();
   const { visitId } = useParams<{ visitId: string }>();
@@ -53,7 +81,7 @@ export const DoctorRequestPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [selectedVisit, setSelectedVisit] = useState<any | null>(null);
+  const [selectedVisit, setSelectedVisit] = useState<DoctorVisitDetails | null>(null);
   const [showDiagnosisForm, setShowDiagnosisForm] = useState(false);
   const [hospitalOptions, setHospitalOptions] = useState<Array<{ value: string; label: string }>>([
     { value: '', label: 'Select hospital' },
@@ -131,8 +159,8 @@ export const DoctorRequestPage: React.FC = () => {
         const medicineNames = Array.from(
           new Set<string>(
             (response.results || [])
-              .filter((medicine: any) => medicine.stock_quantity > 0)
-              .map((medicine: any) => String(medicine.name || '').trim())
+              .filter((medicine: { stock_quantity: number; name: string }) => medicine.stock_quantity > 0)
+              .map((medicine: { stock_quantity: number; name: string }) => String(medicine.name || '').trim())
               .filter(Boolean),
           ),
         ).sort((left, right) => left.localeCompare(right));
@@ -169,7 +197,7 @@ export const DoctorRequestPage: React.FC = () => {
     void fetchHospitals();
   }, []);
 
-  const getVisitDisplayName = (visit: any) => {
+  const getVisitDisplayName = (visit: DoctorVisitDetails) => {
     const explicitVisitName = visit.patient_name?.trim() || visit.employee_name?.trim();
     if (explicitVisitName) {
       return explicitVisitName;
@@ -180,10 +208,10 @@ export const DoctorRequestPage: React.FC = () => {
     return `${firstName} ${lastName}`.trim() || 'N/A';
   };
 
-  const getVisitDisplayCode = (visit: any) => visit.employee_id || visit.employee?.employee_code || 'N/A';
-  const getVisitDisplayDepartment = (visit: any) => visit.employee_department || visit.employee?.department || 'N/A';
+  const getVisitDisplayCode = (visit: DoctorVisitDetails) => visit.employee_id || visit.employee?.employee_code || 'N/A';
+  const getVisitDisplayDepartment = (visit: DoctorVisitDetails) => visit.employee_department || visit.employee?.department || 'N/A';
 
-  const getVisitDisplayTime = (visit: any) => {
+  const getVisitDisplayTime = (visit: DoctorVisitDetails) => {
     if (!visit.visit_time) return 'N/A';
     const time = new Date(`2000-01-01T${visit.visit_time}`);
     return Number.isNaN(time.getTime())
@@ -428,7 +456,7 @@ export const DoctorRequestPage: React.FC = () => {
                 </div>
 
                 <div className={pageStyles.prescriptionList}>
-                  {selectedVisit.prescriptions.map((prescription: any) => (
+                  {selectedVisit.prescriptions.map((prescription: { id: number; medicine_name: string; dosage: string }) => (
                     <div key={prescription.id} className={pageStyles.prescriptionCard}>
                       <span className={pageStyles.prescriptionTitle}>{prescription.medicine_name}</span>
                       <span className={pageStyles.prescriptionMeta}>{prescription.dosage}</span>

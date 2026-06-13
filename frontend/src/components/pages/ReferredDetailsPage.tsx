@@ -54,7 +54,32 @@ export const ReferredDetailsPage: React.FC = () => {
     show(message, 'error');
   }, [show]);
 
-  const fetchData = async () => {
+interface ReferredVisit {
+  id: number;
+  visit_status: string;
+  requires_referral?: boolean;
+  employee_code?: string;
+  employee_name?: string;
+  department?: string;
+  visit_date: string;
+  chief_complaint?: string;
+  employee?: {
+    employee_code?: string;
+    department?: string;
+  } | null;
+  diagnoses?: Array<{ diagnosis_name?: string }> | null;
+}
+
+interface ReferralRecord {
+  id: number;
+  referral_status?: string;
+  referral_reason?: string;
+  priority?: string;
+  hospital?: { name?: string } | null;
+  referred_by_user?: { name?: string } | null;
+}
+
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -75,24 +100,24 @@ export const ReferredDetailsPage: React.FC = () => {
       const referralData = Array.isArray(referralsResponse.data) ? referralsResponse.data : referralsResponse.data?.results || [];
 
       // Map referrals to get full details
-      const referralMap = new Map();
-      referralData.forEach((ref: any) => {
+      const referralMap = new Map<number, ReferralRecord>();
+      (referralData as ReferralRecord[]).forEach((ref) => {
         referralMap.set(ref.id, ref);
       });
 
       // Combine visits that were referred with referral details
-      const referredCases = data
-        .filter((visit: any) => visit.visit_status === 'REFERRED' || visit.requires_referral)
-        .map((visit: any) => {
+      const referredCases = (data as ReferredVisit[])
+        .filter((visit) => visit.visit_status === 'REFERRED' || visit.requires_referral)
+        .map((visit) => {
           const referral = referralMap.get(visit.id);
           return {
             id: visit.id,
-            employee_code: visit.employee?.employee_code || visit.employee_code,
-            employee_name: visit.employee_name,
-            department: visit.employee?.department || visit.department,
+            employee_code: visit.employee?.employee_code || visit.employee_code || '',
+            employee_name: visit.employee_name || '',
+            department: visit.employee?.department || visit.department || '',
             referral_date: visit.visit_date,
             referral_status: referral?.referral_status || visit.visit_status,
-            referral_reason: referral?.referral_reason || visit.chief_complaint,
+            referral_reason: referral?.referral_reason || visit.chief_complaint || '',
             hospital_name: referral?.hospital?.name || 'N/A',
             priority: referral?.priority || 'NORMAL',
             consultant: referral?.referred_by_user?.name || 'N/A',
@@ -139,15 +164,23 @@ export const ReferredDetailsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, handleError]);
 
   useEffect(() => {
-    if (!user || (user.role !== Role.EHS && user.role !== Role.MANAGEMENT)) {
-      setError('Access restricted to EHS and Management users only');
-      return;
+    if (user && user.role !== Role.EHS && user.role !== Role.MANAGEMENT) {
+      show('Access restricted to EHS and Management users only', 'error');
+      navigate('/dashboard');
     }
-    fetchData();
-  }, [user, filters]);
+  }, [user, navigate, show]);
+
+  useEffect(() => {
+    if (user && (user.role === Role.EHS || user.role === Role.MANAGEMENT)) {
+      const timer = setTimeout(() => {
+        fetchData();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [user, fetchData]);
 
   const handleFilterChange = (key: keyof typeof filters, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
