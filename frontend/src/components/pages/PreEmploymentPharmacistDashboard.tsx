@@ -49,10 +49,10 @@ export const PreEmploymentPharmacistDashboard: React.FC = () => {
       try {
         setLoading(true);
         const [data, summary] = await Promise.all([
-          getPharmacistPrescriptions(),
+          getPharmacistPrescriptions() as Promise<PrescriptionItem[]>,
           getPreEmploymentPharmacistSummary(),
         ]);
-        setPrescriptions((data || []).filter((item: PrescriptionItem) => item.visit?.visit_type === VisitType.PRE_EMPLOYMENT));
+        setPrescriptions(data.filter((item) => item.visit?.visit_type === VisitType.PRE_EMPLOYMENT));
         setCompletedWithoutMedicines(summary?.doctor_completed_without_medicines || 0);
       } catch (err) {
         const message = handleApiError(err, 'Failed to fetch pre-employment prescriptions');

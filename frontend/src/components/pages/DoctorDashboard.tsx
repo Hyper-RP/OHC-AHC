@@ -51,7 +51,7 @@ interface Visit {
   visit_date: string;
   visit_time?: string;
   visit_type?: string;
-  visit_status?: string;
+  visit_status?: VisitStatus;
   chief_complaint?: string;
   symptoms?: string;
   vitals?: Record<string, unknown>;

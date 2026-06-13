@@ -80,25 +80,15 @@ export const PharmacistRequestPage: React.FC = () => {
 
       try {
         setLoading(true);
-        const data = await getPharmacistPrescriptions();
-        const prescription = (data || []).find((item) => String(item.id) === prescriptionId) || null;
+        const data = (await getPharmacistPrescriptions()) as PrescriptionItem[];
+        const prescription = data.find((item) => String(item.id) === prescriptionId) || null;
 
-        if (!prescription || !prescription.medicine) {
+        if (!prescription) {
           setError('Prescription details were not found');
           return;
         }
 
         setSelectedPrescription(prescription);
-        setSelectedMedicine(prescription.medicine);
-        setDispenseForm({
-          medicine_id: prescription.medicine.id,
-          medicine_name: prescription.medicine.name,
-          stock_available: prescription.medicine.stock_quantity,
-          quantity_dispensed: 1,
-          remaining_stock: prescription.medicine.stock_quantity - 1,
-          issue_date: new Date().toISOString().split('T')[0],
-          remarks: '',
-        });
       } catch (err) {
         const errorMessage = handleApiError(err, 'Failed to fetch prescription');
         setError(errorMessage);
@@ -110,6 +100,21 @@ export const PharmacistRequestPage: React.FC = () => {
 
     void fetchPrescription();
   }, [navigate, prescriptionId, show]);
+
+  useEffect(() => {
+    if (selectedPrescription && selectedPrescription.medicine) {
+      setSelectedMedicine(selectedPrescription.medicine);
+      setDispenseForm({
+        medicine_id: selectedPrescription.medicine.id,
+        medicine_name: selectedPrescription.medicine.name,
+        stock_available: selectedPrescription.medicine.stock_quantity,
+        quantity_dispensed: 1,
+        remaining_stock: selectedPrescription.medicine.stock_quantity - 1,
+        issue_date: new Date().toISOString().split('T')[0],
+        remarks: '',
+      });
+    }
+  }, [selectedPrescription]);
 
   const handleQuantityChange = (value: string) => {
     const quantity = parseInt(value, 10) || 0;

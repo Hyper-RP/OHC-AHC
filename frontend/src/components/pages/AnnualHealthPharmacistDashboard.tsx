@@ -47,8 +47,8 @@ export const AnnualHealthPharmacistDashboard: React.FC = () => {
     const fetchPrescriptions = async () => {
       try {
         setLoading(true);
-        const data = await getPharmacistPrescriptions();
-        setPrescriptions((data || []).filter((item: PrescriptionItem) => item.visit?.visit_type === VisitType.PERIODIC));
+        const data = (await getPharmacistPrescriptions()) as PrescriptionItem[];
+        setPrescriptions(data.filter((item) => item.visit?.visit_type === VisitType.PERIODIC));
       } catch (err) {
         const message = handleApiError(err, 'Failed to fetch annual health checkup prescriptions');
         setError(message);

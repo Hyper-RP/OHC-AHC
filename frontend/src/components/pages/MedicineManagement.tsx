@@ -59,7 +59,9 @@ export const MedicineManagement: React.FC = () => {
     const state = location.state as { banner?: string } | null;
     if (state?.banner) {
       const timer = setTimeout(() => {
-        setBanner(state.banner);
+        if (state.banner) {
+          setBanner(state.banner);
+        }
       }, 0);
       return () => clearTimeout(timer);
     }

@@ -120,20 +120,13 @@ export const SeverityPieChart: React.FC<SeverityPieChartProps> = ({
               innerRadius,
               outerRadius,
               percent,
-            }: {
-              cx: number;
-              cy: number;
-              midAngle: number;
-              innerRadius: number;
-              outerRadius: number;
-              percent: number;
             }) => {
+              if (midAngle === undefined || percent === undefined || percent < 0.05) return null; // Don't show label for small slices
+
               const RADIAN = Math.PI / 180;
               const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
               const x = cx + radius * Math.cos(-midAngle * RADIAN);
               const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-              if (percent < 0.05) return null; // Don't show label for small slices
 
               return (
                 <text

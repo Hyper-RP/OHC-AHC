@@ -177,7 +177,7 @@ export const EmployeeHealthHistoryDetail: React.FC = () => {
                       <div className={styles.detailBlock}>
                         <p className={styles.blockTitle}>Diagnoses</p>
                         <div className={styles.detailList}>
-                          {visit.diagnoses.map((diagnosis: { diagnosis_name: string; fitness_decision?: string; diagnosed_at?: string }) => (
+                          {visit.diagnoses.map((diagnosis) => (
                             <div key={`${visit.id}-${diagnosis.diagnosis_name}-${diagnosis.diagnosed_at}`} className={styles.inlineRecord}>
                               <strong>{diagnosis.diagnosis_name}</strong>
                               <span>{diagnosis.fitness_decision}</span>
@@ -190,7 +190,7 @@ export const EmployeeHealthHistoryDetail: React.FC = () => {
                       <div className={styles.detailBlock}>
                         <p className={styles.blockTitle}>Prescriptions</p>
                         <div className={styles.detailList}>
-                          {visit.prescriptions.map((prescription: { medicine_name: string; dosage?: string; start_date?: string }) => (
+                          {visit.prescriptions.map((prescription) => (
                             <div key={`${visit.id}-${prescription.medicine_name}-${prescription.start_date}`} className={styles.inlineRecord}>
                               <strong>{prescription.medicine_name}</strong>
                               <span>{prescription.dosage}</span>

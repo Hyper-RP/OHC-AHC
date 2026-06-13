@@ -3,7 +3,7 @@ import type { VisitStatus, PrescriptionStatus } from '../../types';
 import styles from './StatusBadge.module.css';
 
 interface StatusBadgeProps {
-  status: VisitStatus | PrescriptionStatus;
+  status?: VisitStatus | PrescriptionStatus;
   size?: 'small' | 'medium' | 'large';
 }
 
@@ -12,6 +12,10 @@ interface StatusBadgeProps {
  * Color-coded for quick visual identification
  */
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'medium' }) => {
+  if (!status) {
+    return null;
+  }
+
   const getStatusColor = (): string => {
     switch (status) {
       case 'OPEN':
