@@ -84,7 +84,7 @@ jobs:
         run: |
           cd myproject
           pip install -r requirements.txt
-          pip install flake8 pytest-cov
+          pip install flake8
 
       # ── Step 3: Python linting ────────────────────────────────
       # flake8 checks for syntax errors and undefined variables
