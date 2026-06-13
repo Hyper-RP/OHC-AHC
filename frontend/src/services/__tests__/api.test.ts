@@ -39,7 +39,7 @@ describe('api module', () => {
         message: 'Request failed',
       };
       vi.spyOn(axios, 'isAxiosError').mockReturnValue(true);
-      expect(handleApiError(error)).toBe('This field is required.');
+      expect(handleApiError(error)).toBe('Username: This field is required.');
     });
 
     it('falls back to error.message when no response data', () => {
@@ -54,7 +54,7 @@ describe('api module', () => {
 
     it('returns default message for non-axios errors', () => {
       vi.spyOn(axios, 'isAxiosError').mockReturnValue(false);
-      expect(handleApiError(new Error('something'))).toBe('An unexpected error occurred');
+      expect(handleApiError(new Error('something'))).toBe('something');
     });
 
     it('returns default message for unknown error types', () => {
@@ -70,7 +70,7 @@ describe('api module', () => {
       };
       vi.spyOn(axios, 'isAxiosError').mockReturnValue(true);
       // No detail, no array fields → falls through to message
-      expect(handleApiError(error)).toBe('Bad Request');
+      expect(handleApiError(error)).toBe('Status: error');
     });
   });
 

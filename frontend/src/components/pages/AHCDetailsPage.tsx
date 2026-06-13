@@ -45,7 +45,21 @@ export const AHCDetailsPage: React.FC = () => {
     show(message, 'error');
   }, [show]);
 
-  const fetchData = async () => {
+  interface AHCVisit {
+    employee_id?: number;
+    employee_code?: string;
+    employee_name: string;
+    department?: string;
+    visit_date: string;
+    health_index?: number;
+    employee?: {
+      id: number;
+      employee_code?: string;
+      department?: string;
+    };
+  }
+
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -55,25 +69,28 @@ export const AHCDetailsPage: React.FC = () => {
 
       const employeeMap = new Map<number, AHCEmployee>();
 
-      data.ahc.till_date_count_visits?.forEach?.((visit: any) => {
+      data.ahc.till_date_count_visits?.forEach?.((visit: AHCVisit) => {
         const key = visit.employee_id || visit.employee?.id;
-        if (!employeeMap.has(key)) {
-          employeeMap.set(key, {
-            employee_id: key,
-            employee_code: visit.employee?.employee_code || visit.employee_code,
-            employee_name: visit.employee_name,
-            department: visit.department || visit.employee?.department,
-            last_checkup_date: visit.visit_date,
-            health_index: visit.health_index || 75,
-          });
+        if (key !== undefined) {
+          if (!employeeMap.has(key)) {
+            employeeMap.set(key, {
+              employee_id: key,
+              employee_code: visit.employee?.employee_code || visit.employee_code || '',
+              employee_name: visit.employee_name,
+              department: visit.department || visit.employee?.department || '',
+              last_checkup_date: visit.visit_date,
+              health_index: visit.health_index || 75,
+            });
+          }
         }
       });
 
-      setEmployees(Array.from(employeeMap.values()));
+      const employeeList = Array.from(employeeMap.values());
+      setEmployees(employeeList);
 
       const deptMap: Record<string, { completed: number; total: number }> = {};
 
-      employees.forEach((emp) => {
+      employeeList.forEach((emp) => {
         const dept = emp.department || 'Unknown';
         if (!deptMap[dept]) {
           deptMap[dept] = { completed: 0, total: 0 };
@@ -81,8 +98,8 @@ export const AHCDetailsPage: React.FC = () => {
         deptMap[dept].completed += 1;
       });
 
-      Object.entries(deptMap).forEach(([_dept, stats]) => {
-        stats.total = Math.round(stats.completed / (data.ahc.completion_percentage / 100));
+      Object.values(deptMap).forEach((stats) => {
+        stats.total = Math.round(stats.completed / (data.ahc.completion_percentage / 100)) || stats.completed;
       });
 
       setAnalytics({
@@ -101,15 +118,20 @@ export const AHCDetailsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [handleError]);
 
   useEffect(() => {
     if (!user || (user.role !== Role.EHS && user.role !== Role.MANAGEMENT)) {
-      setError('Access restricted to EHS and Management users only');
-      return;
+      const timer = setTimeout(() => {
+        setError('Access restricted to EHS and Management users only');
+      }, 0);
+      return () => clearTimeout(timer);
     }
-    fetchData();
-  }, [user, filters]);
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [user, fetchData, filters]);
 
   const handleFilterChange = (key: keyof typeof filters, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));

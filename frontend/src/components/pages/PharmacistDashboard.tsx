@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSnackbar } from '../../contexts/SnackbarContext';
 import { Header } from '../layout';
 import { Card, Alert, Button, FormInput } from '../ui';
-import { listMedicines, dispenseMedicine } from '../../services/medicine';
+import { listMedicines, dispenseMedicine, type LowStockMedicine } from '../../services/medicine';
 import { getPharmacistPrescriptions, updateVisitStatus } from '../../services/ohc';
 import { handleApiError } from '../../services/api';
 import { Role, VisitStatus, VisitType } from '../../types';
@@ -27,7 +27,7 @@ interface PrescriptionItem {
     visit_type?: string;
     triage_level?: string;
     visit_status?: string;
-    vitals?: Record<string, any>;
+    vitals?: Record<string, unknown>;
     chief_complaint?: string;
     symptoms?: string;
     preliminary_notes?: string;
@@ -61,7 +61,7 @@ interface PrescriptionItem {
   instructions?: string;
   status: string;
   is_dispensed?: boolean;
-  medicine?: any;
+  medicine?: LowStockMedicine;
 }
 
 interface DispenseFormData {
@@ -88,15 +88,15 @@ export const PharmacistDashboard: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [prescriptions, setPrescriptions] = useState<PrescriptionItem[]>([]);
-  const [medicines, setMedicines] = useState<any[]>([]);
-  const [lowStockMedicines, setLowStockMedicines] = useState<any[]>([]);
+  const [medicines, setMedicines] = useState<LowStockMedicine[]>([]);
+  const [lowStockMedicines, setLowStockMedicines] = useState<LowStockMedicine[]>([]);
   const [activeTab, setActiveTab] = useState<'prescriptions' | 'inventory'>('prescriptions');
   const [search, setSearch] = useState('');
 
   // Dispense modal state
   const [showDispenseModal, setShowDispenseModal] = useState(false);
   const [selectedPrescription, setSelectedPrescription] = useState<PrescriptionItem | null>(null);
-  const [selectedMedicine, setSelectedMedicine] = useState<any | null>(null);
+  const [selectedMedicine, setSelectedMedicine] = useState<LowStockMedicine | null>(null);
   const [dispenseForm, setDispenseForm] = useState<DispenseFormData>({
     medicine_id: 0,
     medicine_name: '',
@@ -107,22 +107,12 @@ export const PharmacistDashboard: React.FC = () => {
     remarks: '',
   });
 
-  useEffect(() => {
-    if (!user || user.role !== Role.PHARMACIST) {
-      setError('Access restricted to pharmacists only');
-      navigate('/dashboard');
-      return;
-    }
-    fetchPrescriptions();
-    fetchMedicines();
-  }, [user, navigate]);
-
-  const fetchPrescriptions = async () => {
+  const fetchPrescriptions = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getPharmacistPrescriptions();
       setPrescriptions(
-        (data || []).filter((item: PrescriptionItem) => OHC_VISIT_TYPES.includes(item.visit?.visit_type || '')),
+        (data as PrescriptionItem[] || []).filter((item: PrescriptionItem) => OHC_VISIT_TYPES.includes(item.visit?.visit_type || '')),
       );
       setError('');
     } catch (err) {
@@ -132,22 +122,33 @@ export const PharmacistDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [show]);
 
-  const fetchMedicines = async () => {
+  const fetchMedicines = useCallback(async () => {
     try {
       const data = await listMedicines();
       setMedicines(data.results || []);
-      setLowStockMedicines(data.results?.filter((m: any) => m.is_low_stock) || []);
+      setLowStockMedicines(data.results?.filter((m: LowStockMedicine) => m.is_low_stock) || []);
     } catch (err) {
       const errorMessage = handleApiError(err, 'Failed to fetch medicines');
       setError(errorMessage);
       show(errorMessage, 'error');
     }
-  };
+  }, [show]);
 
-  const handleOpenDispenseModal = (prescription: PrescriptionItem, medicine: any) => {
-    void medicine;
+  useEffect(() => {
+    if (!user || user.role !== Role.PHARMACIST) {
+      navigate('/dashboard');
+      return;
+    }
+    const timer = setTimeout(() => {
+      void fetchPrescriptions();
+      void fetchMedicines();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [user, navigate, fetchPrescriptions, fetchMedicines]);
+
+  const handleOpenDispenseModal = (prescription: PrescriptionItem) => {
     navigate(`/pharmacist/request/${prescription.id}`);
   };
 
@@ -624,7 +625,7 @@ export const PharmacistDashboard: React.FC = () => {
                   <div
                     key={prescription.id}
                     className={`${styles.prescriptionListItem} ${prescription.is_dispensed ? styles.dispensedItem : ''}`}
-                    onClick={() => prescription.medicine && !prescription.is_dispensed && handleOpenDispenseModal(prescription, prescription.medicine)}
+                    onClick={() => prescription.medicine && !prescription.is_dispensed && handleOpenDispenseModal(prescription)}
                   >
                     <div className={styles.listItemMain}>
                       <div className={styles.listItemPatient}>

@@ -9,6 +9,37 @@ import {
 } from 'recharts';
 import styles from './SeverityPieChart.module.css';
 
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      name: string;
+      value: number;
+      percentage: string | number;
+    };
+  }>;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className={styles.tooltip}>
+        <p className={styles.tooltipSeverity}>{data.name}</p>
+        <p className={styles.tooltipRow}>
+          <span className={styles.tooltipLabel}>Count:</span>
+          <span className={styles.tooltipValue}>{data.value}</span>
+        </p>
+        <p className={styles.tooltipRow}>
+          <span className={styles.tooltipLabel}>Percentage:</span>
+          <span className={styles.tooltipValue}>{data.percentage}%</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 interface SeverityData {
   severity: 'MILD' | 'MODERATE' | 'SEVERE' | 'CRITICAL';
   count: number;
@@ -30,10 +61,6 @@ const SEVERITY_COLORS: Record<string, string> = {
   CRITICAL: '#ef4444',
 };
 
-/**
- * SeverityPieChart component
- * Donut/pie chart showing disease severity breakdown
- */
 export const SeverityPieChart: React.FC<SeverityPieChartProps> = ({
   data,
   loading = false,
@@ -50,27 +77,6 @@ export const SeverityPieChart: React.FC<SeverityPieChartProps> = ({
     color: item.color || SEVERITY_COLORS[item.severity],
     percentage: total > 0 ? ((item.count / total) * 100).toFixed(1) : 0,
   }));
-
-  // Custom tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className={styles.tooltip}>
-          <p className={styles.tooltipSeverity}>{data.name}</p>
-          <p className={styles.tooltipRow}>
-            <span className={styles.tooltipLabel}>Count:</span>
-            <span className={styles.tooltipValue}>{data.value}</span>
-          </p>
-          <p className={styles.tooltipRow}>
-            <span className={styles.tooltipLabel}>Percentage:</span>
-            <span className={styles.tooltipValue}>{data.percentage}%</span>
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   // Custom label for center of donut
   const renderCenterText = () => {
@@ -114,7 +120,14 @@ export const SeverityPieChart: React.FC<SeverityPieChartProps> = ({
               innerRadius,
               outerRadius,
               percent,
-            }: any) => {
+            }: {
+              cx: number;
+              cy: number;
+              midAngle: number;
+              innerRadius: number;
+              outerRadius: number;
+              percent: number;
+            }) => {
               const RADIAN = Math.PI / 180;
               const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
               const x = cx + radius * Math.cos(-midAngle * RADIAN);

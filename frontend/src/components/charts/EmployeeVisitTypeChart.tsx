@@ -13,6 +13,31 @@ import {
 import type { VisitTypeData } from '../../utils/charts/employee-health-transformers';
 import styles from './EmployeeVisitTypeChart.module.css';
 
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      type: string;
+      count: number;
+      percentage: number;
+    };
+  }>;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const item = payload[0].payload;
+    return (
+      <div className={styles.tooltip}>
+        <p className={styles.tooltipType}>{item.type}</p>
+        <p className={styles.tooltipCount}>{item.count} visits</p>
+        <p className={styles.tooltipPercentage}>{item.percentage}%</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 const VISIT_TYPE_COLORS: Record<string, string> = {
   Routine: '#3b82f6',
   'Walk-in': '#10b981',
@@ -41,20 +66,6 @@ export const EmployeeVisitTypeChart: React.FC<EmployeeVisitTypeChartProps> = ({
       </div>
     );
   }
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const item = payload[0].payload;
-      return (
-        <div className={styles.tooltip}>
-          <p className={styles.tooltipType}>{item.type}</p>
-          <p className={styles.tooltipCount}>{item.count} visits</p>
-          <p className={styles.tooltipPercentage}>{item.percentage}%</p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className={styles.chartContainer} style={{ height }} data-testid="chart-container">

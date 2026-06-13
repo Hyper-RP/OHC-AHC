@@ -163,7 +163,14 @@ const buildDepartmentComparison = (visits: DashboardVisit[]) => {
   });
 
   return Array.from(departmentMap.values())
-    .map(({ employeeCodes: _employeeCodes, ...item }) => item)
+    .map((item) => ({
+      department: item.department,
+      visits: item.visits,
+      employees: item.employees,
+      referrals: item.referrals,
+      preamtiveCheckUps: item.preamtiveCheckUps,
+      annualCheckup: item.annualCheckup,
+    }))
     .sort((a, b) => b.visits - a.visits);
 };
 
@@ -187,7 +194,10 @@ export const DepartmentDetailsPage: React.FC = () => {
       requestedGranularity === 'monthly' ||
       requestedGranularity === 'yearly'
     ) {
-      setGranularity(requestedGranularity);
+      const timer = setTimeout(() => {
+        setGranularity(requestedGranularity);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [location.search]);
 

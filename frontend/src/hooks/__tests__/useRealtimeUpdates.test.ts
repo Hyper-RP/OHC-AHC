@@ -1,4 +1,5 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useRealtimeUpdates } from '../useRealtimeUpdates';
 
 class MockWebSocket {
@@ -16,6 +17,12 @@ class MockWebSocket {
 
   constructor(url: string) {
     this.url = url;
+    queueMicrotask(() => {
+      if (this.readyState === 0) { // CONNECTING
+        this.readyState = 1; // OPEN
+        this.onopen?.(new Event('open'));
+      }
+    });
   }
 
   send(data: string): void {
@@ -26,7 +33,9 @@ class MockWebSocket {
 
   close(): void {
     this.readyState = MockWebSocket.CLOSED;
-    this.onclose?.(new CloseEvent('close'));
+    queueMicrotask(() => {
+      this.onclose?.(new CloseEvent('close'));
+    });
   }
 }
 
@@ -35,7 +44,10 @@ describe('useRealtimeUpdates', () => {
 
   beforeEach(() => {
     originalWebSocket = global.WebSocket;
-    global.WebSocket = MockWebSocket as any;
+    const mockConstructor = vi.fn().mockImplementation((url: string) => {
+      return new MockWebSocket(url);
+    });
+    global.WebSocket = mockConstructor as any;
   });
 
   afterEach(() => {
@@ -55,7 +67,7 @@ describe('useRealtimeUpdates', () => {
   });
 
   it('calls onConnect when WebSocket opens', async () => {
-    const onConnect = jest.fn();
+    const onConnect = vi.fn();
     renderHook(() =>
       useRealtimeUpdates({
         url: 'ws://localhost:8080',
@@ -69,7 +81,7 @@ describe('useRealtimeUpdates', () => {
   });
 
   it('receives messages', async () => {
-    const onMessage = jest.fn();
+    const onMessage = vi.fn();
     const { result } = renderHook(() =>
       useRealtimeUpdates({
         url: 'ws://localhost:8080',
@@ -161,7 +173,7 @@ describe('useRealtimeUpdates', () => {
   });
 
   it('calls onError on WebSocket error', async () => {
-    const onError = jest.fn();
+    const onError = vi.fn();
     renderHook(() =>
       useRealtimeUpdates({
         url: 'ws://localhost:8080',
@@ -175,7 +187,7 @@ describe('useRealtimeUpdates', () => {
   });
 
   it('calls onDisconnect on WebSocket close', async () => {
-    const onDisconnect = jest.fn();
+    const onDisconnect = vi.fn();
     const { result } = renderHook(() =>
       useRealtimeUpdates({
         url: 'ws://localhost:8080',
@@ -199,7 +211,7 @@ describe('useRealtimeUpdates', () => {
     const { result } = renderHook(() =>
       useRealtimeUpdates({
         url: 'ws://localhost:8080',
-        reconnectInterval: 100,
+        reconnectInterval: 10,
       })
     );
 
@@ -214,9 +226,8 @@ describe('useRealtimeUpdates', () => {
     expect(result.current.reconnecting).toBe(true);
     expect(result.current.reconnectAttempts).toBeGreaterThan(0);
 
-    act(() => {
-      jest.advanceTimersByTime(100);
-    });
+    // Wait for the reconnect interval to pass
+    await new Promise((resolve) => setTimeout(resolve, 20));
 
     await waitFor(() => {
       expect(result.current.connected).toBe(true);
@@ -240,9 +251,8 @@ describe('useRealtimeUpdates', () => {
       result.current.disconnect();
     });
 
-    act(() => {
-      jest.advanceTimersByTime(30);
-    });
+    // Wait for reconnect attempts to exhaust
+    await new Promise((resolve) => setTimeout(resolve, 30));
 
     expect(result.current.reconnectAttempts).toBe(2);
     expect(result.current.reconnecting).toBe(false);

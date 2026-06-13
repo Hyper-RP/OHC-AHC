@@ -10,9 +10,14 @@ import styles from './OPDDetailsPage.module.css';
 
 interface OPDVisit {
   id: number;
-  employee_code: string;
-  employee_name: string;
-  department: string;
+  employee?: {
+    employee_code?: string;
+    department?: string;
+    user?: {
+      first_name?: string;
+      last_name?: string;
+    };
+  };
   visit_date: string;
   visit_time: string;
   chief_complaint: string;
@@ -56,7 +61,7 @@ export const OPDDetailsPage: React.FC = () => {
     show(message, 'error');
   }, [show]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -79,20 +84,20 @@ export const OPDDetailsPage: React.FC = () => {
       if (filters.status) params.visit_status = filters.status;
 
       const response = await api.get('/ohc/visits/', { params });
-      const data = Array.isArray(response.data) ? response.data : response.data?.results || [];
+      const data: OPDVisit[] = Array.isArray(response.data) ? response.data : response.data?.results || [];
       setVisits(data);
 
       // Calculate analytics
       const deptMap: Record<string, number> = {};
-      data.forEach((visit: any) => {
+      data.forEach((visit: OPDVisit) => {
         const dept = visit.employee?.department || 'Unknown';
         deptMap[dept] = (deptMap[dept] || 0) + 1;
       });
 
       setAnalytics({
         total_visits: data.length,
-        open_cases: data.filter((v: any) => v.visit_status === 'OPEN').length,
-        completed_cases: data.filter((v: any) => v.visit_status === 'COMPLETED').length,
+        open_cases: data.filter((v: OPDVisit) => v.visit_status === 'OPEN').length,
+        completed_cases: data.filter((v: OPDVisit) => v.visit_status === 'COMPLETED').length,
         department_distribution: Object.entries(deptMap).map(([department, count]) => ({ department, count })),
       });
     } catch (err) {
@@ -100,15 +105,20 @@ export const OPDDetailsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, handleError]);
 
   useEffect(() => {
     if (!user || (user.role !== Role.EHS && user.role !== Role.MANAGEMENT)) {
-      setError('Access restricted to EHS and Management users only');
-      return;
+      const timer = setTimeout(() => {
+        setError('Access restricted to EHS and Management users only');
+      }, 0);
+      return () => clearTimeout(timer);
     }
-    fetchData();
-  }, [user, filters]);
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [user, fetchData]);
 
   const handleFilterChange = (key: keyof typeof filters, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -254,7 +264,7 @@ export const OPDDetailsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {visits.map((visit: any) => (
+                {visits.map((visit: OPDVisit) => (
                   <tr key={visit.id}>
                     <td>{visit.employee?.user ? `${visit.employee.user.first_name} ${visit.employee.user.last_name}` : '-'}</td>
                     <td>{visit.employee?.employee_code || '-'}</td>

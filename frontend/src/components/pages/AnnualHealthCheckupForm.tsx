@@ -57,18 +57,20 @@ export const AnnualHealthCheckupForm: React.FC = () => {
     consulted_doctor: undefined,
   });
 
-  useEffect(() => {
-    if (!user || (user.role !== Role.ADMIN && user.role !== Role.NURSE)) {
-      navigate('/dashboard');
-      return;
-    }
-    void fetchDoctorOptions();
-  }, [navigate, user]);
+  interface DoctorApiResponse {
+    id: number;
+    registration_number: string;
+    specializations?: string;
+    user: {
+      first_name: string;
+      last_name: string;
+    };
+  }
 
-  const fetchDoctorOptions = async () => {
+  const fetchDoctorOptions = useCallback(async () => {
     try {
       const response = await api.get('/accounts/doctors/');
-      const doctors: DoctorOption[] = response.data.map((doctor: any) => ({
+      const doctors: DoctorOption[] = response.data.map((doctor: DoctorApiResponse) => ({
         id: doctor.id,
         name: `${doctor.user.first_name} ${doctor.user.last_name}`,
         registration_number: doctor.registration_number,
@@ -78,7 +80,18 @@ export const AnnualHealthCheckupForm: React.FC = () => {
     } catch (err) {
       console.error('Failed to fetch doctors:', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!user || (user.role !== Role.ADMIN && user.role !== Role.NURSE)) {
+      navigate('/dashboard');
+      return;
+    }
+    const timer = setTimeout(() => {
+      void fetchDoctorOptions();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [navigate, user, fetchDoctorOptions]);
 
   const handleVitalChange = (name: string, value: string) => {
     setFormData((prev) => ({

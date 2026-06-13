@@ -10,6 +10,50 @@ import {
 import type { DiagnosisDistributionData } from '../../utils/charts/employee-health-transformers';
 import styles from './EmployeeDiagnosisDonutChart.module.css';
 
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      name: string;
+      count: number;
+      percentage: number;
+    };
+  }>;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const item = payload[0].payload;
+    return (
+      <div className={styles.tooltip}>
+        <p className={styles.tooltipDiagnosis}>{item.name}</p>
+        <p className={styles.tooltipCount}>{item.count} cases</p>
+        <p className={styles.tooltipPercentage}>{item.percentage}%</p>
+      </div>
+    );
+  }
+  return null;
+};
+
+interface CustomLabelProps {
+  viewBox?: {
+    cx?: number;
+    cy?: number;
+  };
+  totalCount: number;
+}
+
+const CustomLabel: React.FC<CustomLabelProps> = ({ viewBox, totalCount }) => {
+  if (!viewBox) return null;
+  const { cx, cy } = viewBox;
+  if (cx === undefined || cy === undefined) return null;
+  return (
+    <text x={cx} y={cy} dy={-10} textAnchor="middle" className={styles.centerLabel}>
+      {totalCount}
+    </text>
+  );
+};
+
 interface EmployeeDiagnosisDonutChartProps {
   data: DiagnosisDistributionData[];
   height?: number;
@@ -36,31 +80,6 @@ export const EmployeeDiagnosisDonutChart: React.FC<EmployeeDiagnosisDonutChartPr
 
   const totalCount = data.reduce((sum, item) => sum + item.count, 0);
 
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const item = payload[0].payload;
-      return (
-        <div className={styles.tooltip}>
-          <p className={styles.tooltipDiagnosis}>{item.name}</p>
-          <p className={styles.tooltipCount}>{item.count} cases</p>
-          <p className={styles.tooltipPercentage}>{item.percentage}%</p>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const CustomLabel = ({ viewBox }: any) => {
-    if (!viewBox) return null;
-    const { cx, cy } = viewBox;
-    if (cx === undefined || cy === undefined) return null;
-    return (
-      <text x={cx} y={cy} dy={-10} textAnchor="middle" className={styles.centerLabel}>
-        {totalCount}
-      </text>
-    );
-  };
-
   return (
     <div className={styles.chartContainer} style={{ height }} data-testid="chart-container">
       <ResponsiveContainer width="100%" height="100%">
@@ -70,7 +89,7 @@ export const EmployeeDiagnosisDonutChart: React.FC<EmployeeDiagnosisDonutChartPr
             cx="50%"
             cy="50%"
             labelLine={false}
-            label={CustomLabel}
+            label={<CustomLabel totalCount={totalCount} />}
             outerRadius={100}
             innerRadius={60}
             paddingAngle={5}

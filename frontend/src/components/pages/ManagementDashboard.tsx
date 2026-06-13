@@ -23,16 +23,7 @@ export const ManagementDashboard: React.FC = () => {
   const [medicineSummary, setMedicineSummary] = useState<MedicineSummary | null>(null);
   const [activeView, setActiveView] = useState<'analytics' | 'medicine'>('analytics');
 
-  useEffect(() => {
-    if (!user || user.role !== Role.MANAGEMENT) {
-      setError('Access restricted to Management users only');
-      navigate('/dashboard');
-      return;
-    }
-    fetchData();
-  }, [user, navigate]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [analyticsData, medicineData] = await Promise.all([
@@ -49,7 +40,21 @@ export const ManagementDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [show]);
+
+  useEffect(() => {
+    if (!user || user.role !== Role.MANAGEMENT) {
+      const timer = setTimeout(() => {
+        setError('Access restricted to Management users only');
+        navigate('/dashboard');
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [user, navigate, fetchData]);
 
   // Auto-refresh every 60 seconds
   useEffect(() => {
@@ -58,7 +63,7 @@ export const ManagementDashboard: React.FC = () => {
     }, 60000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchData]);
 
   if (loading) {
     return (

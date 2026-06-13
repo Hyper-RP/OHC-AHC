@@ -231,6 +231,8 @@ class MedicineStock(BaseModel):
     @property
     def is_low_stock(self) -> bool:
         """Check if stock is below reorder level."""
+        if self.reorder_level == 0:
+            return False
         return self.stock_quantity <= self.reorder_level
 
     @property

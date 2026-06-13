@@ -5,47 +5,56 @@ from django.db import migrations, models, connection
 
 def alter_examination_notes_nullable(apps, schema_editor):
     """Make examination_notes column nullable if it exists as NOT NULL."""
-    with connection.cursor() as cursor:
-        # Check if the column exists and is NOT NULL
-        cursor.execute("""
-            SELECT sql FROM sqlite_master
-            WHERE type='table' AND name='ohc_diagnosis'
-        """)
-        result = cursor.fetchone()
-        if result and 'examination_notes' in result[0]:
-            # Column exists, alter it to be nullable
-            # SQLite doesn't support ALTER COLUMN directly, so we need to recreate the table
+    if connection.vendor == 'sqlite':
+        with connection.cursor() as cursor:
+            # Check if the column exists and is NOT NULL
             cursor.execute("""
-                CREATE TABLE ohc_diagnosis_new (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    created_at TIMESTAMP NOT NULL,
-                    updated_at TIMESTAMP NOT NULL,
-                    diagnosis_code VARCHAR(50),
-                    diagnosis_name VARCHAR(255) NOT NULL,
-                    diagnosis_notes TEXT,
-                    severity VARCHAR(15) NOT NULL,
-                    condition_status VARCHAR(15) NOT NULL,
-                    is_primary BOOL NOT NULL,
-                    is_referral_required BOOL NOT NULL,
-                    fitness_decision VARCHAR(30) NOT NULL,
-                    work_restrictions TEXT,
-                    advised_rest_days UNSIGNED INT NOT NULL,
-                    follow_up_date DATE,
-                    diagnosed_by_id INTEGER NOT NULL REFERENCES accounts_doctorprofile(id),
-                    visit_id INTEGER NOT NULL REFERENCES ohc_ohcvisit(id),
-                    examination_notes TEXT,
-                    referred_hospital_id INTEGER
-                );
+                SELECT sql FROM sqlite_master
+                WHERE type='table' AND name='ohc_diagnosis'
             """)
+            result = cursor.fetchone()
+            if result and 'examination_notes' in result[0]:
+                # SQLite doesn't support ALTER COLUMN directly, so we need to recreate the table
+                cursor.execute("""
+                    CREATE TABLE ohc_diagnosis_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        created_at TIMESTAMP NOT NULL,
+                        updated_at TIMESTAMP NOT NULL,
+                        diagnosis_code VARCHAR(50),
+                        diagnosis_name VARCHAR(255) NOT NULL,
+                        diagnosis_notes TEXT,
+                        severity VARCHAR(15) NOT NULL,
+                        condition_status VARCHAR(15) NOT NULL,
+                        is_primary BOOL NOT NULL,
+                        is_referral_required BOOL NOT NULL,
+                        fitness_decision VARCHAR(30) NOT NULL,
+                        work_restrictions TEXT,
+                        advised_rest_days UNSIGNED INT NOT NULL,
+                        follow_up_date DATE,
+                        diagnosed_by_id INTEGER NOT NULL REFERENCES accounts_doctorprofile(id),
+                        visit_id INTEGER NOT NULL REFERENCES ohc_ohcvisit(id),
+                        examination_notes TEXT,
+                        referred_hospital_id INTEGER
+                    );
+                """)
+                cursor.execute("""
+                    INSERT INTO ohc_diagnosis_new
+                    SELECT * FROM ohc_diagnosis;
+                """)
+                cursor.execute("DROP TABLE ohc_diagnosis;")
+                cursor.execute("ALTER TABLE ohc_diagnosis_new RENAME TO ohc_diagnosis;")
+                # Recreate indexes
+                cursor.execute("CREATE INDEX IF NOT EXISTS 'ohc_diagnosis_visit_id_idx' ON 'ohc_diagnosis' ('visit_id');")
+                cursor.execute("CREATE INDEX IF NOT EXISTS 'ohc_diagnosis_diagnosed_by_id_idx' ON 'ohc_diagnosis' ('diagnosed_by_id');")
+    elif connection.vendor == 'postgresql':
+        with connection.cursor() as cursor:
+            # Check if the column exists in PostgreSQL before altering it
             cursor.execute("""
-                INSERT INTO ohc_diagnosis_new
-                SELECT * FROM ohc_diagnosis;
+                SELECT 1 FROM information_schema.columns 
+                WHERE table_name='ohc_diagnosis' AND column_name='examination_notes';
             """)
-            cursor.execute("DROP TABLE ohc_diagnosis;")
-            cursor.execute("ALTER TABLE ohc_diagnosis_new RENAME TO ohc_diagnosis;")
-            # Recreate indexes
-            cursor.execute("CREATE INDEX IF NOT EXISTS 'ohc_diagnosis_visit_id_idx' ON 'ohc_diagnosis' ('visit_id');")
-            cursor.execute("CREATE INDEX IF NOT EXISTS 'ohc_diagnosis_diagnosed_by_id_idx' ON 'ohc_diagnosis' ('diagnosed_by_id');")
+            if cursor.fetchone():
+                cursor.execute("ALTER TABLE ohc_diagnosis ALTER COLUMN examination_notes DROP NOT NULL;")
 
 
 def reverse_alter(apps, schema_editor):

@@ -61,6 +61,55 @@ export interface SeverityTrendData {
 }
 
 // ============================================================================
+// API Response Shape Types
+// ============================================================================
+
+interface ApiVisitTrendItem {
+  date: string;
+  count: number;
+}
+
+interface ApiDepartmentItem {
+  department: string;
+  visits: number;
+  employees: number;
+  referrals: number;
+  health_index: number;
+  total_visits: number;
+  referred_cases: number;
+  unfit_employees: number;
+  total_employees: number;
+}
+
+interface ApiDiagnosisItem {
+  diagnosis_name: string;
+  trend?: ApiVisitTrendItem[];
+  trend_data?: ApiVisitTrendItem[];
+  severity?: string;
+}
+
+interface ApiTrendData {
+  date: string;
+  count: number;
+}
+
+interface DashboardApiResponse {
+  visit_trends?: ApiVisitTrendItem[];
+  department_comparison?: ApiDepartmentItem[];
+  severity_breakdown?: Record<string, number>;
+  common_diagnoses?: ApiDiagnosisItem[];
+}
+
+interface DepartmentStatsApiResponse {
+  departments?: ApiDepartmentItem[];
+}
+
+interface DiseaseTrendsApiResponse {
+  trends?: ApiDiagnosisItem[];
+  severity_trends?: Record<string, ApiTrendData[]>;
+}
+
+// ============================================================================
 // Color Helpers
 // ============================================================================
 
@@ -116,14 +165,14 @@ export function getHealthIndexColor(index: number): string {
 /**
  * Transform dashboard API response to chart data
  */
-export function transformDashboardData(apiResponse: any): {
+export function transformDashboardData(apiResponse: DashboardApiResponse): {
   visitTrends: VisitTrendData[];
   departmentComparison: DepartmentComparisonData[];
   severityBreakdown: SeverityData[];
   diagnosisTrends: DiagnosisTrendData[];
 } {
   const visitTrends: VisitTrendData[] = (apiResponse.visit_trends || []).map(
-    (item: any) => ({
+    (item) => ({
       date: new Date(item.date),
       count: item.count,
     })
@@ -131,7 +180,7 @@ export function transformDashboardData(apiResponse: any): {
 
   const departmentComparison: DepartmentComparisonData[] = (
     apiResponse.department_comparison || []
-  ).map((item: any) => ({
+  ).map((item) => ({
     department: item.department,
     visits: item.visits,
     employees: item.employees,
@@ -140,8 +189,8 @@ export function transformDashboardData(apiResponse: any): {
 
   const severityBreakdown: SeverityData[] = Object.entries(
     apiResponse.severity_breakdown || {}
-  ).map(([severity, count]: [string, any]) => ({
-    severity: severity as any,
+  ).map(([severity, count]) => ({
+    severity: severity as SeverityData['severity'],
     count: count as number,
     color: getSeverityColor(severity),
   }));
@@ -150,9 +199,9 @@ export function transformDashboardData(apiResponse: any): {
     apiResponse.common_diagnoses || []
   )
     .slice(0, 5)
-    .map((item: any) => ({
+    .map((item) => ({
       diagnosis: item.diagnosis_name,
-      data: (item.trend || []).map((t: any) => ({
+      data: (item.trend || []).map((t) => ({
         date: new Date(t.date),
         count: t.count,
       })),
@@ -174,12 +223,12 @@ export function transformDashboardData(apiResponse: any): {
 /**
  * Transform department stats API response to chart data
  */
-export function transformDepartmentStatsData(apiResponse: any): {
+export function transformDepartmentStatsData(apiResponse: DepartmentStatsApiResponse): {
   healthIndex: HealthIndexData[];
   visitsReferrals: VisitsReferralsData[];
 } {
   const healthIndex: HealthIndexData[] = (apiResponse.departments || []).map(
-    (dept: any) => ({
+    (dept) => ({
       department: dept.department,
       healthIndex: dept.health_index,
       visits: dept.total_visits,
@@ -190,7 +239,7 @@ export function transformDepartmentStatsData(apiResponse: any): {
   );
 
   const visitsReferrals: VisitsReferralsData[] = (apiResponse.departments || []).map(
-    (dept: any) => ({
+    (dept) => ({
       department: dept.department,
       visits: dept.total_visits,
       referrals: dept.referred_cases,
@@ -210,15 +259,15 @@ export function transformDepartmentStatsData(apiResponse: any): {
 /**
  * Transform disease trends API response to chart data
  */
-export function transformDiseaseTrendsData(apiResponse: any): {
+export function transformDiseaseTrendsData(apiResponse: DiseaseTrendsApiResponse): {
   diagnosisArea: DiagnosisAreaData[];
   severityTrends: SeverityTrendData[];
 } {
   const diagnosisArea: DiagnosisAreaData[] = (apiResponse.trends || [])
     .slice(0, 5)
-    .map((item: any) => ({
+    .map((item) => ({
       diagnosis: item.diagnosis_name,
-      data: (item.trend_data || []).map((t: any) => ({
+      data: (item.trend_data || []).map((t) => ({
         date: new Date(t.date),
         count: t.count,
       })),
@@ -228,9 +277,9 @@ export function transformDiseaseTrendsData(apiResponse: any): {
 
   const severityTrends: SeverityTrendData[] = Object.entries(
     apiResponse.severity_trends || {}
-  ).map(([severity, data]: [string, any]) => ({
+  ).map(([severity, data]) => ({
     severity,
-    data: (data || []).map((t: any) => ({
+    data: (data || []).map((t) => ({
       date: new Date(t.date),
       count: t.count,
     })),

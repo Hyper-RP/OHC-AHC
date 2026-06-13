@@ -84,7 +84,7 @@ export function useExport() {
 
       setExportProgress(100);
     } catch (error) {
-      throw new Error(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`, { cause: error });
     } finally {
       setIsExporting(false);
       setExportProgress(0);

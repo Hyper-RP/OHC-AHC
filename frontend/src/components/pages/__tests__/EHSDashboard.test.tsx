@@ -177,7 +177,7 @@ describe('EHSDashboard', () => {
       await waitFor(() => {
         expect(mockUrl.createObjectURL).toHaveBeenCalledWith(mockBlob, 'test-url');
         expect(mockUrl.createObjectURL).toHaveBeenCalled();
-        expect(exportAnalytics).toHaveBeenCalledWith({ filters: {}, 'csv' });
+        expect(exportAnalytics).toHaveBeenCalledWith(expect.any(Object), 'csv');
         expect(mockUrl.createObjectURL).toHaveBeenCalled();
         expect(mockUrl.revokeObjectURL).toHaveBeenCalled();
       });

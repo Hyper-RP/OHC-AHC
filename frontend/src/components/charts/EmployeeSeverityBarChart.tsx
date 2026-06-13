@@ -13,6 +13,29 @@ import {
 import type { SeverityBreakdownData } from '../../utils/charts/employee-health-transformers';
 import styles from './EmployeeSeverityBarChart.module.css';
 
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      severity: string;
+      count: number;
+    };
+  }>;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const item = payload[0].payload;
+    return (
+      <div className={styles.tooltip}>
+        <p className={styles.tooltipSeverity}>{item.severity}</p>
+        <p className={styles.tooltipCount}>{item.count} cases</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 interface EmployeeSeverityBarChartProps {
   data: SeverityBreakdownData[];
   height?: number;
@@ -35,19 +58,6 @@ export const EmployeeSeverityBarChart: React.FC<EmployeeSeverityBarChartProps> =
       </div>
     );
   }
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const item = payload[0].payload;
-      return (
-        <div className={styles.tooltip}>
-          <p className={styles.tooltipSeverity}>{item.severity}</p>
-          <p className={styles.tooltipCount}>{item.count} cases</p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className={styles.chartContainer} style={{ height }} data-testid="chart-container">

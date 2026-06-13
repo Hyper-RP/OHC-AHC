@@ -164,6 +164,7 @@ class OHCApiTests(TestCase):
 
     def test_diagnosis_list_response_no_uuid(self):
         """POST /api/ohc/diagnosis-prescriptions/ should not include uuid in response"""
+        self.client.force_authenticate(user=self.doctor_user)
         # Create a visit first
         visit = OHCVisit.objects.create(
             employee=self.employee_profile,
@@ -173,13 +174,11 @@ class OHCApiTests(TestCase):
             chief_complaint='Headache'
         )
         response = self.client.post('/api/ohc/diagnosis-prescriptions/', {
-            'diagnosis': {
-                'visit': visit.id,
-                'diagnosed_by': self.doctor_profile.id,
-                'diagnosis_name': 'Migraine',
-                'severity': 'MILD',
-                'diagnosis_notes': 'Patient reports recurring headaches'
-            },
+            'visit': visit.id,
+            'diagnosis_name': 'Migraine',
+            'severity': 'MILD',
+            'fitness_decision': 'FIT',
+            'diagnosis_notes': 'Patient reports recurring headaches',
             'prescriptions': [
                 {
                     'medicine_name': 'Paracetamol',
@@ -439,6 +438,62 @@ class DiagnosisWorkflowTests(TestCase):
                 fitness_decision=decision,
             )
             self.assertEqual(diagnosis.fitness_decision, decision)
+
+    def test_diagnosis_condition_status_validation(self):
+        """Test condition status enum values."""
+        valid_statuses = [
+            Diagnosis.ConditionStatus.ACTIVE,
+            Diagnosis.ConditionStatus.STABLE,
+            Diagnosis.ConditionStatus.RESOLVED,
+            Diagnosis.ConditionStatus.CHRONIC,
+        ]
+
+        for status in valid_statuses:
+            diagnosis = Diagnosis.objects.create(
+                visit=self.visit,
+                diagnosed_by=self.doctor_profile,
+                diagnosis_name='Test',
+                condition_status=status,
+            )
+            self.assertEqual(diagnosis.condition_status, status)
+
+    def test_medical_test_priority_validation(self):
+        """Test medical test priority enum values."""
+        valid_priorities = [
+            MedicalTest.Priority.ROUTINE,
+            MedicalTest.Priority.URGENT,
+            MedicalTest.Priority.STAT,
+        ]
+
+        for priority in valid_priorities:
+            test = MedicalTest.objects.create(
+                visit=self.visit,
+                requested_by=self.doctor_profile,
+                test_name='Test',
+                test_type='Laboratory',
+                priority=priority,
+            )
+            self.assertEqual(test.priority, priority)
+
+    def test_medical_test_status_validation(self):
+        """Test medical test status enum values."""
+        valid_statuses = [
+            MedicalTest.TestStatus.ORDERED,
+            MedicalTest.TestStatus.SAMPLE_COLLECTED,
+            MedicalTest.TestStatus.IN_PROGRESS,
+            MedicalTest.TestStatus.COMPLETED,
+            MedicalTest.TestStatus.CANCELLED,
+        ]
+
+        for status in valid_statuses:
+            test = MedicalTest.objects.create(
+                visit=self.visit,
+                requested_by=self.doctor_profile,
+                test_name='Test',
+                test_type='Laboratory',
+                status=status,
+            )
+            self.assertEqual(test.status, status)
 
 
 class MedicineStockTests(TestCase):
@@ -907,7 +962,7 @@ class ViewSetTests(TestCase):
         client = APIClient()
         client.force_authenticate(user=self.ehs_user)
 
-        response = client.get('/api/analytics/')
+        response = client.get('/api/ohc/analytics/')
         self.assertEqual(response.status_code, 200)
 
         data = response.data
@@ -923,7 +978,7 @@ class ViewSetTests(TestCase):
         client = APIClient()
         client.force_authenticate(user=self.ehs_user)
 
-        response = client.get('/api/analytics/?status=OPEN')
+        response = client.get('/api/ohc/analytics/?status=OPEN')
         self.assertEqual(response.status_code, 200)
 
         data = response.data
@@ -1583,18 +1638,17 @@ class PropertyEdgeCaseTests(TestCase):
         self.assertFalse(medicine.is_low_stock)  # Stock >= 0 should not be low
 
     def test_medicine_stock_negative_stock(self):
-        """Test negative stock doesn't cause errors."""
-        MedicineStock.objects.create(
-            medicine_id='MED_NEG',
-            name='Test Medicine',
-            unit=MedicineStock.Unit.TABLETS,
-            stock_quantity=-5,
-            initial_stock=0,
-            reorder_level=10,
-        )
-
-        medicine = MedicineStock.objects.get(medicine_id='MED_NEG')
-        self.assertTrue(medicine.is_low_stock)
+        """Test negative stock causes IntegrityError due to PositiveIntegerField."""
+        from django.db.utils import IntegrityError
+        with self.assertRaises(IntegrityError):
+            MedicineStock.objects.create(
+                medicine_id='MED_NEG',
+                name='Test Medicine',
+                unit=MedicineStock.Unit.TABLETS,
+                stock_quantity=-5,
+                initial_stock=0,
+                reorder_level=10,
+            )
 
     def test_medicine_expiry_none_date(self):
         """Test medicine with no expiry date is not expired."""
@@ -1609,59 +1663,3 @@ class PropertyEdgeCaseTests(TestCase):
 
         self.assertFalse(medicine.is_expired)
         self.assertFalse(medicine.is_expiring_soon)
-
-    def test_diagnosis_condition_status_validation(self):
-        """Test condition status enum values."""
-        valid_statuses = [
-            Diagnosis.ConditionStatus.ACTIVE,
-            Diagnosis.ConditionStatus.STABLE,
-            Diagnosis.ConditionStatus.RESOLVED,
-            Diagnosis.ConditionStatus.CHRONIC,
-        ]
-
-        for status in valid_statuses:
-            diagnosis = Diagnosis.objects.create(
-                visit=self.visit,
-                diagnosed_by=self.doctor_profile,
-                diagnosis_name='Test',
-                condition_status=status,
-            )
-            self.assertEqual(diagnosis.condition_status, status)
-
-    def test_medical_test_priority_validation(self):
-        """Test medical test priority enum values."""
-        valid_priorities = [
-            MedicalTest.Priority.ROUTINE,
-            MedicalTest.Priority.URGENT,
-            MedicalTest.Priority.STAT,
-        ]
-
-        for priority in valid_priorities:
-            test = MedicalTest.objects.create(
-                visit=self.visit,
-                requested_by=self.doctor_profile,
-                test_name='Test',
-                test_type='Laboratory',
-                priority=priority,
-            )
-            self.assertEqual(test.priority, priority)
-
-    def test_medical_test_status_validation(self):
-        """Test medical test status enum values."""
-        valid_statuses = [
-            MedicalTest.TestStatus.ORDERED,
-            MedicalTest.TestStatus.SAMPLE_COLLECTED,
-            MedicalTest.TestStatus.IN_PROGRESS,
-            MedicalTest.TestStatus.COMPLETED,
-            MedicalTest.TestStatus.CANCELLED,
-        ]
-
-        for status in valid_statuses:
-            test = MedicalTest.objects.create(
-                visit=self.visit,
-                requested_by=self.doctor_profile,
-                test_name='Test',
-                test_type='Laboratory',
-                status=status,
-            )
-            self.assertEqual(test.status, status)

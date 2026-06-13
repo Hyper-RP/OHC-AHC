@@ -70,3 +70,9 @@ coverage.xml
 
 # Documentation
 docs
+
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+*.tfvars

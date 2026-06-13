@@ -63,6 +63,33 @@ export interface TransformedChartData {
   healthIndexTrend: HealthIndexTrendData[];
 }
 
+// ============================================================================
+// API Response Shape Types
+// ============================================================================
+
+interface ApiDiagnosis {
+  diagnosis_name: string;
+  severity?: string;
+}
+
+interface ApiVisit {
+  visit_date: string;
+  visit_type: string;
+  diagnoses?: ApiDiagnosis[];
+}
+
+interface ApiEmployee {
+  user: { first_name: string; last_name: string };
+  department: string;
+  designation: string;
+  fitness_status: string;
+}
+
+interface EmployeeHealthApiData {
+  employee: ApiEmployee;
+  visits: ApiVisit[];
+}
+
 // Color palettes
 export const DIAGNOSIS_COLORS = [
   '#3b82f6',
@@ -87,7 +114,7 @@ export const CHART_COLORS = DIAGNOSIS_COLORS;
  * Transform raw API data into chart-ready format
  */
 export function transformEmployeeHealthHistory(
-  apiData: any,
+  apiData: EmployeeHealthApiData,
   dailyMonthly: 'daily' | 'monthly'
 ): TransformedChartData {
   const { visits } = apiData;
@@ -105,7 +132,7 @@ export function transformEmployeeHealthHistory(
 /**
  * Transform summary data
  */
-function transformSummary(apiData: any) {
+function transformSummary(apiData: EmployeeHealthApiData) {
   const { employee, visits } = apiData;
 
   const healthScore = calculateHealthScore(visits, employee.fitness_status);
@@ -128,7 +155,7 @@ function transformSummary(apiData: any) {
 /**
  * Calculate health score (0-100)
  */
-export function calculateHealthScore(visits: any[], fitnessStatus: string): number {
+export function calculateHealthScore(visits: ApiVisit[], fitnessStatus: string): number {
   let score = 100;
 
   // Base score from fitness status
@@ -177,7 +204,7 @@ export function calculateHealthScore(visits: any[], fitnessStatus: string): numb
 /**
  * Get maximum severity from diagnoses array
  */
-function getMaxSeverityFromDiagnoses(diagnoses: any[]): string {
+function getMaxSeverityFromDiagnoses(diagnoses?: ApiDiagnosis[]): string {
   if (!diagnoses || diagnoses.length === 0) return 'MILD';
 
   const severityOrder = ['CRITICAL', 'SERIOUS', 'MODERATE', 'MILD'];
@@ -193,7 +220,7 @@ function getMaxSeverityFromDiagnoses(diagnoses: any[]): string {
 /**
  * Calculate average recovery time in days
  */
-function calculateAvgRecoveryTime(visits: any[]): number {
+function calculateAvgRecoveryTime(visits: ApiVisit[]): number {
   if (visits.length < 2) return 0;
 
   const sorted = [...visits].sort(
@@ -215,7 +242,7 @@ function calculateAvgRecoveryTime(visits: any[]): number {
 /**
  * Calculate fitness trend
  */
-function calculateFitnessTrend(visits: any[]): QuickStatsData['fitnessTrend'] {
+function calculateFitnessTrend(visits: ApiVisit[]): QuickStatsData['fitnessTrend'] {
   const now = new Date();
   const recentStart = subDays(now, 30);
   const previousEnd = recentStart;
@@ -245,7 +272,7 @@ function calculateFitnessTrend(visits: any[]): QuickStatsData['fitnessTrend'] {
  * Transform visit frequency data
  */
 export function transformVisitFrequency(
-  visits: any[],
+  visits: ApiVisit[],
   dailyMonthly: 'daily' | 'monthly'
 ): VisitFrequencyData[] {
   const grouped: Record<string, number> = {};
@@ -275,7 +302,7 @@ export function transformVisitFrequency(
 /**
  * Transform visit types data
  */
-export function transformVisitTypes(visits: any[]): VisitTypeData[] {
+export function transformVisitTypes(visits: ApiVisit[]): VisitTypeData[] {
   const counts: Record<string, number> = {
     Routine: 0,
     'Walk-in': 0,
@@ -315,13 +342,13 @@ function mapVisitType(apiType: string): string {
  * Transform diagnosis distribution data
  */
 export function transformDiagnosisDistribution(
-  visits: any[],
+  visits: ApiVisit[],
   maxItems: number = 5
 ): DiagnosisDistributionData[] {
   const counts: Record<string, number> = {};
 
   visits.forEach((visit) => {
-    visit.diagnoses?.forEach((diagnosis: any) => {
+    visit.diagnoses?.forEach((diagnosis) => {
       const name = diagnosis.diagnosis_name;
       counts[name] = (counts[name] || 0) + 1;
     });
@@ -355,7 +382,7 @@ export function transformDiagnosisDistribution(
 /**
  * Transform severity breakdown data
  */
-export function transformSeverityBreakdown(visits: any[]): SeverityBreakdownData[] {
+export function transformSeverityBreakdown(visits: ApiVisit[]): SeverityBreakdownData[] {
   const counts: Record<string, number> = {
     MILD: 0,
     MODERATE: 0,
@@ -364,7 +391,7 @@ export function transformSeverityBreakdown(visits: any[]): SeverityBreakdownData
   };
 
   visits.forEach((visit) => {
-    visit.diagnoses?.forEach((diagnosis: any) => {
+    visit.diagnoses?.forEach((diagnosis) => {
       const severity = diagnosis.severity;
       if (severity) {
         counts[severity] = (counts[severity] || 0) + 1;
@@ -384,10 +411,10 @@ export function transformSeverityBreakdown(visits: any[]): SeverityBreakdownData
  * Transform health index trend data
  */
 function transformHealthIndexTrend(
-  visits: any[],
+  visits: ApiVisit[],
   dailyMonthly: 'daily' | 'monthly'
 ): HealthIndexTrendData[] {
-  const groupedVisits: Record<string, any[]> = {};
+  const groupedVisits: Record<string, ApiVisit[]> = {};
 
   visits.forEach((visit) => {
     const date = parseISO(visit.visit_date);

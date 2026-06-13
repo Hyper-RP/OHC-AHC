@@ -35,17 +35,45 @@ export function useDashboardData<T = unknown>(
     onError,
   } = options;
 
-  const [data, setData] = useState<T | null>(null);
+  // Memoize params to prevent infinite loop from recreating object literals
+  const serializedParams = JSON.stringify(params);
+  const memoizedParams = useMemo(() => JSON.parse(serializedParams), [serializedParams]);
+
+  const cacheKey = useMemo(() => getCacheKey(endpoint, memoizedParams), [endpoint, memoizedParams]);
+
+  const [data, setData] = useState<T | null>(() => {
+    const cached = cache.get(cacheKey);
+    // Cache is valid for 5 minutes
+    if (cached && Date.now() - cached.timestamp < 300000) {
+      return cached.data as T;
+    }
+    return null;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(() => {
+    const cached = cache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < 300000) {
+      return new Date(cached.timestamp);
+    }
+    return null;
+  });
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFetchingRef = useRef(false);
 
-  const cacheKey = useMemo(() => getCacheKey(endpoint, params), [endpoint, params]);
+  const fetchData = useCallback(async (force = false) => {
+    if (!enabled) return;
 
-  const fetchData = useCallback(async () => {
-    if (!enabled || isFetchingRef.current) return;
+    // Check cache unless force refetch
+    const cached = cache.get(cacheKey);
+    if (!force && cached && Date.now() - cached.timestamp < 300000) {
+      setData(cached.data as T);
+      setLastUpdated(new Date(cached.timestamp));
+      onSuccess?.(cached.data);
+      return;
+    }
+
+    if (isFetchingRef.current) return;
 
     isFetchingRef.current = true;
     abortControllerRef.current?.abort();
@@ -56,7 +84,7 @@ export function useDashboardData<T = unknown>(
 
     try {
       const response = await api.get<T>(endpoint, {
-        params,
+        params: memoizedParams,
         signal: abortControllerRef.current.signal,
       });
 
@@ -66,27 +94,32 @@ export function useDashboardData<T = unknown>(
       onSuccess?.(response.data);
     } catch (err) {
       if (err instanceof Error && err.name !== 'AbortError') {
-        const error = err as Error;
-        setError(error);
-        onError?.(error);
+        setError(err);
+        onError?.(err);
       }
     } finally {
       setIsLoading(false);
       isFetchingRef.current = false;
     }
-  }, [endpoint, enabled, cacheKey, onSuccess, onError]);
+  }, [endpoint, enabled, cacheKey, onSuccess, onError, memoizedParams]);
+
+  const initialFetch = useRef(true);
 
   useEffect(() => {
+    if (initialFetch.current && data !== null) {
+      initialFetch.current = false;
+      return;
+    }
     fetchData();
 
     return () => {
       abortControllerRef.current?.abort();
     };
-  }, [fetchData]);
+  }, [fetchData, data]);
 
   useEffect(() => {
     if (refetchInterval && enabled) {
-      const interval = setInterval(fetchData, refetchInterval);
+      const interval = setInterval(() => fetchData(true), refetchInterval);
       return () => clearInterval(interval);
     }
   }, [refetchInterval, fetchData, enabled]);
@@ -94,7 +127,7 @@ export function useDashboardData<T = unknown>(
   const refetch = useCallback(() => {
     cache.delete(cacheKey);
     isFetchingRef.current = false;
-    fetchData();
+    fetchData(true);
   }, [cacheKey, fetchData]);
 
   const invalidateCache = useCallback((key?: string) => {

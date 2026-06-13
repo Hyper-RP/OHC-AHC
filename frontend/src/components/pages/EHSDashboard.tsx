@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSnackbar } from '../../contexts/SnackbarContext';
@@ -34,17 +34,7 @@ export const EHSDashboard: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [followUpLoading, setFollowUpLoading] = useState(false);
 
-  useEffect(() => {
-    if (!user || (user.role !== Role.EHS && user.role !== Role.MANAGEMENT)) {
-      setError('Access restricted to EHS and Management users only');
-      navigate('/dashboard');
-      return;
-    }
-    fetchAnalytics();
-    fetchEHSStatistics();
-  }, [user, navigate, filters]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getDashboard(filters);
@@ -57,9 +47,9 @@ export const EHSDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, show]);
 
-  const fetchEHSStatistics = async () => {
+  const fetchEHSStatistics = useCallback(async () => {
     try {
       const data = await getEHSStatistics(filters);
       setEhsStatistics(data);
@@ -67,17 +57,29 @@ export const EHSDashboard: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch EHS statistics';
       show(errorMessage, 'error');
     }
-  };
+  }, [filters, show]);
+
+  useEffect(() => {
+    if (!user || (user.role !== Role.EHS && user.role !== Role.MANAGEMENT)) {
+      navigate('/dashboard');
+      return;
+    }
+    const timer = setTimeout(() => {
+      void fetchAnalytics();
+      void fetchEHSStatistics();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [user, navigate, filters, fetchAnalytics, fetchEHSStatistics]);
 
   // Auto-refresh every 60 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchAnalytics();
-      fetchEHSStatistics();
+      void fetchAnalytics();
+      void fetchEHSStatistics();
     }, 60000);
 
     return () => clearInterval(interval);
-  }, [filters]);
+  }, [fetchAnalytics, fetchEHSStatistics]);
 
   const handleExport = async () => {
     try {
@@ -191,26 +193,6 @@ export const EHSDashboard: React.FC = () => {
               <ReferredStatisticsCard statistics={ehsStatistics?.referred || null} loading={loading} />
             </div>
 
-            {/* Summary Cards */}
-            {/* <div className={styles.summaryCards}>
-              <Card className={styles.summaryCard}>
-                <h3>Total Visits</h3>
-                <p className={styles.summaryValue}>{analytics.summary.total_visits}</p>
-              </Card>
-              <Card className={styles.summaryCard}>
-                <h3>Open Cases</h3>
-                <p className={styles.summaryValue}>{analytics.summary.open_cases}</p>
-              </Card>
-              <Card className={styles.summaryCard}>
-                <h3>Completed Cases</h3>
-                <p className={styles.summaryValue}>{analytics.summary.completed_cases}</p>
-              </Card>
-              <Card className={styles.summaryCard}>
-                <h3>Pending Follow-ups</h3>
-                <p className={styles.summaryValue}>{analytics.summary.follow_up_pending}</p>
-              </Card>
-            </div> */}
-
             {/* Department-wise Visits */}
             <Card className={styles.chartCard}>
               <h3>Department-wise Visits</h3>
@@ -229,29 +211,6 @@ export const EHSDashboard: React.FC = () => {
                 ))}
               </div>
             </Card>
-
-            {/* Severity Distribution */}
-            {/* <Card className={styles.chartCard}>
-              <h3>Severity Distribution</h3>
-              <div className={styles.severityGrid}>
-                <div className={styles.severityItem}>
-                  <span className={styles.severityLabel}>Low</span>
-                  <span className={styles.severityValue}>{analytics.severity_wise.LOW}</span>
-                </div>
-                <div className={styles.severityItem}>
-                  <span className={styles.severityLabel}>Medium</span>
-                  <span className={styles.severityValue}>{analytics.severity_wise.MEDIUM}</span>
-                </div>
-                <div className={styles.severityItem}>
-                  <span className={styles.severityLabel}>High</span>
-                  <span className={styles.severityValue}>{analytics.severity_wise.HIGH}</span>
-                </div>
-                <div className={styles.severityItem}>
-                  <span className={styles.severityLabel}>Critical</span>
-                  <span className={styles.severityValue}>{analytics.severity_wise.CRITICAL}</span>
-                </div>
-              </div>
-            </Card> */}
 
             {/* Critical Cases */}
             {analytics.critical_cases.length > 0 && (

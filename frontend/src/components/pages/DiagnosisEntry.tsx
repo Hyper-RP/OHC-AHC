@@ -70,8 +70,8 @@ export const DiagnosisEntry: React.FC = () => {
         const medicineNames = Array.from(
           new Set<string>(
             data
-              .filter((medicine: any) => medicine.stock_quantity > 0)
-              .map((medicine: any) => String(medicine.name || '').trim())
+              .filter((medicine: { stock_quantity: number; name: string }) => medicine.stock_quantity > 0)
+              .map((medicine: { stock_quantity: number; name: string }) => String(medicine.name || '').trim())
               .filter((name: string) => Boolean(name)),
           ),
         ).sort((left, right) => left.localeCompare(right));

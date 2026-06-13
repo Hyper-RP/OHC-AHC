@@ -363,10 +363,6 @@ describe('NurseVisitForm', () => {
     });
 
     it('validates temperature out of range (80-120)', async () => {
-      const { show } = vi.spyOn(vi.importActual('../../../contexts/SnackbarContext'), 'useSnackbar').mockReturnValue({
-        show: vi.fn(),
-      }).getReturnValue({ show });
-
       renderWithProviders(<NurseVisitForm />);
 
       const tempInput = screen.getByLabelText('Temperature (°F)');
@@ -381,10 +377,6 @@ describe('NurseVisitForm', () => {
     });
 
     it('validates temperature below minimum range (<80)', async () => {
-      const { show } = vi.spyOn(vi.importActual('../../../contexts/SnackbarContext'), 'useSnackbar').mockReturnValue({
-        show: vi.fn(),
-      }).getReturnValue({ show });
-
       renderWithProviders(<NurseVisitForm />);
 
       const tempInput = screen.getByLabelText('Temperature (°F)');
@@ -399,10 +391,6 @@ describe('NurseVisitForm', () => {
     });
 
     it('validates blood pressure format (120/80)', async () => {
-      const { show } = vi.spyOn(vi.importActual('../../../contexts/SnackbarContext'), 'useSnackbar').mockReturnValue({
-        show: vi.fn(),
-      }).getReturnValue({ show });
-
       renderWithProviders(<NurseVisitForm />);
 
       const bpInput = screen.getByLabelText('Blood Pressure');
@@ -417,10 +405,6 @@ describe('NurseVisitForm', () => {
     });
 
     it('clears vitals errors on valid input', async () => {
-      const { show } = vi.spyOn(vi.importActual('../../../contexts/SnackbarContext'), 'useSnackbar').mockReturnValue({
-        show: vi.fn(),
-      }).getReturnValue({ show });
-
       renderWithProviders(<NurseVisitForm />);
 
       const tempInput = screen.getByLabelText('Temperature (°F)');
@@ -631,7 +615,7 @@ describe('NurseVisitForm', () => {
       fireEvent.change(doctorSelect, mockDoctors[0].id.toString());
 
       await waitFor(() => {
-        expect(screen.getByRole('combobox', { name: 'Select Doctor' }).toHaveValue(mockDoctors[0].id.toString());
+        expect(screen.getByRole('combobox', { name: 'Select Doctor' })).toHaveValue(mockDoctors[0].id.toString());
       });
     });
   });

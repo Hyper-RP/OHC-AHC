@@ -1,29 +1,38 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useExport, type ExportFormat } from '../useExport';
+import { useExport } from '../useExport';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
-jest.mock('html2canvas');
-jest.mock('jspdf');
+const mockAddImage = vi.fn();
+const mockSave = vi.fn();
+
+vi.mock('html2canvas', () => ({
+  default: vi.fn(),
+}));
+
+vi.mock('jspdf', () => ({
+  jsPDF: vi.fn().mockImplementation(function (this: any) {
+    this.addImage = mockAddImage;
+    this.save = mockSave;
+  }),
+}));
 
 describe('useExport', () => {
-  let mockHtml2Canvas: jest.Mock;
-  let mockJsPDF: jest.MockedClass<any>;
   let mockCanvas: HTMLCanvasElement;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockCanvas = document.createElement('canvas');
     mockCanvas.width = 800;
     mockCanvas.height = 600;
 
-    mockHtml2Canvas = require('html2canvas').default;
-    mockHtml2Canvas.mockResolvedValue(mockCanvas);
+    vi.mocked(html2canvas).mockResolvedValue(mockCanvas);
 
-    mockJsPDF = require('jspdf').jsPDF;
-    mockJsPDF.mockImplementation(() => ({
-      addImage: jest.fn(),
-      save: jest.fn(),
-    }));
+    vi.mocked(jsPDF).mockImplementation(function (this: any) {
+      this.addImage = mockAddImage;
+      this.save = mockSave;
+    } as any);
 
     document.body.innerHTML = '<div id="test-chart">Test Content</div>';
   });
@@ -31,10 +40,11 @@ describe('useExport', () => {
   it('exports chart as PNG', async () => {
     const { result } = renderHook(() => useExport());
 
-    const linkSpy = jest.spyOn(document, 'createElement').mockReturnValue({
+    const clickMock = vi.fn();
+    const linkSpy = vi.spyOn(document, 'createElement').mockReturnValue({
       download: '',
       href: '',
-      click: jest.fn(),
+      click: clickMock,
     } as unknown as HTMLAnchorElement);
 
     await act(async () => {
@@ -45,8 +55,9 @@ describe('useExport', () => {
       expect(result.current.isExporting).toBe(false);
     });
 
-    expect(mockHtml2Canvas).toHaveBeenCalled();
+    expect(html2canvas).toHaveBeenCalled();
     expect(linkSpy).toHaveBeenCalled();
+    expect(clickMock).toHaveBeenCalled();
 
     linkSpy.mockRestore();
   });
@@ -62,22 +73,27 @@ describe('useExport', () => {
       expect(result.current.isExporting).toBe(false);
     });
 
-    expect(mockJsPDF).toHaveBeenCalled();
+    expect(jsPDF).toHaveBeenCalled();
+    expect(mockAddImage).toHaveBeenCalled();
+    expect(mockSave).toHaveBeenCalled();
   });
 
   it('sets exporting state correctly', async () => {
     const { result } = renderHook(() => useExport());
-    mockHtml2Canvas.mockImplementation(
+    vi.mocked(html2canvas).mockImplementation(
       () => new Promise((resolve) => setTimeout(() => resolve(mockCanvas), 100))
     );
 
-    const exportPromise = act(async () => {
-      result.current.exportChart('test-chart', { format: 'png' });
+    let exportPromise: Promise<void> | undefined;
+    act(() => {
+      exportPromise = result.current.exportChart('test-chart', { format: 'png' });
     });
 
     expect(result.current.isExporting).toBe(true);
 
-    await exportPromise;
+    await act(async () => {
+      await exportPromise;
+    });
 
     await waitFor(() => {
       expect(result.current.isExporting).toBe(false);
@@ -85,30 +101,34 @@ describe('useExport', () => {
   });
 
   it('updates export progress', async () => {
+    let resolveCanvas!: (val: HTMLCanvasElement) => void;
+    const canvasPromise = new Promise<HTMLCanvasElement>((resolve) => {
+      resolveCanvas = resolve;
+    });
+
+    vi.mocked(html2canvas).mockImplementation(() => canvasPromise);
+
     const { result } = renderHook(() => useExport());
 
-    const progressUpdates: number[] = [];
-    const originalExport = result.current.exportChart.bind(result.current);
+    let exportPromise: Promise<void> | undefined;
+    act(() => {
+      exportPromise = result.current.exportChart('test-chart', { format: 'png' });
+    });
 
-    result.current.exportChart = async (...args) => {
-      const promise = originalExport(...args);
-      progressUpdates.push(result.current.exportProgress);
-      await promise;
-      return promise;
-    };
+    expect(result.current.isExporting).toBe(true);
+    expect(result.current.exportProgress).toBeGreaterThan(0);
 
     await act(async () => {
-      await result.current.exportChart('test-chart', { format: 'png' });
+      resolveCanvas(mockCanvas);
+      await exportPromise;
     });
 
-    await waitFor(() => {
-      expect(result.current.exportProgress).toBe(0);
-    });
+    expect(result.current.exportProgress).toBe(0);
   });
 
   it('handles export errors', async () => {
     const { result } = renderHook(() => useExport());
-    mockHtml2Canvas.mockRejectedValue(new Error('Export failed'));
+    vi.mocked(html2canvas).mockRejectedValue(new Error('Export failed'));
 
     await act(async () => {
       await expect(
@@ -135,18 +155,19 @@ describe('useExport', () => {
 
   it('copies to clipboard', async () => {
     const { result } = renderHook(() => useExport());
-    const clipboardSpy = jest
-      .spyOn(navigator, 'clipboard', 'get')
-      .mockReturnValue({
-        writeText: jest.fn().mockResolvedValue(undefined),
-      } as unknown as Clipboard);
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: writeTextMock,
+      },
+      writable: true,
+      configurable: true,
+    });
 
     const success = await result.current.copyToClipboard('test text');
 
     expect(success).toBe(true);
-    expect(clipboardSpy.writeText).toHaveBeenCalledWith('test text');
-
-    clipboardSpy.mockRestore();
+    expect(writeTextMock).toHaveBeenCalledWith('test text');
   });
 
   it('exports multiple charts', async () => {
@@ -166,7 +187,7 @@ describe('useExport', () => {
       expect(result.current.isExporting).toBe(false);
     });
 
-    expect(mockHtml2Canvas).toHaveBeenCalledTimes(2);
+    expect(html2canvas).toHaveBeenCalledTimes(2);
   });
 
   it('handles non-existent element', async () => {

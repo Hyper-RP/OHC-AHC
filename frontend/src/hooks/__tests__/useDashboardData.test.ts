@@ -2,17 +2,21 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 import api from '../../services/api';
 import { useDashboardData, clearDashboardCache } from '../useDashboardData';
 
-jest.mock('../../services/api');
+vi.mock('../../services/api', () => ({
+  default: {
+    get: vi.fn(),
+  },
+}));
 
 describe('useDashboardData', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     clearDashboardCache();
   });
 
   it('fetches data on mount', async () => {
     const mockData = { results: [{ id: 1, name: 'Test' }] };
-    (api.get as jest.Mock).mockResolvedValue({ data: mockData });
+    vi.mocked(api.get).mockResolvedValue({ data: mockData });
 
     const { result } = renderHook(() =>
       useDashboardData('/test-endpoint')
@@ -31,7 +35,7 @@ describe('useDashboardData', () => {
 
   it('uses cached data when available', async () => {
     const mockData = { results: [{ id: 1, name: 'Test' }] };
-    (api.get as jest.Mock).mockResolvedValue({ data: mockData });
+    vi.mocked(api.get).mockResolvedValue({ data: mockData });
 
     const { result: result1 } = renderHook(() =>
       useDashboardData('/test-endpoint')
@@ -41,7 +45,7 @@ describe('useDashboardData', () => {
       expect(result1.current.data).toEqual(mockData);
     });
 
-    (api.get as jest.Mock).mockClear();
+    vi.mocked(api.get).mockClear();
 
     const { result: result2 } = renderHook(() =>
       useDashboardData('/test-endpoint')
@@ -57,7 +61,7 @@ describe('useDashboardData', () => {
   it('refetches data when calling refetch', async () => {
     const mockData1 = { results: [{ id: 1, name: 'Test1' }] };
     const mockData2 = { results: [{ id: 2, name: 'Test2' }] };
-    (api.get as jest.Mock)
+    vi.mocked(api.get)
       .mockResolvedValueOnce({ data: mockData1 })
       .mockResolvedValueOnce({ data: mockData2 });
 
@@ -82,9 +86,9 @@ describe('useDashboardData', () => {
 
   it('handles errors', async () => {
     const mockError = new Error('API Error');
-    (api.get as jest.Mock).mockRejectedValue(mockError);
+    vi.mocked(api.get).mockRejectedValue(mockError);
 
-    const onError = jest.fn();
+    const onError = vi.fn();
     const { result } = renderHook(() =>
       useDashboardData('/test-endpoint', {}, { onError })
     );
@@ -112,9 +116,9 @@ describe('useDashboardData', () => {
   });
 
   it('auto-refreshes with interval', async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const mockData = { results: [{ id: 1 }] };
-    (api.get as jest.Mock).mockResolvedValue({ data: mockData });
+    vi.mocked(api.get).mockResolvedValue({ data: mockData });
 
     const { result } = renderHook(() =>
       useDashboardData('/test-endpoint', {}, { refetchInterval: 1000 })
@@ -127,13 +131,13 @@ describe('useDashboardData', () => {
     expect(api.get).toHaveBeenCalledTimes(1);
 
     act(() => {
-      jest.advanceTimersByTime(1000);
+      vi.advanceTimersByTime(1000);
     });
 
     await waitFor(() => {
       expect(api.get).toHaveBeenCalledTimes(2);
     });
 
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 });

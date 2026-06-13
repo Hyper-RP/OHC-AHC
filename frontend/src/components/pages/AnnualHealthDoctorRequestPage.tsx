@@ -27,6 +27,28 @@ const FITNESS_STATUS_OPTIONS = [
   ...FITNESS_DECISION_OPTIONS,
 ];
 
+interface AnnualHealthVisitDetails {
+  id: number;
+  patient_name?: string;
+  employee_id?: string;
+  employee_department?: string;
+  patient_gender?: string;
+  patient_age?: number;
+  patient_contact?: string;
+  visit_status: string;
+  visit_date: string;
+  visit_time?: string;
+  vitals?: Record<string, string | number>;
+  employee?: {
+    employee_code?: string;
+    department?: string;
+    user?: {
+      first_name?: string;
+      last_name?: string;
+    };
+  } | null;
+}
+
 export const AnnualHealthDoctorRequestPage: React.FC = () => {
   const navigate = useNavigate();
   const { visitId } = useParams<{ visitId: string }>();
@@ -37,7 +59,7 @@ export const AnnualHealthDoctorRequestPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [selectedVisit, setSelectedVisit] = useState<any | null>(null);
+  const [selectedVisit, setSelectedVisit] = useState<AnnualHealthVisitDetails | null>(null);
   const [medicines, setMedicines] = useState<Array<{ value: string; label: string }>>([]);
   const [diagnosisName, setDiagnosisName] = useState('');
   const [examinationNotes, setExaminationNotes] = useState('');
@@ -130,8 +152,8 @@ export const AnnualHealthDoctorRequestPage: React.FC = () => {
         const medicineNames = Array.from(
           new Set<string>(
             (response.results || [])
-              .filter((item: any) => item.stock_quantity > 0)
-              .map((item: any) => String(item.name || '').trim())
+              .filter((item: { stock_quantity: number; name: string }) => item.stock_quantity > 0)
+              .map((item: { stock_quantity: number; name: string }) => String(item.name || '').trim())
               .filter(Boolean),
           ),
         ).sort((left, right) => left.localeCompare(right));

@@ -280,7 +280,15 @@ const buildSummaryTrends = (visits: DashboardVisit[], granularity: TrendGranular
   return Array.from(trendMap.values())
     .sort((a, b) => a.sortKey - b.sortKey)
     .slice(-bucketLimit)
-    .map(({ sortKey: _sortKey, ...item }) => item);
+    .map((item) => ({
+      period: item.period,
+      ohcVisits: item.ohcVisits,
+      preamtiveCheckUps: item.preamtiveCheckUps,
+      annualCheckup: item.annualCheckup,
+      referralCases: item.referralCases,
+      emergencyCount: item.emergencyCount,
+      incidentCount: item.incidentCount,
+    }));
 };
 
 const buildDepartmentComparison = (visits: DashboardVisit[]) => {
@@ -325,7 +333,14 @@ const buildDepartmentComparison = (visits: DashboardVisit[]) => {
   });
 
   return Array.from(departmentMap.values())
-    .map(({ employeeCodes: _codes, ...item }) => item)
+    .map((item) => ({
+      department: item.department,
+      visits: item.visits,
+      employees: item.employees,
+      referrals: item.referrals,
+      preamtiveCheckUps: item.preamtiveCheckUps,
+      annualCheckup: item.annualCheckup,
+    }))
     .sort((a, b) => b.visits - a.visits);
 };
 

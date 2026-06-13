@@ -27,7 +27,7 @@ interface PrescriptionItem {
   frequency: string;
   duration_days: number;
   is_dispensed?: boolean;
-  medicine?: any;
+  medicine?: unknown;
 }
 
 export const AnnualHealthPharmacistDashboard: React.FC = () => {

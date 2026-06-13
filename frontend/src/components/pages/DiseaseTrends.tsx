@@ -14,7 +14,7 @@ import styles from './DiseaseTrends.module.css';
 export const DiseaseTrends: React.FC = () => {
   const [period, setPeriod] = useState(90);
   const [loading, setLoading] = useState(true);
-  const [chartData, setChartData] = useState<any>({
+  const [chartData, setChartData] = useState<ReturnType<typeof transformDiseaseTrendsData>>({
     diagnosisArea: [],
     severityTrends: [],
   });

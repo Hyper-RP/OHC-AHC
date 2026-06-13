@@ -50,7 +50,7 @@ export const PreEmploymentDetailsPage: React.FC = () => {
     show(message, 'error');
   }, [show]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -65,12 +65,12 @@ export const PreEmploymentDetailsPage: React.FC = () => {
       if (filters.fitness_status) params.fitness_status = filters.fitness_status;
 
       const response = await api.get('/ohc/visits/', { params });
-      const data = Array.isArray(response.data) ? response.data : response.data?.results || [];
+      const data = (Array.isArray(response.data) ? response.data : response.data?.results || []) as PreEmploymentVisit[];
       setVisits(data);
 
-      const fitCount = data.filter((v: any) => v.fitness_status === 'FIT').length;
-      const unfitCount = data.filter((v: any) => v.fitness_status === 'UNFIT').length;
-      const pendingCount = data.filter((v: any) => v.fitness_status === 'PENDING' || !v.fitness_status).length;
+      const fitCount = data.filter((v) => v.fitness_status === 'FIT').length;
+      const unfitCount = data.filter((v) => v.fitness_status === 'UNFIT').length;
+      const pendingCount = data.filter((v) => v.fitness_status === 'PENDING' || !v.fitness_status).length;
 
       setAnalytics({
         total_checks: data.length,
@@ -84,15 +84,23 @@ export const PreEmploymentDetailsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, handleError]);
 
   useEffect(() => {
-    if (!user || (user.role !== Role.EHS && user.role !== Role.MANAGEMENT)) {
-      setError('Access restricted to EHS and Management users only');
-      return;
+    if (user && user.role !== Role.EHS && user.role !== Role.MANAGEMENT) {
+      show('Access restricted to EHS and Management users only', 'error');
+      navigate('/dashboard');
     }
-    fetchData();
-  }, [user, filters]);
+  }, [user, navigate, show]);
+
+  useEffect(() => {
+    if (user && (user.role === Role.EHS || user.role === Role.MANAGEMENT)) {
+      const timer = setTimeout(() => {
+        fetchData();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [user, fetchData]);
 
   const handleFilterChange = (key: keyof typeof filters, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));

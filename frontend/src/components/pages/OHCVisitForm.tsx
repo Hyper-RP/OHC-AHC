@@ -69,7 +69,10 @@ export const OHCVisitForm: React.FC = () => {
   }, [vitals]);
 
   useEffect(() => {
-    setMedicineOptions(loadMedicineRecords());
+    const timer = setTimeout(() => {
+      setMedicineOptions(loadMedicineRecords());
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleInputChange = (name: string, value: string) => {

@@ -66,8 +66,8 @@ export const EmployeeHealthHistory: React.FC = () => {
   };
 
   const isListMode = data !== null;
-  const records = data?.records || [];
   const summary = useMemo(() => {
+    const records = data?.records || [];
     const uniqueEmployees = new Set(records.map((record) => record.employee_code)).size;
     const fitCases = records.filter((record) => String(record.fitness_decision || '').includes('FIT')).length;
     const referredCases = records.filter((record) => record.referral_status).length;
@@ -78,7 +78,7 @@ export const EmployeeHealthHistory: React.FC = () => {
       fitCases,
       referredCases,
     };
-  }, [records]);
+  }, [data]);
 
   return (
     <div className={styles.healthHistory}>

@@ -11,6 +11,35 @@ import {
 } from 'recharts';
 import styles from './DiagnosisTrendLineChart.module.css';
 
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    color: string;
+    dataKey: string | number;
+    value: number | string;
+  }>;
+  label?: string;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className={styles.tooltip}>
+        <p className={styles.tooltipDate}>{label}</p>
+        {payload.map((entry, index) => (
+          <p key={index} className={styles.tooltipRow}>
+            <span className={styles.tooltipLabel} style={{ color: entry.color }}>
+              {entry.dataKey}:
+            </span>
+            <span className={styles.tooltipValue}>{entry.value} cases</span>
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
 interface DiagnosisData {
   diagnosis: string;
   data: Array<{ date: Date; count: number }>;
@@ -62,7 +91,7 @@ export const DiagnosisTrendLineChart: React.FC<DiagnosisTrendLineChartProps> = (
     });
 
     return sortedDates.map((date) => {
-      const point: any = { date };
+      const point: Record<string, string | number> = { date };
       data.forEach((diagnosis) => {
         const dataPoint = diagnosis.data.find(
           (d) => d.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) === date
@@ -78,26 +107,6 @@ export const DiagnosisTrendLineChart: React.FC<DiagnosisTrendLineChartProps> = (
     ...item,
     color: item.color || DIAGNOSIS_COLORS[index % DIAGNOSIS_COLORS.length],
   }));
-
-  // Custom tooltip
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className={styles.tooltip}>
-          <p className={styles.tooltipDate}>{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <p key={index} className={styles.tooltipRow}>
-              <span className={styles.tooltipLabel} style={{ color: entry.color }}>
-                {entry.dataKey}:
-              </span>
-              <span className={styles.tooltipValue}>{entry.value} cases</span>
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
 
   if (loading) {
     return <div className={styles.skeleton} style={{ height }} />;

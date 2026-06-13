@@ -13,6 +13,28 @@ import { loadMedicineRecords } from './medicineInventory';
 import pageStyles from './RequestPage.module.css';
 import dashboardStyles from './PreEmploymentDoctorDashboard.module.css';
 
+interface PreEmploymentVisit {
+  id: number;
+  visit_status: VisitStatus;
+  patient_name?: string;
+  employee_name?: string;
+  employee?: {
+    id: number;
+    employee_code: string;
+    user: { first_name: string; last_name: string };
+    department: string;
+  } | null;
+  candidate_id?: string;
+  candidate_department?: string;
+  candidate_designation?: string;
+  patient_age?: number;
+  patient_gender?: string;
+  patient_contact?: string;
+  visit_date?: string;
+  visit_time?: string;
+  vitals?: Record<string, string>;
+}
+
 interface PrescriptionInput {
   medicine_name: string;
   dosage: string;
@@ -36,7 +58,7 @@ export const PreEmploymentDoctorRequestPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [selectedVisit, setSelectedVisit] = useState<any | null>(null);
+  const [selectedVisit, setSelectedVisit] = useState<PreEmploymentVisit | null>(null);
   const [medicines, setMedicines] = useState<Array<{ value: string; label: string }>>([]);
   const [diagnosisName, setDiagnosisName] = useState('');
   const [examinationNotes, setExaminationNotes] = useState('');
@@ -100,8 +122,8 @@ export const PreEmploymentDoctorRequestPage: React.FC = () => {
         const medicineNames = Array.from(
           new Set<string>(
             (response.results || [])
-              .filter((item: any) => item.stock_quantity > 0)
-              .map((item: any) => String(item.name || '').trim())
+              .filter((item: { stock_quantity: number }) => item.stock_quantity > 0)
+              .map((item: { name?: string }) => String(item.name || '').trim())
               .filter(Boolean),
           ),
         ).sort((left, right) => left.localeCompare(right));
@@ -160,7 +182,11 @@ export const PreEmploymentDoctorRequestPage: React.FC = () => {
     }
   };
 
-  const handlePrescriptionChange = (index: number, field: keyof PrescriptionInput, value: string | number) => {
+  const handlePrescriptionChange = <K extends keyof PrescriptionInput>(
+    index: number,
+    field: K,
+    value: PrescriptionInput[K]
+  ) => {
     setPrescriptions((prev) =>
       prev.map((item, itemIndex) => (itemIndex === index ? { ...item, [field]: value } : item)),
     );

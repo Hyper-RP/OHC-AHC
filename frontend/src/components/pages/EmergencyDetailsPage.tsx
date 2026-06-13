@@ -51,7 +51,22 @@ export const EmergencyDetailsPage: React.FC = () => {
     show(message, 'error');
   }, [show]);
 
-  const fetchData = async () => {
+  interface VisitApiResponse {
+    id: number;
+    chief_complaint?: string;
+    visit_type?: string;
+    triage_level?: string;
+    visit_date?: string;
+    visit_status?: string;
+    employee_name?: string;
+    employee_code?: string;
+    employee?: {
+      department?: string;
+      employee_code?: string;
+    } | null;
+  }
+
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -73,7 +88,7 @@ export const EmergencyDetailsPage: React.FC = () => {
       const data = Array.isArray(response.data) ? response.data : response.data?.results || [];
 
       // Filter for emergency cases (EMERGENCY type OR emergency keywords)
-      const emergencyVisits = data.filter((visit: any) => {
+      const emergencyVisits = data.filter((visit: VisitApiResponse) => {
         const complaint = visit.chief_complaint?.toLowerCase() || '';
         const isEmergency = emergencyKeywords.some((keyword: string) =>
           complaint.includes(keyword)
@@ -82,7 +97,18 @@ export const EmergencyDetailsPage: React.FC = () => {
         return isEmergency || isEmergencyType;
       });
 
-      setEmergencies(emergencyVisits);
+      setEmergencies(emergencyVisits.map((visit: VisitApiResponse) => ({
+        id: visit.id,
+        employee_code: visit.employee_code || visit.employee?.employee_code || '',
+        employee_name: visit.employee_name || '',
+        department: visit.employee?.department || '',
+        emergency_date: visit.visit_date || '',
+        chief_complaint: visit.chief_complaint || '',
+        triage_level: visit.triage_level || 'LOW',
+        severity: visit.triage_level || 'LOW',
+        visit_status: visit.visit_status || 'OPEN',
+        description: visit.chief_complaint || '',
+      })));
 
       const severityMap = { LOW: 0, MEDIUM: 0, HIGH: 0, CRITICAL: 0 };
       const deptMap: Record<string, number> = {};
@@ -90,7 +116,7 @@ export const EmergencyDetailsPage: React.FC = () => {
 
       const today = new Date().toISOString().split('T')[0];
 
-      emergencyVisits.forEach((visit: any) => {
+      emergencyVisits.forEach((visit: VisitApiResponse) => {
         const rawSeverity = visit.triage_level || 'LOW';
         const severity = rawSeverity as keyof typeof severityMap;
 
@@ -106,7 +132,7 @@ export const EmergencyDetailsPage: React.FC = () => {
         monthMap[month] = (monthMap[month] || 0) + 1;
       });
 
-      const todayEmergencies = emergencyVisits.filter((v: any) => v.visit_date?.split('T')[0] === today).length;
+      const todayEmergencies = emergencyVisits.filter((v: VisitApiResponse) => v.visit_date?.split('T')[0] === today).length;
 
       const departmentEmergencies = Object.entries(deptMap).map(([department, count]) => ({
         department,
@@ -130,15 +156,20 @@ export const EmergencyDetailsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, handleError]);
 
   useEffect(() => {
     if (!user || (user.role !== Role.EHS && user.role !== Role.MANAGEMENT)) {
-      setError('Access restricted to EHS and Management users only');
-      return;
+      const timer = setTimeout(() => {
+        setError('Access restricted to EHS and Management users only');
+      }, 0);
+      return () => clearTimeout(timer);
     }
-    fetchData();
-  }, [user, filters]);
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [user, fetchData]);
 
   const handleFilterChange = (key: keyof typeof filters, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));

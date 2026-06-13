@@ -114,7 +114,7 @@ export const getVisitPrescriptions = async (visitUuid: string): Promise<Prescrip
  * Get pending prescriptions for pharmacist
  * @returns Promise resolving to array of prescriptions with visit and medicine details
  */
-export const getPharmacistPrescriptions = async (): Promise<any[]> => {
+export const getPharmacistPrescriptions = async (): Promise<unknown[]> => {
   try {
     const response = await api.get('/ohc/prescriptions/');
     return response.data;

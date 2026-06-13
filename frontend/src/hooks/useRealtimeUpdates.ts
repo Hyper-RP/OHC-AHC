@@ -29,6 +29,11 @@ export function useRealtimeUpdates(options: UseRealtimeUpdatesOptions) {
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttemptsRef = useRef(0);
+  // connectRef holds a stable reference to `connect` so the onclose handler
+  // can call it without creating a circular useCallback dependency.
+  const connectRef = useRef<(() => void) | null>(null);
+
   const [state, setState] = useState<WebSocketState>({
     connected: false,
     reconnecting: false,
@@ -51,18 +56,18 @@ export function useRealtimeUpdates(options: UseRealtimeUpdatesOptions) {
     }
 
     wsRef.current.onopen = () => {
-      setState((prev) => ({
-        ...prev,
+      reconnectAttemptsRef.current = 0;
+      setState({
         connected: true,
         reconnecting: false,
         reconnectAttempts: 0,
-      }));
+      });
       onConnect?.();
     };
 
     wsRef.current.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
+        const data = JSON.parse(event.data as string);
         setLastMessage(data);
         setMessageHistory((prev) => [
           { time: new Date(), data },
@@ -90,19 +95,26 @@ export function useRealtimeUpdates(options: UseRealtimeUpdatesOptions) {
       }));
       onDisconnect?.();
 
-      if (state.reconnectAttempts < maxReconnectAttempts) {
+      if (reconnectAttemptsRef.current < maxReconnectAttempts) {
+        reconnectAttemptsRef.current += 1;
         setState((prev) => ({
           ...prev,
           reconnecting: true,
-          reconnectAttempts: prev.reconnectAttempts + 1,
+          reconnectAttempts: reconnectAttemptsRef.current,
         }));
 
         reconnectTimeoutRef.current = setTimeout(() => {
-          connect();
+          // Use the ref to avoid calling `connect` before it is declared
+          connectRef.current?.();
         }, reconnectInterval);
       }
     };
-  }, [url, reconnectInterval, maxReconnectAttempts, onConnect, onDisconnect, onError, onMessage, state.reconnectAttempts]);
+  }, [url, reconnectInterval, maxReconnectAttempts, onConnect, onDisconnect, onError, onMessage]);
+
+  // Keep the ref in sync inside an effect, never during render
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -128,6 +140,7 @@ export function useRealtimeUpdates(options: UseRealtimeUpdatesOptions) {
 
   const reconnect = useCallback(() => {
     disconnect();
+    reconnectAttemptsRef.current = 0;
     setState((prev) => ({
       ...prev,
       reconnectAttempts: 0,

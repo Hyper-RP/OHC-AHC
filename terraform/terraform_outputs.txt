@@ -1,0 +1,45 @@
+alb_dns_name = "ohc-ahc-staging-alb-1852523875.us-east-1.elb.amazonaws.com"
+alb_zone_id = "Z35SXDOTRQ7X7K"
+cloudwatch_dashboard_url = "https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=ohc-ahc-staging"
+cost_summary = {
+  "breakdown" = tomap({
+    "alb" = "$18.75"
+    "cloudfront" = "$0 (disabled in staging)"
+    "cloudwatch_logs" = "$2.00"
+    "container_insights" = "$2.00"
+    "data_processing" = "$2.25"
+    "data_transfer" = "$5.00"
+    "ecs_fargate" = "$9.12"
+    "nat_gateway" = "$32.85"
+    "rds" = "$15.00"
+    "s3_bucket" = "~$1.00"
+  })
+  "environment" = "staging"
+  "estimated_monthly_cost" = "~$75/month"
+}
+database_endpoint = <sensitive>
+ecr_repository_url = "819808778143.dkr.ecr.us-east-1.amazonaws.com/ohc-ahc-backend"
+ecs_cluster_name = "ohc-ahc-staging-cluster"
+ecs_security_group_id = "sg-08432516229c6cf52"
+ecs_service_name = "ohc-ahc-staging-service"
+ecs_task_family = "ohc-ahc-staging-app"
+github_actions_role_arn = "arn:aws:iam::819808778143:role/ohc-ahc-github-actions-role"
+next_steps = {
+  "1_confirm_email" = "Check your email (rp302084@gmail.com) and click the SNS subscription confirmation link"
+  "2_update_github" = "Update GitHub Actions ECS_CLUSTER, ECS_SERVICE, ECS_TASK_FAMILY env vars to match outputs above"
+  "3_store_secrets" = "Run: aws secretsmanager put-secret-value --secret-id ohc-ahc/staging/database-url --secret-string '...'"
+  "4_first_image_push" = "Push your first Docker image to ECR: 819808778143.dkr.ecr.us-east-1.amazonaws.com/ohc-ahc-backend"
+  "5_phase8_oidc" = "When ready for OIDC: delete GitHub static key secrets, update workflow to use role-to-assume: arn:aws:iam::819808778143:role/ohc-ahc-github-actions-role"
+}
+private_subnet_ids = [
+  "subnet-062532a0bb8e86aa8",
+  "subnet-0e708fa5b7d778f70",
+]
+s3_bucket_name = "ohc-ahc-staging-static"
+sns_alerts_topic_arn = "arn:aws:sns:us-east-1:819808778143:ohc-ahc-staging-alerts"
+vpc_id = "vpc-0dd27fcf9b51b2704"
+[33m╷[0m[0m
+[33m│[0m [0m[1m[33mWarning: [0m[0m[1mDeprecated Parameter[0m
+[33m│[0m [0m
+[33m│[0m [0m[0mThe parameter "dynamodb_table" is deprecated. Use parameter "use_lockfile" instead.
+[33m╵[0m[0m

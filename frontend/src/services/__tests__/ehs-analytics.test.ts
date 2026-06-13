@@ -3,7 +3,15 @@ import { getEHSStatistics } from '../analytics';
 import api from '../api';
 import type { EHSStatistics } from '../../types';
 
-vi.mock('../api');
+vi.mock('../api', async () => {
+  const actual = await vi.importActual<any>('../api');
+  return {
+    ...actual,
+    default: {
+      get: vi.fn(),
+    },
+  };
+});
 
 describe('getEHSStatistics', () => {
   const mockEHSStatistics: EHSStatistics = {
