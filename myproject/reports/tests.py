@@ -2,7 +2,7 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from accounts.models import User, EmployeeProfile
+from accounts.models import User, EmployeeProfile, DoctorProfile
 from ohc.models import OHCVisit
 from reports.models import AuditLog, Notification
 
@@ -33,6 +33,16 @@ class AuditLogModelTests(TestCase):
             email='test@example.com',
             role=User.Role.ADMIN,
         )
+        self.doctor_user = User.objects.create_user(
+            username='doctoruser',
+            email='doctor@example.com',
+            role=User.Role.DOCTOR,
+        )
+        self.doctor = DoctorProfile.objects.create(
+            user=self.doctor_user,
+            registration_number='DOC_AUDIT',
+            specialization='General',
+        )
         self.employee = EmployeeProfile.objects.create(
             user=self.user,
             employee_code='EMP001',
@@ -41,7 +51,7 @@ class AuditLogModelTests(TestCase):
         )
         self.visit = OHCVisit.objects.create(
             employee=self.employee,
-            consulted_doctor=None,
+            consulted_doctor=self.doctor,
             visit_type='WALK_IN',
             visit_status='OPEN',
             visit_date='2026-05-20T10:00:00Z',
@@ -119,6 +129,16 @@ class NotificationModelTests(TestCase):
             email='test@example.com',
             role=User.Role.EMPLOYEE,
         )
+        self.doctor_user = User.objects.create_user(
+            username='doctoruser',
+            email='doctor@example.com',
+            role=User.Role.DOCTOR,
+        )
+        self.doctor = DoctorProfile.objects.create(
+            user=self.doctor_user,
+            registration_number='DOC_NOTIF',
+            specialization='General',
+        )
         self.employee = EmployeeProfile.objects.create(
             user=self.user,
             employee_code='EMP001',
@@ -127,7 +147,7 @@ class NotificationModelTests(TestCase):
         )
         self.visit = OHCVisit.objects.create(
             employee=self.employee,
-            consulted_doctor=None,
+            consulted_doctor=self.doctor,
             visit_type='WALK_IN',
             visit_status='OPEN',
             visit_date='2026-05-20T10:00:00Z',
@@ -209,6 +229,16 @@ class APITests(TestCase):
             role=User.Role.ADMIN,
         )
         self.client.force_authenticate(user=self.user)
+        self.doctor_user = User.objects.create_user(
+            username='doctoruser',
+            email='doctor@example.com',
+            role=User.Role.DOCTOR,
+        )
+        self.doctor = DoctorProfile.objects.create(
+            user=self.doctor_user,
+            registration_number='DOC_API',
+            specialization='General',
+        )
         self.employee = EmployeeProfile.objects.create(
             user=self.user,
             employee_code='EMP001',
@@ -217,7 +247,7 @@ class APITests(TestCase):
         )
         self.visit = OHCVisit.objects.create(
             employee=self.employee,
-            consulted_doctor=None,
+            consulted_doctor=self.doctor,
             visit_type='WALK_IN',
             visit_status='OPEN',
             visit_date='2026-05-20T10:00:00Z',
@@ -274,6 +304,16 @@ class ForeignKeyTests(TestCase):
             email='fk@example.com',
             role=User.Role.ADMIN,
         )
+        self.doctor_user = User.objects.create_user(
+            username='doctoruser',
+            email='doctor@example.com',
+            role=User.Role.DOCTOR,
+        )
+        self.doctor = DoctorProfile.objects.create(
+            user=self.doctor_user,
+            registration_number='DOC_FK',
+            specialization='General',
+        )
         self.employee = EmployeeProfile.objects.create(
             user=self.user,
             employee_code='EMP001',
@@ -282,7 +322,7 @@ class ForeignKeyTests(TestCase):
         )
         self.visit = OHCVisit.objects.create(
             employee=self.employee,
-            consulted_doctor=None,
+            consulted_doctor=self.doctor,
             visit_type='WALK_IN',
             visit_status='OPEN',
             visit_date='2026-05-20T10:00:00Z',
@@ -290,7 +330,7 @@ class ForeignKeyTests(TestCase):
         )
         self.diagnosis = Diagnosis.objects.create(
             visit=self.visit,
-            diagnosed_by=None,
+            diagnosed_by=self.doctor,
             diagnosis_name='Migraine',
             severity='MILD',
             condition_status='ACTIVE',
@@ -357,6 +397,16 @@ class IntegrationTests(TestCase):
             email='integration@example.com',
             role=User.Role.ADMIN,
         )
+        self.doctor_user = User.objects.create_user(
+            username='doctoruser',
+            email='doctor@example.com',
+            role=User.Role.DOCTOR,
+        )
+        self.doctor = DoctorProfile.objects.create(
+            user=self.doctor_user,
+            registration_number='DOC_INTEG',
+            specialization='General',
+        )
         self.employee = EmployeeProfile.objects.create(
             user=self.user,
             employee_code='EMP001',
@@ -365,7 +415,7 @@ class IntegrationTests(TestCase):
         )
         self.visit = OHCVisit.objects.create(
             employee=self.employee,
-            consulted_doctor=None,
+            consulted_doctor=self.doctor,
             visit_type='WALK_IN',
             visit_status='OPEN',
             visit_date='2026-05-20T10:00:00Z',

@@ -48,8 +48,13 @@ def alter_examination_notes_nullable(apps, schema_editor):
                 cursor.execute("CREATE INDEX IF NOT EXISTS 'ohc_diagnosis_diagnosed_by_id_idx' ON 'ohc_diagnosis' ('diagnosed_by_id');")
     elif connection.vendor == 'postgresql':
         with connection.cursor() as cursor:
-            # PostgreSQL supports direct alteration
-            cursor.execute("ALTER TABLE ohc_diagnosis ALTER COLUMN examination_notes DROP NOT NULL;")
+            # Check if the column exists in PostgreSQL before altering it
+            cursor.execute("""
+                SELECT 1 FROM information_schema.columns 
+                WHERE table_name='ohc_diagnosis' AND column_name='examination_notes';
+            """)
+            if cursor.fetchone():
+                cursor.execute("ALTER TABLE ohc_diagnosis ALTER COLUMN examination_notes DROP NOT NULL;")
 
 
 def reverse_alter(apps, schema_editor):

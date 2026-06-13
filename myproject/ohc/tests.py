@@ -173,13 +173,11 @@ class OHCApiTests(TestCase):
             chief_complaint='Headache'
         )
         response = self.client.post('/api/ohc/diagnosis-prescriptions/', {
-            'diagnosis': {
-                'visit': visit.id,
-                'diagnosed_by': self.doctor_profile.id,
-                'diagnosis_name': 'Migraine',
-                'severity': 'MILD',
-                'diagnosis_notes': 'Patient reports recurring headaches'
-            },
+            'visit': visit.id,
+            'diagnosis_name': 'Migraine',
+            'severity': 'MILD',
+            'fitness_decision': 'FIT',
+            'diagnosis_notes': 'Patient reports recurring headaches',
             'prescriptions': [
                 {
                     'medicine_name': 'Paracetamol',
@@ -907,7 +905,7 @@ class ViewSetTests(TestCase):
         client = APIClient()
         client.force_authenticate(user=self.ehs_user)
 
-        response = client.get('/api/analytics/')
+        response = client.get('/api/ohc/analytics/')
         self.assertEqual(response.status_code, 200)
 
         data = response.data
@@ -923,7 +921,7 @@ class ViewSetTests(TestCase):
         client = APIClient()
         client.force_authenticate(user=self.ehs_user)
 
-        response = client.get('/api/analytics/?status=OPEN')
+        response = client.get('/api/ohc/analytics/?status=OPEN')
         self.assertEqual(response.status_code, 200)
 
         data = response.data
