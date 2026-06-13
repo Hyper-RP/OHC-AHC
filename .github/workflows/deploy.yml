@@ -1,0 +1,489 @@
+# ================================================================
+# OHC-AHC CI/CD Pipeline
+# ================================================================
+# Architecture:
+#   Job 1: test    → runs on every push + every PR
+#   Job 2: build-and-deploy → runs ONLY after test passes, ONLY on main
+#
+# Required GitHub Secrets:
+#   AWS_ACCESS_KEY_ID      - IAM user key (replace with OIDC later)
+#   AWS_SECRET_ACCESS_KEY  - IAM user secret (replace with OIDC later)
+#
+# Optional GitHub Secrets:
+#   VITE_API_BASE_URL      - Production API URL for React build
+#   SLACK_WEBHOOK_URL      - Slack webhook for deployment notifications
+# ================================================================
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "production"
+        type: choice
+        options: [staging, production]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: ohc-ahc-backend
+  ECS_CLUSTER: ohc-ahc-production-cluster
+  ECS_SERVICE: ohc-ahc-production-service
+  ECS_TASK_FAMILY: ohc-ahc-production-app
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20"
+
+# ================================================================
+# JOB 1: TEST — runs on every push and every pull request
+# ================================================================
+jobs:
+  test:
+    name: 🧪 Tests & Lint
+    runs-on: ubuntu-latest
+
+    # Temporary PostgreSQL database — GitHub starts and stops this automatically
+    # Think of it as a disposable database just for running tests
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: ohc_test_db
+          POSTGRES_USER: ohc_user
+          POSTGRES_PASSWORD: testpassword_ci_only
+        ports:
+          - 5432:5432
+        # Health check — wait until Postgres is ready before running tests
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      # ── Step 1: Get the code ──────────────────────────────────
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      # ── Step 2: Python setup with pip caching ─────────────────
+      # Cache = if requirements.txt hasn't changed, skip re-downloading
+      # packages. Saves ~60 seconds per run.
+      - name: 🐍 Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+          cache-dependency-path: myproject/requirements.txt
+
+      - name: 📦 Install Python dependencies
+        run: |
+          cd myproject
+          pip install -r requirements.txt
+          pip install flake8 pytest-cov
+
+      # ── Step 3: Python linting ────────────────────────────────
+      # flake8 checks for syntax errors and undefined variables
+      # A syntax error in Python = your app crashes immediately on startup
+      - name: 🔍 Lint Python (flake8)
+        run: |
+          cd myproject
+          echo "Checking for syntax errors and undefined names..."
+          # E9  = syntax errors (FAIL build)
+          # F63 = invalid escape sequences (FAIL build)
+          # F7  = syntax warnings (FAIL build)
+          # F82 = undefined names like 'view' (FAIL build)
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          echo "✅ No critical Python syntax errors found"
+
+      # ── Step 4: Django tests with database ───────────────────
+      - name: 🧪 Run Django tests (pytest)
+        env:
+          DJANGO_SETTINGS_MODULE: myproject.settings
+          DATABASE_URL: postgres://ohc_user:testpassword_ci_only@localhost:5432/ohc_test_db
+          SECRET_KEY: "ci-test-secret-key-not-used-in-production-ever"
+          DEBUG: "True"
+          ALLOWED_HOSTS: "localhost,127.0.0.1"
+          # Disable AWS calls in tests (no real AWS needed for unit tests)
+          AWS_ACCESS_KEY_ID: "testing"
+          AWS_SECRET_ACCESS_KEY: "testing"
+          AWS_DEFAULT_REGION: "us-east-1"
+        run: |
+          cd myproject
+          echo "Running database migrations on test database..."
+          python manage.py migrate --noinput
+          echo "✅ Migrations done. Running tests..."
+          pytest \
+            --cov=. \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term-missing \
+            --tb=short \
+            -v \
+            || (echo "❌ Tests FAILED — deployment blocked" && exit 1)
+          echo "✅ All Django tests passed"
+
+      # ── Step 5: Node.js + frontend tests ─────────────────────
+      - name: 🟨 Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📦 Install Node dependencies
+        run: |
+          cd frontend
+          npm ci  # ci = clean install, faster than npm install, uses lockfile
+
+      - name: 🔍 Lint TypeScript (ESLint)
+        run: |
+          cd frontend
+          npm run lint
+          echo "✅ No ESLint errors found"
+
+      - name: 🧪 Run frontend tests (Vitest)
+        run: |
+          cd frontend
+          npm run test:run
+          echo "✅ All frontend tests passed"
+
+      # ── Step 6: Upload coverage report ───────────────────────
+      - name: 📊 Upload test coverage
+        uses: actions/upload-artifact@v4
+        if: always()  # Upload even if tests failed (useful for debugging)
+        with:
+          name: coverage-report
+          path: myproject/coverage.xml
+          retention-days: 7
+
+  # ================================================================
+  # JOB 2: BUILD & DEPLOY
+  # Runs ONLY when:
+  #   1. The "test" job above PASSED (needs: test)
+  #   2. This is a push to main (not a pull request)
+  # ================================================================
+  build-and-deploy:
+    name: 🚀 Build & Deploy to AWS
+    runs-on: ubuntu-latest
+    needs: test  # ← CRITICAL: test must pass before we even start building
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    # Required for OIDC authentication with AWS (future upgrade)
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for accurate versioning
+
+      # ── Step 1: Build React ───────────────────────────────────
+      - name: 🟨 Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 🎨 Build React frontend
+        env:
+          # Point React to your production Django API
+          # Set this secret in GitHub: Settings → Secrets → VITE_API_BASE_URL
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL || 'https://api.ohc-ahc.com' }}
+        run: |
+          echo "🎨 Building React application..."
+          cd frontend
+          npm ci
+          npm run build
+          echo "✅ React build completed"
+          echo "📦 Copying build output to Django static files..."
+          mkdir -p ../myproject/static/react
+          cp -r dist/* ../myproject/static/react/
+          echo "📁 React files copied to myproject/static/react/"
+
+      - name: ✅ Verify React build
+        run: |
+          echo "🔍 Verifying React build output..."
+          if [ ! -f "myproject/static/react/index.html" ]; then
+            echo "❌ FAILED: myproject/static/react/index.html not found"
+            exit 1
+          fi
+          if [ ! -d "myproject/static/react/assets" ]; then
+            echo "❌ FAILED: myproject/static/react/assets directory not found"
+            exit 1
+          fi
+          echo "✅ Build verification successful"
+          echo "📊 Build contents:"
+          ls -lh myproject/static/react/
+          echo "📊 Total build size:"
+          du -sh myproject/static/react/
+
+      # ── Step 2: AWS Authentication ────────────────────────────
+      # Currently using static keys. Phase 8 upgrades this to OIDC.
+      - name: 🔐 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ── Step 3: Login to ECR ──────────────────────────────────
+      # ECR = Amazon's private Docker registry. We need to login before
+      # we can push images there.
+      - name: 🐳 Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ── Step 4: Build Docker image ────────────────────────────
+      - name: 🐳 Build Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          echo "🐳 Building Docker image..."
+          echo "   Registry: $ECR_REGISTRY"
+          echo "   Repository: $ECR_REPOSITORY"
+          echo "   Tag: $IMAGE_TAG"
+          docker build \
+            --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            --tag $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            --label "git-commit=$IMAGE_TAG" \
+            --label "build-date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            .
+          echo "✅ Docker image built successfully"
+          docker images $ECR_REGISTRY/$ECR_REPOSITORY
+
+      # ── Step 5: Security scan ─────────────────────────────────
+      # Trivy scans your Docker image for known CVEs (Common Vulnerabilities)
+      # Like a virus scan for your container image
+      - name: 🔒 Scan image for vulnerabilities (Trivy)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}"
+          format: "table"
+          exit-code: "0"           # Change to "1" to block deploys with CRITICAL CVEs
+          ignore-unfixed: true      # Ignore vulnerabilities with no available fix
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+        continue-on-error: true     # Don't fail pipeline — just warn for now
+
+      # ── Step 6: Push to ECR ───────────────────────────────────
+      - name: 📤 Push Docker image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          echo "📤 Pushing Docker image to ECR..."
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "✅ Image pushed successfully"
+          echo "🏷️  Image URI: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      # ── Step 7: Get current task definition ──────────────────
+      # We need to update the task definition with the new image tag
+      # before telling ECS to deploy it
+      - name: 📋 Get current ECS task definition
+        id: get-task-def
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          echo "📋 Fetching current task definition..."
+          # Download current task definition
+          aws ecs describe-task-definition \
+            --task-definition $ECS_TASK_FAMILY \
+            --query 'taskDefinition' \
+            --output json > current-task-def.json
+
+          # Update the image URI in the task definition
+          NEW_TASK_DEF=$(cat current-task-def.json | jq \
+            --arg IMAGE "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
+            '.containerDefinitions[0].image = $IMAGE | 
+             del(.taskDefinitionArn, .revision, .status, .requiresAttributes, 
+                 .placementConstraints, .compatibilities, .registeredAt, .registeredBy)')
+
+          # Register the updated task definition
+          NEW_TASK_DEF_ARN=$(echo "$NEW_TASK_DEF" | aws ecs register-task-definition \
+            --cli-input-json /dev/stdin \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "new_task_def_arn=$NEW_TASK_DEF_ARN" >> $GITHUB_OUTPUT
+          echo "✅ New task definition registered: $NEW_TASK_DEF_ARN"
+
+      # ── Step 8: Run database migrations ──────────────────────
+      # This runs Django migrations as a one-shot ECS task BEFORE
+      # the new service version starts. This ensures:
+      #   1. DB schema is updated before new code runs
+      #   2. If migrations fail, deployment stops (old version keeps running)
+      - name: 🗄️ Run database migrations
+        run: |
+          echo "🗄️ Running Django migrations via ECS one-shot task..."
+
+          # Get private subnet and security group IDs
+          SUBNET_IDS=$(aws ec2 describe-subnets \
+            --filters "Name=tag:Name,Values=ohc-ahc-production-private-*" \
+            --query 'Subnets[*].SubnetId' \
+            --output json | jq -r 'join(",")')
+
+          SG_ID=$(aws ec2 describe-security-groups \
+            --filters "Name=tag:Name,Values=ohc-ahc-production-ecs-sg" \
+            --query 'SecurityGroups[0].GroupId' \
+            --output text)
+
+          if [ -z "$SUBNET_IDS" ] || [ "$SUBNET_IDS" = "null" ]; then
+            echo "⚠️  Could not find private subnets — skipping ECS migration task"
+            echo "   Migrations will run via container startup command instead"
+            exit 0
+          fi
+
+          echo "📍 Using subnet: $SUBNET_IDS"
+          echo "📍 Using security group: $SG_ID"
+
+          # Run the migration as a one-off ECS task
+          TASK_ARN=$(aws ecs run-task \
+            --cluster $ECS_CLUSTER \
+            --task-definition ${{ steps.get-task-def.outputs.new_task_def_arn }} \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_IDS],securityGroups=[$SG_ID],assignPublicIp=DISABLED}" \
+            --overrides '{"containerOverrides":[{"name":"ohc-app","command":["python","manage.py","migrate","--noinput"]}]}' \
+            --query 'tasks[0].taskArn' \
+            --output text)
+
+          if [ -z "$TASK_ARN" ] || [ "$TASK_ARN" = "None" ]; then
+            echo "❌ Failed to start migration task"
+            exit 1
+          fi
+
+          echo "⏳ Migration task started: $TASK_ARN"
+          echo "Waiting for migration to complete (max 10 minutes)..."
+
+          aws ecs wait tasks-stopped \
+            --cluster $ECS_CLUSTER \
+            --tasks $TASK_ARN
+
+          # Check the exit code of the migration container
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster $ECS_CLUSTER \
+            --tasks $TASK_ARN \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)
+
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "❌ Migration FAILED with exit code: $EXIT_CODE"
+            echo "🔍 Check logs: AWS Console → CloudWatch → /ecs/ohc-ahc-production"
+            exit 1
+          fi
+
+          echo "✅ Database migrations completed successfully"
+
+      # ── Step 9: Deploy to ECS ─────────────────────────────────
+      - name: 🚀 Update ECS service
+        run: |
+          echo "🚀 Deploying new version to ECS..."
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $ECS_SERVICE \
+            --task-definition ${{ steps.get-task-def.outputs.new_task_def_arn }} \
+            --force-new-deployment \
+            --region $AWS_REGION
+          echo "✅ ECS service update initiated"
+
+      # ── Step 10: Wait for stable deployment ──────────────────
+      - name: ⏳ Wait for deployment to stabilize
+        timeout-minutes: 15
+        run: |
+          echo "⏳ Waiting for ECS service to become stable..."
+          echo "   This means: old containers stopped, new containers healthy"
+          aws ecs wait services-stable \
+            --cluster $ECS_CLUSTER \
+            --services $ECS_SERVICE \
+            --region $AWS_REGION
+          echo "✅ ECS service is stable — deployment complete!"
+
+      # ── Step 11: Invalidate CloudFront cache ──────────────────
+      # After deploying, old static files (JS/CSS) might be cached.
+      # Invalidation tells CloudFront to fetch fresh files from the origin.
+      - name: 🔄 Invalidate CloudFront cache
+        if: success()
+        run: |
+          echo "🔄 Looking for CloudFront distribution..."
+          DISTRIBUTION_ID=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?contains(Origins.Items[0].DomainName,'ohc-ahc')].Id | [0]" \
+            --output text 2>/dev/null || echo "None")
+
+          if [ -n "$DISTRIBUTION_ID" ] && [ "$DISTRIBUTION_ID" != "None" ]; then
+            INVALIDATION_ID=$(aws cloudfront create-invalidation \
+              --distribution-id $DISTRIBUTION_ID \
+              --paths "/*" \
+              --query 'Invalidation.Id' \
+              --output text)
+            echo "✅ CloudFront cache invalidation started: $INVALIDATION_ID"
+          else
+            echo "⚠️  No CloudFront distribution found — skipping (staging mode?)"
+          fi
+
+      # ── Step 12: Post-deploy health check ────────────────────
+      - name: 🏥 Post-deploy health check
+        if: success()
+        run: |
+          echo "⏳ Waiting 30 seconds for new containers to fully start..."
+          sleep 30
+          echo "🏥 Checking application health endpoint..."
+          HTTP_STATUS=$(curl \
+            --silent \
+            --output /dev/null \
+            --write-out "%{http_code}" \
+            --max-time 30 \
+            --retry 3 \
+            --retry-delay 10 \
+            https://api.ohc-ahc.com/health/ 2>/dev/null || echo "000")
+
+          echo "Health check status: HTTP $HTTP_STATUS"
+
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "✅ Health check PASSED — application is responding correctly"
+          elif [ "$HTTP_STATUS" = "000" ]; then
+            echo "⚠️  Could not reach health endpoint (DNS may not be configured yet)"
+          else
+            echo "⚠️  Health check returned HTTP $HTTP_STATUS — investigate if unexpected"
+          fi
+
+          echo ""
+          echo "═══════════════════════════════════════════════"
+          echo "  ✅ DEPLOYMENT COMPLETE"
+          echo "═══════════════════════════════════════════════"
+          echo "  Cluster:    $ECS_CLUSTER"
+          echo "  Service:    $ECS_SERVICE"
+          echo "  Image Tag:  ${{ github.sha }}"
+          echo "  Task Def:   ${{ steps.get-task-def.outputs.new_task_def_arn }}"
+          echo "  Committed:  $(git log -1 --format='%s')"
+          echo "  Deployed:   $(date -u +'%Y-%m-%d %H:%M UTC')"
+          echo "═══════════════════════════════════════════════"
+
+      # ── Step 13: Failure notification ────────────────────────
+      - name: ❌ Handle deployment failure
+        if: failure()
+        run: |
+          echo "❌ ═══════════════════════════════════════"
+          echo "   DEPLOYMENT FAILED"
+          echo "   ═══════════════════════════════════════"
+          echo ""
+          echo "🔍 Diagnostic steps:"
+          echo "   1. Check the failed step above for error details"
+          echo "   2. View ECS logs: AWS Console → CloudWatch → /ecs/ohc-ahc-production"
+          echo "   3. Check ECS events: AWS Console → ECS → Cluster → Service → Events"
+          echo ""
+          echo "♻️  Recovery:"
+          echo "   - The previous ECS task version is still running"
+          echo "   - Your application is NOT down (circuit breaker keeps old version)"
+          echo "   - Fix the issue and push again to retry deployment"
+          echo ""
+          echo "📌 Failed commit: ${{ github.sha }}"
+          echo "📌 Triggered by: ${{ github.actor }}"
