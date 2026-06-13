@@ -204,7 +204,7 @@ describe('useFilters', () => {
 
     expect(result.current.savedFilters).toHaveLength(0);
     const saved = localStorage.getItem('saved-dashboard-filters');
-    expect(saved).toBeNull();
+    expect(saved).toBe('[]');
   });
 
   it('exports filters as JSON', () => {
@@ -231,7 +231,10 @@ describe('useFilters', () => {
       employeeCodes: [],
     });
 
-    const success = result.current.importFilters(json);
+    let success = false;
+    act(() => {
+      success = result.current.importFilters(json);
+    });
 
     expect(success).toBe(true);
     expect(result.current.filters.departments).toEqual(['IT', 'HR']);

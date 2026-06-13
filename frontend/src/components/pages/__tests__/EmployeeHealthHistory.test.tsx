@@ -95,7 +95,7 @@ describe('EmployeeHealthHistory', () => {
 
   it('renders Employee ID input', () => {
     renderWithProviders(<EmployeeHealthHistory />);
-    expect(screen.getByPlaceholderText('Enter employee ID')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Enter employee ID or leave blank')).toBeInTheDocument();
   });
 
   it('renders Load button', () => {
@@ -107,7 +107,7 @@ describe('EmployeeHealthHistory', () => {
     vi.mocked(getEmployeeHealthHistory).mockResolvedValue(mockHistoryData);
 
     renderWithProviders(<EmployeeHealthHistory />);
-    const input = screen.getByPlaceholderText('Enter employee ID');
+    const input = screen.getByPlaceholderText('Enter employee ID or leave blank');
     fireEvent.change(input, { target: { value: 'EMP-001' } });
     fireEvent.click(screen.getByText('Load'));
 
@@ -135,7 +135,7 @@ describe('EmployeeHealthHistory', () => {
     vi.spyOn(window, 'alert').mockImplementation(() => {});
 
     renderWithProviders(<EmployeeHealthHistory />);
-    const input = screen.getByPlaceholderText('Enter employee ID');
+    const input = screen.getByPlaceholderText('Enter employee ID or leave blank');
     fireEvent.change(input, { target: { value: 'EMP-999' } });
     fireEvent.click(screen.getByText('Load'));
 

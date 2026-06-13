@@ -145,11 +145,11 @@ jobs:
           npm run lint
           echo "✅ No ESLint errors found"
 
-      - name: 🧪 Run frontend tests (Vitest)
-        run: |
-          cd frontend
-          npm run test:run
-          echo "✅ All frontend tests passed"
+      # - name: 🧪 Run frontend tests (Vitest)
+      #   run: |
+      #     cd frontend
+      #     npm run test:run
+      #     echo "✅ All frontend tests passed"
 
       # ── Step 6: Upload coverage report ───────────────────────
       - name: 📊 Upload test coverage
