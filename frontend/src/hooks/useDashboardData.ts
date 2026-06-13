@@ -103,13 +103,19 @@ export function useDashboardData<T = unknown>(
     }
   }, [endpoint, enabled, cacheKey, onSuccess, onError, memoizedParams]);
 
+  const initialFetch = useRef(true);
+
   useEffect(() => {
+    if (initialFetch.current && data !== null) {
+      initialFetch.current = false;
+      return;
+    }
     fetchData();
 
     return () => {
       abortControllerRef.current?.abort();
     };
-  }, [fetchData]);
+  }, [fetchData, data]);
 
   useEffect(() => {
     if (refetchInterval && enabled) {
