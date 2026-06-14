@@ -202,10 +202,6 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: 🎨 Build React frontend
-        env:
-          # Point React to your production Django API
-          # Set this secret in GitHub: Settings → Secrets → VITE_API_BASE_URL
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL || 'https://api.ohc-ahc.com' }}
         run: |
           echo "🎨 Building React application..."
           cd frontend
