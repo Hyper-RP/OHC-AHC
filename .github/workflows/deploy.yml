@@ -402,7 +402,7 @@ jobs:
             --task-definition ${{ steps.get-task-def.outputs.new_task_def_arn }} \
             --launch-type FARGATE \
             --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_IDS],securityGroups=[$SG_ID],assignPublicIp=DISABLED}" \
-            --overrides '{"containerOverrides":[{"name":"ohc-app","command":["python","manage.py","migrate","--noinput"]}]}' \
+            --overrides '{"containerOverrides":[{"name":"ohc-app","command":["sh","-c","cd /app/myproject && python manage.py migrate --noinput"]}]}' \
             --query 'tasks[0].taskArn' \
             --output text)
 
