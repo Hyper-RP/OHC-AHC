@@ -418,16 +418,68 @@ jobs:
             --cluster $ECS_CLUSTER \
             --tasks $TASK_ARN
 
-          # Check the exit code of the migration container
-          EXIT_CODE=$(aws ecs describe-tasks \
+          # Fetch full task details once — used for exit code AND stop reason
+          TASK_DETAIL=$(aws ecs describe-tasks \
             --cluster $ECS_CLUSTER \
             --tasks $TASK_ARN \
-            --query 'tasks[0].containers[0].exitCode' \
-            --output text)
+            --output json)
 
-          if [ "$EXIT_CODE" != "0" ]; then
-            echo "❌ Migration FAILED with exit code: $EXIT_CODE"
-            echo "🔍 Check logs: AWS Console → CloudWatch → /ecs/ohc-ahc-production"
+          EXIT_CODE=$(echo "$TASK_DETAIL" | jq -r '.tasks[0].containers[0].exitCode // "None"')
+          STOP_CODE=$(echo "$TASK_DETAIL" | jq -r '.tasks[0].stopCode // "unknown"')
+          STOPPED_REASON=$(echo "$TASK_DETAIL" | jq -r '.tasks[0].stoppedReason // "no reason provided"')
+
+          echo "📊 Task exit code:     $EXIT_CODE"
+          echo "📊 Task stop code:     $STOP_CODE"
+          echo "📊 Task stopped reason: $STOPPED_REASON"
+
+          if [ "$EXIT_CODE" = "None" ]; then
+            # exitCode is None = task was stopped at the INFRASTRUCTURE level
+            # before the container ever ran. Common causes:
+            #   - Image pull failure (wrong ECR URI, ECR permissions)
+            #   - Secrets Manager fetch failure (wrong ARN, IAM permissions)
+            #   - Task execution role missing ecr:GetAuthorizationToken
+            #   - Out of memory before container started
+            echo ""
+            echo "❌ Migration task stopped before container ran (exitCode=None)"
+            echo "   Stop code:   $STOP_CODE"
+            echo "   Reason:      $STOPPED_REASON"
+            echo ""
+            echo "🔍 Diagnostic checklist:"
+            echo "   1. Check CloudWatch logs: /ecs/ohc-ahc-staging"
+            echo "   2. Verify ECR image exists: ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY"
+            echo "   3. Verify Secrets Manager ARNs in task definition match:"
+            echo "      arn:aws:secretsmanager:us-east-1:819808778143:secret:ohc-ahc/staging/database-url"
+            echo "      arn:aws:secretsmanager:us-east-1:819808778143:secret:ohc-ahc/staging/secret-key"
+            echo "   4. Verify IAM execution role has secretsmanager:GetSecretValue permission"
+            # Attempt to print recent CloudWatch logs for the task
+            TASK_ID=$(basename $TASK_ARN)
+            echo ""
+            echo "📜 Attempting to fetch CloudWatch logs for task $TASK_ID..."
+            aws logs get-log-events \
+              --log-group-name "/ecs/ohc-ahc-staging" \
+              --log-stream-name "app/ohc-app/$TASK_ID" \
+              --limit 50 \
+              --query 'events[*].message' \
+              --output text 2>/dev/null || echo "   (No logs found — task may have stopped before logging started)"
+            exit 1
+
+          elif [ "$EXIT_CODE" != "0" ]; then
+            # Container ran but exited with a non-zero code
+            # (Django migration error, DB connection refused, etc.)
+            echo ""
+            echo "❌ Migration container exited with code $EXIT_CODE"
+            echo "   Reason: $STOPPED_REASON"
+            echo ""
+            echo "🔍 Check full logs: AWS Console → CloudWatch → /ecs/ohc-ahc-staging"
+            TASK_ID=$(basename $TASK_ARN)
+            echo ""
+            echo "📜 Fetching CloudWatch logs for task $TASK_ID..."
+            aws logs get-log-events \
+              --log-group-name "/ecs/ohc-ahc-staging" \
+              --log-stream-name "app/ohc-app/$TASK_ID" \
+              --limit 100 \
+              --query 'events[*].message' \
+              --output text 2>/dev/null || echo "   (Could not fetch logs)"
             exit 1
           fi
 
@@ -527,7 +579,7 @@ jobs:
           echo ""
           echo "🔍 Diagnostic steps:"
           echo "   1. Check the failed step above for error details"
-          echo "   2. View ECS logs: AWS Console → CloudWatch → /ecs/ohc-ahc-production"
+          echo "   2. View ECS logs: AWS Console → CloudWatch → /ecs/ohc-ahc-staging"
           echo "   3. Check ECS events: AWS Console → ECS → Cluster → Service → Events"
           echo ""
           echo "♻️  Recovery:"
