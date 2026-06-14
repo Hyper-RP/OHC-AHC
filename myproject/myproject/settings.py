@@ -45,10 +45,19 @@ if IS_PRODUCTION:
     ALLOWED_HOSTS = [
         'api.ohc-ahc.com',
         '.ohc-ahc.com',
-        # The ALB health check uses the internal IP — allow it
-        '10.0.0.0/8',  # VPC CIDR
-
+        '.amazonaws.com',  # Allow ALB DNS names directly
     ]
+    # Dynamically allow container local IP for target group health checks
+    try:
+        import socket
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        ALLOWED_HOSTS.append(local_ip)
+        ALLOWED_HOSTS.append('localhost')
+        ALLOWED_HOSTS.append('127.0.0.1')
+    except Exception:
+        pass
+
     extra_hosts = os.getenv('ALLOWED_HOSTS', '')
     if extra_hosts:
         ALLOWED_HOSTS += [h.strip() for h in extra_hosts.split(',') if h.strip()]
