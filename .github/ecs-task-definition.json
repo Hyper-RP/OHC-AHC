@@ -1,0 +1,57 @@
+{
+  "family": "ohc-ahc-staging-app",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::819808778143:role/ohc-ahc-staging-ecs-execution-role",
+  "taskRoleArn": "arn:aws:iam::819808778143:role/ohc-ahc-staging-ecs-task-role",
+  "containerDefinitions": [
+    {
+      "name": "ohc-app",
+      "image": "819808778143.dkr.ecr.us-east-1.amazonaws.com/ohc-ahc-backend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "DJANGO_SETTINGS_MODULE",
+          "value": "myproject.settings"
+        },
+        {
+          "name": "DEBUG",
+          "value": "False"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:819808778143:secret:ohc-ahc/staging/database-url"
+        },
+        {
+          "name": "SECRET_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:819808778143:secret:ohc-ahc/staging/secret-key"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/ohc-ahc-staging",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "app"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:8000/health/ || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ]
+}
