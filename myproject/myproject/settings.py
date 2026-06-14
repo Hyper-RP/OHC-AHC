@@ -45,13 +45,18 @@ if IS_PRODUCTION:
     ALLOWED_HOSTS = [
         'api.ohc-ahc.com',
         '.ohc-ahc.com',
-        # The ALB health check uses the internal IP — allow it
-        '10.0.0.0/8',  # VPC CIDR
-
+        '.amazonaws.com',  # Allow ALB DNS names directly
     ]
-    extra_hosts = os.getenv('ALLOWED_HOSTS', '')
-    if extra_hosts:
-        ALLOWED_HOSTS += [h.strip() for h in extra_hosts.split(',') if h.strip()]
+    # Dynamically allow container local IP for target group health checks
+    try:
+        import socket
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        ALLOWED_HOSTS.append(local_ip)
+        ALLOWED_HOSTS.append('localhost')
+        ALLOWED_HOSTS.append('127.0.0.1')
+    except Exception:
+        pass
 else:
     ALLOWED_HOSTS = [
         '127.0.0.1',
@@ -59,6 +64,12 @@ else:
         '10.150.224.239',
         'ohc-ahc.onrender.com',
     ]
+
+# DJANGO_ALLOWED_HOSTS adds extra hosts in any environment (e.g. staging ALB, custom domains).
+# Set as a comma-separated list in the ECS task definition environment variables.
+_extra_hosts = os.getenv('DJANGO_ALLOWED_HOSTS', '')
+if _extra_hosts:
+    ALLOWED_HOSTS += [h.strip() for h in _extra_hosts.split(',') if h.strip()]
 
 
 # ─────────────────────────────────────────────────────────────────

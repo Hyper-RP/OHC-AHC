@@ -177,6 +177,10 @@ resource "aws_ecs_task_definition" "app" {
         {
           name  = "DEBUG"
           value = var.environment == "staging" ? "True" : "False"
+        },
+        {
+          name  = "DJANGO_ALLOWED_HOSTS"
+          value = aws_lb.main.dns_name
         }
       ]
 
