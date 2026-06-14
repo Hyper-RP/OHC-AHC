@@ -57,10 +57,6 @@ if IS_PRODUCTION:
         ALLOWED_HOSTS.append('127.0.0.1')
     except Exception:
         pass
-
-    extra_hosts = os.getenv('ALLOWED_HOSTS', '')
-    if extra_hosts:
-        ALLOWED_HOSTS += [h.strip() for h in extra_hosts.split(',') if h.strip()]
 else:
     ALLOWED_HOSTS = [
         '127.0.0.1',
@@ -68,6 +64,12 @@ else:
         '10.150.224.239',
         'ohc-ahc.onrender.com',
     ]
+
+# DJANGO_ALLOWED_HOSTS adds extra hosts in any environment (e.g. staging ALB, custom domains).
+# Set as a comma-separated list in the ECS task definition environment variables.
+_extra_hosts = os.getenv('DJANGO_ALLOWED_HOSTS', '')
+if _extra_hosts:
+    ALLOWED_HOSTS += [h.strip() for h in _extra_hosts.split(',') if h.strip()]
 
 
 # ─────────────────────────────────────────────────────────────────
