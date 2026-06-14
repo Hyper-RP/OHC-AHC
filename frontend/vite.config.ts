@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react';
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
-  // Use relative paths for built assets (critical for Django serving)
-  base: mode === 'production' ? './' : '/',
+  // Absolute path so Django/WhiteNoise serves assets at /static/react/assets/...
+  base: mode === 'production' ? '/static/react/' : '/',
 
   plugins: [react()],
   server: {
