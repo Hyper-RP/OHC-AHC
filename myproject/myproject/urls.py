@@ -5,6 +5,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.http import JsonResponse
 from django.urls import include, path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from reports.views import ReactAppView
 
 # Health check endpoint for Docker/ALB
 def health_check(request):
@@ -31,6 +32,9 @@ urlpatterns = [
     path('api/payments/', include('payments.urls')),
     path('api/reports/', include('reports.urls')),
 ]
+
+# Catch-all: serve React app for any path not matched above (React Router handles client-side routing)
+urlpatterns += [path('<path:path>', ReactAppView.as_view(), name='react-app-catchall')]
 
 if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
