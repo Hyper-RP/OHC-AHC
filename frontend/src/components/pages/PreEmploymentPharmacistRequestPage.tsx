@@ -104,16 +104,20 @@ export const PreEmploymentPharmacistRequestPage: React.FC = () => {
 
   useEffect(() => {
     if (selectedPrescription && selectedPrescription.medicine) {
-      setSelectedMedicine(selectedPrescription.medicine);
-      setDispenseForm({
-        medicine_id: selectedPrescription.medicine.id,
-        medicine_name: selectedPrescription.medicine.name,
-        stock_available: selectedPrescription.medicine.stock_quantity,
-        quantity_dispensed: 1,
-        remaining_stock: selectedPrescription.medicine.stock_quantity - 1,
-        issue_date: new Date().toISOString().split('T')[0],
-        remarks: '',
-      });
+      const medicine = selectedPrescription.medicine;
+      const timer = setTimeout(() => {
+        setSelectedMedicine(medicine);
+        setDispenseForm({
+          medicine_id: medicine.id,
+          medicine_name: medicine.name,
+          stock_available: medicine.stock_quantity,
+          quantity_dispensed: 1,
+          remaining_stock: medicine.stock_quantity - 1,
+          issue_date: new Date().toISOString().split('T')[0],
+          remarks: '',
+        });
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [selectedPrescription]);
 
