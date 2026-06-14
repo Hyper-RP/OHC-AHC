@@ -33,11 +33,21 @@ on:
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: ohc-ahc-backend
-  ECS_CLUSTER: ohc-ahc-production-cluster
-  ECS_SERVICE: ohc-ahc-production-service
-  ECS_TASK_FAMILY: ohc-ahc-production-app
+  # ⚠️  These values come directly from `terraform output` (terraform/terraform_outputs.txt).
+  # Only the STAGING environment has been deployed via Terraform so far.
+  # Update to ohc-ahc-production-* ONLY after running: terraform apply -var-file=production.tfvars
+  ECS_CLUSTER: ohc-ahc-staging-cluster
+  ECS_SERVICE: ohc-ahc-staging-service
+  ECS_TASK_FAMILY: ohc-ahc-staging-app
   PYTHON_VERSION: "3.11"
   NODE_VERSION: "20"
+
+  # ⚠️  These values come directly from `terraform output` (terraform/terraform_outputs.txt).
+  # Only the STAGING environment has been deployed via Terraform so far.
+  # Update to ohc-ahc-production-* ONLY after running: terraform apply -var-file=production.tfvars
+  # ECS_CLUSTER: ohc-ahc-production-cluster
+  # ECS_SERVICE: ohc-ahc-production-service
+  # ECS_TASK_FAMILY: ohc-ahc-production-app
 
 # ================================================================
 # JOB 1: TEST — runs on every push and every pull request
@@ -285,37 +295,62 @@ jobs:
           echo "✅ Image pushed successfully"
           echo "🏷️  Image URI: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-      # ── Step 7: Get current task definition ──────────────────
-      # We need to update the task definition with the new image tag
-      # before telling ECS to deploy it
-      - name: 📋 Get current ECS task definition
+      # ── Step 7: Get or create ECS task definition ─────────────
+      # We need a task definition to update with the new image tag.
+      # Strategy:
+      #   - If the family already exists → fetch it and bump the image
+      #   - If this is the FIRST deploy (family doesn't exist yet) →
+      #     register a brand-new task definition from the template file
+      #     (.github/ecs-task-definition.json), then proceed normally.
+      - name: 📋 Get or create ECS task definition
         id: get-task-def
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          echo "📋 Fetching current task definition..."
-          # Download current task definition
-          aws ecs describe-task-definition \
-            --task-definition $ECS_TASK_FAMILY \
-            --query 'taskDefinition' \
-            --output json > current-task-def.json
+          echo "📋 Checking for existing task definition family: $ECS_TASK_FAMILY"
 
-          # Update the image URI in the task definition
-          NEW_TASK_DEF=$(cat current-task-def.json | jq \
-            --arg IMAGE "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
-            '.containerDefinitions[0].image = $IMAGE | 
-             del(.taskDefinitionArn, .revision, .status, .requiresAttributes, 
-                 .placementConstraints, .compatibilities, .registeredAt, .registeredBy)')
+          # Try to fetch the existing task definition (suppress error output)
+          if aws ecs describe-task-definition \
+              --task-definition $ECS_TASK_FAMILY \
+              --query 'taskDefinition' \
+              --output json > current-task-def.json 2>/dev/null; then
 
-          # Register the updated task definition
+            echo "✅ Found existing task definition — updating image tag"
+
+            # Update only the container image; strip fields ECS rejects on re-register
+            NEW_TASK_DEF=$(cat current-task-def.json | jq \
+              --arg IMAGE "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
+              '.containerDefinitions[0].image = $IMAGE |
+               del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
+                   .placementConstraints, .compatibilities, .registeredAt, .registeredBy)')
+
+          else
+            echo "⚠️  Task definition '$ECS_TASK_FAMILY' not found in AWS."
+            echo "    This is expected on first deployment — registering from template."
+            echo "    Template: .github/ecs-task-definition.json"
+
+            if [ ! -f ".github/ecs-task-definition.json" ]; then
+              echo "❌ ERROR: .github/ecs-task-definition.json template not found."
+              echo "   Please add this file to the repository (see DEPLOYMENT_RUNBOOK.md)."
+              exit 1
+            fi
+
+            # Substitute the real image URI into the template
+            NEW_TASK_DEF=$(cat .github/ecs-task-definition.json | jq \
+              --arg IMAGE "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
+              --arg FAMILY "$ECS_TASK_FAMILY" \
+              '.containerDefinitions[0].image = $IMAGE | .family = $FAMILY')
+          fi
+
+          # Register the (new or updated) task definition
           NEW_TASK_DEF_ARN=$(echo "$NEW_TASK_DEF" | aws ecs register-task-definition \
             --cli-input-json /dev/stdin \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
 
           echo "new_task_def_arn=$NEW_TASK_DEF_ARN" >> $GITHUB_OUTPUT
-          echo "✅ New task definition registered: $NEW_TASK_DEF_ARN"
+          echo "✅ Task definition registered: $NEW_TASK_DEF_ARN"
 
       # ── Step 8: Run database migrations ──────────────────────
       # This runs Django migrations as a one-shot ECS task BEFORE
