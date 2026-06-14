@@ -312,18 +312,19 @@ jobs:
 
           # Try to fetch the existing task definition (suppress error output)
           if aws ecs describe-task-definition \
-              --task-definition $ECS_TASK_FAMILY \
+              --task-definition "$ECS_TASK_FAMILY" \
               --query 'taskDefinition' \
               --output json > current-task-def.json 2>/dev/null; then
 
             echo "✅ Found existing task definition — updating image tag"
 
-            # Update only the container image; strip fields ECS rejects on re-register
-            NEW_TASK_DEF=$(cat current-task-def.json | jq \
+            # Update only the container image; strip read-only fields ECS rejects on re-register
+            jq \
               --arg IMAGE "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
-              '.containerDefinitions[0].image = $IMAGE |
-               del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
-                   .placementConstraints, .compatibilities, .registeredAt, .registeredBy)')
+              'del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
+                   .placementConstraints, .compatibilities, .registeredAt, .registeredBy) |
+               .containerDefinitions[0].image = $IMAGE' \
+              current-task-def.json > new-task-def.json
 
           else
             echo "⚠️  Task definition '$ECS_TASK_FAMILY' not found in AWS."
@@ -336,16 +337,29 @@ jobs:
               exit 1
             fi
 
-            # Substitute the real image URI into the template
-            NEW_TASK_DEF=$(cat .github/ecs-task-definition.json | jq \
+            # Substitute the real image URI and family name into the template
+            jq \
               --arg IMAGE "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
               --arg FAMILY "$ECS_TASK_FAMILY" \
-              '.containerDefinitions[0].image = $IMAGE | .family = $FAMILY')
+              '.containerDefinitions[0].image = $IMAGE | .family = $FAMILY' \
+              .github/ecs-task-definition.json > new-task-def.json
           fi
 
-          # Register the (new or updated) task definition
-          NEW_TASK_DEF_ARN=$(echo "$NEW_TASK_DEF" | aws ecs register-task-definition \
-            --cli-input-json /dev/stdin \
+          # Debug: print the JSON that will be registered
+          # (helps diagnose any future ParamValidation errors)
+          echo "📄 Task definition JSON to be registered:"
+          cat new-task-def.json
+          echo ""
+
+          # Validate JSON is non-empty before calling AWS
+          if [ ! -s new-task-def.json ]; then
+            echo "❌ ERROR: new-task-def.json is empty — jq transformation failed"
+            exit 1
+          fi
+
+          # Register using file:// — more reliable than /dev/stdin in CI environments
+          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://new-task-def.json \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
 
@@ -362,13 +376,14 @@ jobs:
           echo "🗄️ Running Django migrations via ECS one-shot task..."
 
           # Get private subnet and security group IDs
+          # Tag names come from terraform outputs (terraform/terraform_outputs.txt)
           SUBNET_IDS=$(aws ec2 describe-subnets \
-            --filters "Name=tag:Name,Values=ohc-ahc-production-private-*" \
+            --filters "Name=tag:Name,Values=ohc-ahc-staging-private-*" \
             --query 'Subnets[*].SubnetId' \
             --output json | jq -r 'join(",")')
 
           SG_ID=$(aws ec2 describe-security-groups \
-            --filters "Name=tag:Name,Values=ohc-ahc-production-ecs-sg" \
+            --filters "Name=tag:Name,Values=ohc-ahc-staging-ecs-sg" \
             --query 'SecurityGroups[0].GroupId' \
             --output text)
 
@@ -403,16 +418,68 @@ jobs:
             --cluster $ECS_CLUSTER \
             --tasks $TASK_ARN
 
-          # Check the exit code of the migration container
-          EXIT_CODE=$(aws ecs describe-tasks \
+          # Fetch full task details once — used for exit code AND stop reason
+          TASK_DETAIL=$(aws ecs describe-tasks \
             --cluster $ECS_CLUSTER \
             --tasks $TASK_ARN \
-            --query 'tasks[0].containers[0].exitCode' \
-            --output text)
+            --output json)
 
-          if [ "$EXIT_CODE" != "0" ]; then
-            echo "❌ Migration FAILED with exit code: $EXIT_CODE"
-            echo "🔍 Check logs: AWS Console → CloudWatch → /ecs/ohc-ahc-production"
+          EXIT_CODE=$(echo "$TASK_DETAIL" | jq -r '.tasks[0].containers[0].exitCode // "None"')
+          STOP_CODE=$(echo "$TASK_DETAIL" | jq -r '.tasks[0].stopCode // "unknown"')
+          STOPPED_REASON=$(echo "$TASK_DETAIL" | jq -r '.tasks[0].stoppedReason // "no reason provided"')
+
+          echo "📊 Task exit code:     $EXIT_CODE"
+          echo "📊 Task stop code:     $STOP_CODE"
+          echo "📊 Task stopped reason: $STOPPED_REASON"
+
+          if [ "$EXIT_CODE" = "None" ]; then
+            # exitCode is None = task was stopped at the INFRASTRUCTURE level
+            # before the container ever ran. Common causes:
+            #   - Image pull failure (wrong ECR URI, ECR permissions)
+            #   - Secrets Manager fetch failure (wrong ARN, IAM permissions)
+            #   - Task execution role missing ecr:GetAuthorizationToken
+            #   - Out of memory before container started
+            echo ""
+            echo "❌ Migration task stopped before container ran (exitCode=None)"
+            echo "   Stop code:   $STOP_CODE"
+            echo "   Reason:      $STOPPED_REASON"
+            echo ""
+            echo "🔍 Diagnostic checklist:"
+            echo "   1. Check CloudWatch logs: /ecs/ohc-ahc-staging"
+            echo "   2. Verify ECR image exists: ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY"
+            echo "   3. Verify Secrets Manager ARNs in task definition match:"
+            echo "      arn:aws:secretsmanager:us-east-1:819808778143:secret:ohc-ahc/staging/database-url"
+            echo "      arn:aws:secretsmanager:us-east-1:819808778143:secret:ohc-ahc/staging/secret-key"
+            echo "   4. Verify IAM execution role has secretsmanager:GetSecretValue permission"
+            # Attempt to print recent CloudWatch logs for the task
+            TASK_ID=$(basename $TASK_ARN)
+            echo ""
+            echo "📜 Attempting to fetch CloudWatch logs for task $TASK_ID..."
+            aws logs get-log-events \
+              --log-group-name "/ecs/ohc-ahc-staging" \
+              --log-stream-name "app/ohc-app/$TASK_ID" \
+              --limit 50 \
+              --query 'events[*].message' \
+              --output text 2>/dev/null || echo "   (No logs found — task may have stopped before logging started)"
+            exit 1
+
+          elif [ "$EXIT_CODE" != "0" ]; then
+            # Container ran but exited with a non-zero code
+            # (Django migration error, DB connection refused, etc.)
+            echo ""
+            echo "❌ Migration container exited with code $EXIT_CODE"
+            echo "   Reason: $STOPPED_REASON"
+            echo ""
+            echo "🔍 Check full logs: AWS Console → CloudWatch → /ecs/ohc-ahc-staging"
+            TASK_ID=$(basename $TASK_ARN)
+            echo ""
+            echo "📜 Fetching CloudWatch logs for task $TASK_ID..."
+            aws logs get-log-events \
+              --log-group-name "/ecs/ohc-ahc-staging" \
+              --log-stream-name "app/ohc-app/$TASK_ID" \
+              --limit 100 \
+              --query 'events[*].message' \
+              --output text 2>/dev/null || echo "   (Could not fetch logs)"
             exit 1
           fi
 
@@ -512,7 +579,7 @@ jobs:
           echo ""
           echo "🔍 Diagnostic steps:"
           echo "   1. Check the failed step above for error details"
-          echo "   2. View ECS logs: AWS Console → CloudWatch → /ecs/ohc-ahc-production"
+          echo "   2. View ECS logs: AWS Console → CloudWatch → /ecs/ohc-ahc-staging"
           echo "   3. Check ECS events: AWS Console → ECS → Cluster → Service → Events"
           echo ""
           echo "♻️  Recovery:"
