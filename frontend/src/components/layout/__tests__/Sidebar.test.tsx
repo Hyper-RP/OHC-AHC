@@ -87,6 +87,18 @@ describe('Sidebar', () => {
     expect(screen.queryByText('Payments')).not.toBeInTheDocument();
   });
 
+  it('shows Analysis instead of OHC for EHS users', () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: mockUser({ role: 'EHS' }),
+      isAuthenticated: true, loading: false,
+      login: vi.fn(), logout: vi.fn(), refreshToken: vi.fn(),
+    });
+
+    renderWithRouter(<Sidebar />);
+    expect(screen.getByText('Analysis')).toBeInTheDocument();
+    expect(screen.queryByText('OHC')).not.toBeInTheDocument();
+  });
+
   it('renders no nav items for EMPLOYEE', () => {
     vi.mocked(useAuth).mockReturnValue({
       user: mockUser({ role: 'EMPLOYEE' }),

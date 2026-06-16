@@ -194,6 +194,7 @@ export const getNavItemsForRole = (userRole: Role): NavItem[] => {
         if (roleSpecificChild) {
           items.push({
             ...item,
+            label: userRole === Role.EHS ? 'Analysis' : item.label,
             url: roleSpecificChild.url,
             children: undefined,
           });
