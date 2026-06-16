@@ -234,9 +234,11 @@ resource "aws_ecs_service" "app" {
   enable_execute_command = true
 
   network_configuration {
-    subnets          = aws_subnet.private[*].id
+    # Staging: public subnets + public IP → tasks reach internet directly, no NAT needed
+    # Production: private subnets + no public IP → traffic routed through NAT Gateway
+    subnets          = var.environment == "staging" ? aws_subnet.public[*].id : aws_subnet.private[*].id
     security_groups  = [aws_security_group.ecs.id]
-    assign_public_ip = false
+    assign_public_ip = var.environment == "staging" ? true : false
   }
 
   load_balancer {

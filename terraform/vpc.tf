@@ -1,5 +1,6 @@
 # VPC Module - Optimized for Cost
-# Strategy: S3 Gateway Endpoint (FREE) + NAT Gateway for other AWS services
+# Strategy (staging):    ECS in public subnets → no NAT Gateway needed → saves ~$33/month
+# Strategy (production): ECS in private subnets → NAT Gateway for security
 
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
@@ -47,9 +48,10 @@ resource "aws_internet_gateway" "main" {
   }
 }
 
-# Elastic IP for NAT Gateway
+# Elastic IP for NAT Gateway — production only
+# Staging uses public subnets for ECS, so no NAT Gateway needed
 resource "aws_eip" "nat" {
-  count = var.environment == "staging" ? 1 : length(var.availability_zones)
+  count = var.environment == "production" ? length(var.availability_zones) : 0
 
   domain = "vpc"
 
@@ -60,9 +62,10 @@ resource "aws_eip" "nat" {
   depends_on = [aws_internet_gateway.main]
 }
 
-# NAT Gateways (1 for staging, multi-AZ for production)
+# NAT Gateways — production only (multi-AZ)
+# Staging: $0 saved by removing this (~$33/month)
 resource "aws_nat_gateway" "main" {
-  count = var.environment == "staging" ? 1 : length(var.availability_zones)
+  count = var.environment == "production" ? length(var.availability_zones) : 0
 
   allocation_id = aws_eip.nat[count.index].id
   subnet_id     = aws_subnet.public[count.index].id
@@ -88,15 +91,20 @@ resource "aws_route_table" "public" {
   }
 }
 
-# Private Route Table(s)
+# Private Route Table(s) — used by RDS (which lives in private subnets)
+# Staging:    1 route table, no internet route (RDS doesn't need internet access)
+# Production: 1 per AZ, each routes through its own NAT Gateway
 resource "aws_route_table" "private" {
   count = var.environment == "staging" ? 1 : length(var.availability_zones)
 
   vpc_id = aws_vpc.main.id
 
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.main[count.index].id
+  dynamic "route" {
+    for_each = var.environment == "production" ? [1] : []
+    content {
+      cidr_block     = "0.0.0.0/0"
+      nat_gateway_id = aws_nat_gateway.main[count.index].id
+    }
   }
 
   tags = {

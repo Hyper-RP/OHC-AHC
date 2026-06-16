@@ -27,9 +27,9 @@ resource "aws_appautoscaling_target" "ecs" {
   resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.app.name}"
   scalable_dimension = "ecs:service:DesiredCount"
 
-  # Staging: scale between 1 and 3 tasks
-  # Production: scale between 2 and 10 tasks
-  min_capacity = var.environment == "production" ? 2 : 1
+  # Staging:    min=0 allows scheduled scale-to-zero at night
+  # Production: min=2 ensures high availability at all times
+  min_capacity = var.environment == "production" ? 2 : 0
   max_capacity = var.environment == "production" ? 10 : 3
 }
 
@@ -105,6 +105,59 @@ resource "aws_appautoscaling_policy" "requests" {
       # This links to your specific target group
       resource_label = "${aws_lb.main.arn_suffix}/${aws_lb_target_group.main.arn_suffix}"
     }
+  }
+
+  depends_on = [aws_appautoscaling_target.ecs]
+}
+
+# ================================================================
+# Scheduled Scale-to-Zero — Staging Only
+# Saves ~60-70% of ECS cost by running tasks only during work hours
+#
+# Schedule (IST = UTC+5:30):
+#   Scale UP:   9:00 AM IST = 03:30 UTC  (Mon-Fri only)
+#   Scale DOWN: 8:00 PM IST = 14:30 UTC  (every day, covers weekends)
+#
+# To adjust timezone, change the UTC hours:
+#   New UTC hour = Desired IST hour - 5:30
+#   Example: 10 AM IST = 04:30 UTC → cron(30 4 ? * MON-FRI *)
+# ================================================================
+
+resource "aws_appautoscaling_scheduled_action" "scale_up_morning" {
+  count = var.environment == "staging" ? 1 : 0
+
+  name               = "${var.project_name}-${var.environment}-scale-up-morning"
+  service_namespace  = aws_appautoscaling_target.ecs.service_namespace
+  resource_id        = aws_appautoscaling_target.ecs.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs.scalable_dimension
+
+  # 9:00 AM IST (03:30 UTC) Monday through Friday
+  schedule = "cron(30 3 ? * MON-FRI *)"
+
+  scalable_target_action {
+    min_capacity = 1
+    max_capacity = 3
+  }
+
+  depends_on = [aws_appautoscaling_target.ecs]
+}
+
+resource "aws_appautoscaling_scheduled_action" "scale_down_evening" {
+  count = var.environment == "staging" ? 1 : 0
+
+  name               = "${var.project_name}-${var.environment}-scale-down-evening"
+  service_namespace  = aws_appautoscaling_target.ecs.service_namespace
+  resource_id        = aws_appautoscaling_target.ecs.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs.scalable_dimension
+
+  # 8:00 PM IST (14:30 UTC) every day
+  # Friday scale-down keeps tasks at 0 through Saturday and Sunday
+  # until Monday morning scale-up fires
+  schedule = "cron(30 14 ? * * *)"
+
+  scalable_target_action {
+    min_capacity = 0
+    max_capacity = 0
   }
 
   depends_on = [aws_appautoscaling_target.ecs]
