@@ -371,10 +371,11 @@ jobs:
         run: |
           echo "🗄️ Running Django migrations via ECS one-shot task..."
 
-          # Get private subnet and security group IDs
+          # Get public subnet and security group IDs
+          # Staging ECS tasks run in public subnets (no NAT Gateway) with assignPublicIp=ENABLED
           # Tag names come from terraform outputs (terraform/terraform_outputs.txt)
           SUBNET_IDS=$(aws ec2 describe-subnets \
-            --filters "Name=tag:Name,Values=ohc-ahc-staging-private-*" \
+            --filters "Name=tag:Name,Values=ohc-ahc-staging-public-*" \
             --query 'Subnets[*].SubnetId' \
             --output json | jq -r 'join(",")')
 
@@ -384,7 +385,7 @@ jobs:
             --output text)
 
           if [ -z "$SUBNET_IDS" ] || [ "$SUBNET_IDS" = "null" ]; then
-            echo "⚠️  Could not find private subnets — skipping ECS migration task"
+            echo "⚠️  Could not find public subnets — skipping ECS migration task"
             echo "   Migrations will run via container startup command instead"
             exit 0
           fi
@@ -397,7 +398,7 @@ jobs:
             --cluster $ECS_CLUSTER \
             --task-definition ${{ steps.get-task-def.outputs.new_task_def_arn }} \
             --launch-type FARGATE \
-            --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_IDS],securityGroups=[$SG_ID],assignPublicIp=DISABLED}" \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_IDS],securityGroups=[$SG_ID],assignPublicIp=ENABLED}" \
             --overrides '{"containerOverrides":[{"name":"ohc-app","command":["sh","-c","cd /app/myproject && python manage.py migrate --noinput"]}]}' \
             --query 'tasks[0].taskArn' \
             --output text)
